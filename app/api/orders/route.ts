@@ -10,6 +10,16 @@ export const runtime = "nodejs";
 
 // 주문 생성 — 가격은 반드시 서버 카탈로그에서 확정 (클라이언트 금액 신뢰 금지)
 export async function POST(req: Request) {
+  try {
+    return await handle(req);
+  } catch (err) {
+    console.error("[api/orders]", err);
+    const message = err instanceof Error ? err.message : "서버 오류가 발생했어요.";
+    return NextResponse.json({ error: message }, { status: 500 });
+  }
+}
+
+async function handle(req: Request) {
   let body: { productCode?: string; persons?: unknown[] };
   try {
     body = await req.json();

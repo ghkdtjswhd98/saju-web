@@ -10,6 +10,16 @@ export const runtime = "nodejs";
 // 토스 결제 승인 — 서버 검증의 핵심.
 // (a) 주문 존재/상태 확인 (b) 금액 일치 검증 (c) 토스 confirm API 호출 (d) 리포트 발급
 export async function POST(req: Request) {
+  try {
+    return await handle(req);
+  } catch (err) {
+    console.error("[api/payments/confirm]", err);
+    const message = err instanceof Error ? err.message : "서버 오류가 발생했어요.";
+    return NextResponse.json({ error: message }, { status: 500 });
+  }
+}
+
+async function handle(req: Request) {
   let body: { paymentKey?: string; orderId?: string; amount?: number | string };
   try {
     body = await req.json();

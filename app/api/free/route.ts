@@ -10,6 +10,16 @@ export const runtime = "nodejs";
 
 // 무료 맛보기 신청: 계산 + 리포트 행 생성 → shareId 반환 (해석 생성은 stream 라우트에서)
 export async function POST(req: Request) {
+  try {
+    return await handle(req);
+  } catch (err) {
+    console.error("[api/free]", err);
+    const message = err instanceof Error ? err.message : "서버 오류가 발생했어요.";
+    return NextResponse.json({ error: message }, { status: 500 });
+  }
+}
+
+async function handle(req: Request) {
   let body: unknown;
   try {
     body = await req.json();
