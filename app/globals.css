@@ -1,0 +1,43 @@
+@import "tailwindcss";
+
+/* 오롭미 디자인 토큰 — saju-mvp의 웜톤 팔레트 계승 */
+:root {
+  --bg: #faf7f2;
+  --card: #ffffff;
+  --ink: #3d3d3d;
+  --ink-soft: #7a7a7a;
+  --accent: #8f7bb8;
+  --accent-strong: #6f5b9a;
+  --accent-soft: #e8dff5;
+  --border: #ece6dd;
+  --danger: #c97a7a;
+  --ok: #7aa37a;
+}
+
+@theme inline {
+  --color-bg: var(--bg);
+  --color-card: var(--card);
+  --color-ink: var(--ink);
+  --color-ink-soft: var(--ink-soft);
+  --color-accent: var(--accent);
+  --color-accent-strong: var(--accent-strong);
+  --color-accent-soft: var(--accent-soft);
+  --color-line: var(--border);
+  --color-danger: var(--danger);
+  --color-ok: var(--ok);
+  --font-sans: var(--font-noto-kr), "Apple SD Gothic Neo", sans-serif;
+  /* 오행 컬러 */
+  --color-el-wood: #6a9f6a;
+  --color-el-fire: #d07b6a;
+  --color-el-earth: #c2a05e;
+  --color-el-metal: #9aa3ad;
+  --color-el-water: #6a86b8;
+}
+
+body {
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--font-noto-kr), "Apple SD Gothic Neo", sans-serif;
+  line-height: 1.6;
+  word-break: keep-all;
+}
