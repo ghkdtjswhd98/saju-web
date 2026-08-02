@@ -75,12 +75,12 @@ export async function GET(
   const productCode = report.productCode;
   const format = FORMATS[productCode];
   const persons = (report.inputData as { persons: PersonInput[] }).persons;
-  const isFree = productCode === "free";
+  const isFree = productCode.startsWith("free");
   const model = isFree ? FREE_MODEL : PAID_MODEL;
   const maxTokens = isFree ? 1024 : 16000;
 
   let userPrompt: string;
-  if (productCode === "love") {
+  if (productCode === "love" || productCode === "free_love") {
     const [rA, rB] = report.sajuData as [SajuResult, SajuResult];
     userPrompt = buildLoveUserPrompt(
       { person: persons[0], result: rA },

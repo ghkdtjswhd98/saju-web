@@ -21,13 +21,18 @@ export default async function Image({
   const rows = await getDb().select().from(reports).where(eq(reports.token, shareId)).limit(1);
   const report = rows[0];
 
-  const person = report ? (report.inputData as { persons: PersonInput[] }).persons[0] : null;
-  const saju = report ? (report.sajuData as SajuResult) : null;
+  const persons = report ? (report.inputData as { persons: PersonInput[] }).persons : null;
+  const isLove = report?.productCode === "free_love";
+  const saju = report ? (isLove ? (report.sajuData as SajuResult[])[0] : (report.sajuData as SajuResult)) : null;
   const blocks = (report?.content as { blocks?: Record<string, string> } | null)?.blocks;
-  const summary = blocks?.["한줄요약"] ?? "나의 사주, 30초면 나와요";
-  const title = person ? `${person.name}님의 사주` : "오롭미 무료사주";
+  const summary = blocks?.["한줄요약"] ?? (isLove ? "우리 케미, 30초면 나와요" : "나의 사주, 30초면 나와요");
+  const title = persons
+    ? isLove
+      ? `${persons[0].name} ♥ ${persons[1].name} 궁합`
+      : `${persons[0].name}님의 사주`
+    : "오롭미 무료사주";
 
-  const text = `${title}"${summary}"오롭미 | All of Me목화토금수 무료사주 보러가기0123456789.`;
+  const text = `${title}"${summary}"오롭미 | All of Me목화토금수 무료사주 궁합 보러가기0123456789.♥`;
   const font = await loadKoreanFont(text);
 
   return new ImageResponse(

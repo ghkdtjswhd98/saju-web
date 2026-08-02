@@ -8,8 +8,22 @@ import type { PersonInput } from "@/lib/saju/types";
 
 export const dynamic = "force-dynamic";
 
-// 무료 결과(from=shareId)에서 넘어온 경우 입력값 프리필
-async function getPrefill(fromToken: string | undefined): Promise<Partial<PersonFormValue> | null> {
+function toFormValue(person: PersonInput): Partial<PersonFormValue> {
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return {
+    name: person.name,
+    gender: person.gender,
+    calendar: person.isLunar ? "음력" : "양력",
+    isLeap: person.isLeap,
+    date: `${person.year}-${pad(person.month)}-${pad(person.day)}`,
+    hourValue: person.hourValue,
+  };
+}
+
+// 무료 결과(from=shareId)에서 넘어온 경우 입력값 프리필 (궁합 티저면 2인 모두)
+async function getPrefill(
+  fromToken: string | undefined,
+): Promise<Partial<PersonFormValue>[] | null> {
   if (!fromToken) return null;
   try {
     const rows = await getDb()
@@ -17,17 +31,9 @@ async function getPrefill(fromToken: string | undefined): Promise<Partial<Person
       .from(reports)
       .where(eq(reports.token, fromToken))
       .limit(1);
-    const person = (rows[0]?.inputData as { persons: PersonInput[] } | undefined)?.persons?.[0];
-    if (!person) return null;
-    const pad = (n: number) => String(n).padStart(2, "0");
-    return {
-      name: person.name,
-      gender: person.gender,
-      calendar: person.isLunar ? "음력" : "양력",
-      isLeap: person.isLeap,
-      date: `${person.year}-${pad(person.month)}-${pad(person.day)}`,
-      hourValue: person.hourValue,
-    };
+    const persons = (rows[0]?.inputData as { persons: PersonInput[] } | undefined)?.persons;
+    if (!persons?.length) return null;
+    return persons.map(toFormValue);
   } catch {
     return null;
   }

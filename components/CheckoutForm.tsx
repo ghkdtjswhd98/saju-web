@@ -7,15 +7,17 @@ import PersonFields, { EMPTY_PERSON, personToApiInput, type PersonFormValue } fr
 
 interface Props {
   product: Product;
-  prefill?: Partial<PersonFormValue> | null; // 무료 결과에서 넘어온 경우
+  prefill?: Partial<PersonFormValue>[] | null; // 무료 결과에서 넘어온 경우 (궁합이면 2인)
 }
 
 export default function CheckoutForm({ product, prefill }: Props) {
   const router = useRouter();
-  const [persons, setPersons] = useState<PersonFormValue[]>(() => {
-    const first = { ...EMPTY_PERSON, ...(prefill ?? {}) };
-    return product.personCount === 2 ? [first, { ...EMPTY_PERSON }] : [first];
-  });
+  const [persons, setPersons] = useState<PersonFormValue[]>(() =>
+    Array.from({ length: product.personCount }, (_, i) => ({
+      ...EMPTY_PERSON,
+      ...(prefill?.[i] ?? {}),
+    })),
+  );
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 

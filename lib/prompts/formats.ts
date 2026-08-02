@@ -38,6 +38,39 @@ export const FREE_FORMAT: ReportFormat = {
 출력은 반드시 ===BLOCK1_한줄요약===으로 시작해 BLOCK4의 4번째 줄로 끝납니다. 다른 블록·서두·맺음말 금지.`,
 };
 
+// ── 궁합 무료 티저 (Haiku) — 2인 케미 3블록 ────────────────────
+export const FREE_LOVE_FORMAT: ReportFormat = {
+  markers: [
+    { key: "한줄요약", token: "BLOCK1_한줄요약" },
+    { key: "해시태그", token: "BLOCK2_해시태그" },
+    { key: "케미카드", token: "BLOCK4_케미카드" },
+  ],
+  system: `# 궁합 무료 티저 해석 지침
+
+사용자 메시지에 두 사람(A, B)의 계산값과 지지 교차 관계가 전달됩니다. 두 사람의 "케미"를 짧고 강렬하게 요약하세요. 어느 한쪽을 나쁘게 만들지 않습니다.
+
+# 출력 형식 (엄격) — 3블록
+
+아래 3개 구분자를 정확히 그대로 사용하세요. 구분자는 반드시 줄 시작에 위치합니다.
+
+===BLOCK1_한줄요약===
+[10~18자. 두 사람 케미를 명명하는 후킹 카피. "불꽃형", "스며드는형", "티키타카형" 같은 유형 명명 환영.]
+예: "천천히 스며드는 불" / "투닥거리는 단짝 케미" / "서로의 부족을 채우는 톱니"
+
+===BLOCK2_해시태그===
+[#키워드 3개 정확히. 각 5~8자. 두 사람 관계의 결. 진부 금지.]
+좋은 예: #조용한불꽃 #환장의티키타카 #서로의충전기
+
+===BLOCK4_케미카드===
+[정확히 4줄. 각 줄 22자 이내. 줄바꿈 구분, 불릿 금지.]
+1줄: 처음 만났을 때의 공기
+2줄: 서로에게 끌리는 지점
+3줄: 부딪히기 쉬운 순간
+4줄: 이 관계가 깊어지는 법
+
+출력은 반드시 ===BLOCK1_한줄요약===으로 시작해 케미카드 4번째 줄로 끝납니다. 다른 블록·서두·맺음말 금지.`,
+};
+
 // ── 유료 공통 지침 ─────────────────────────────────────────────
 const PAID_COMMON = `# 유료 심층 리포트 공통 지침
 
@@ -218,6 +251,7 @@ export const CAREER_FORMAT: ReportFormat = {
 
 export const FORMATS: Record<string, ReportFormat> = {
   free: FREE_FORMAT,
+  free_love: FREE_LOVE_FORMAT,
   lifetime: LIFETIME_FORMAT,
   love: LOVE_FORMAT,
   year: YEAR_FORMAT,

@@ -4,7 +4,7 @@
 import { eq } from "drizzle-orm";
 import { nanoid } from "nanoid";
 import { NextResponse } from "next/server";
-import { getDb, reports } from "@/lib/db";
+import { getDb, rateLimits, reports } from "@/lib/db";
 import { computeAll } from "@/lib/saju/compute";
 import { getProduct } from "@/lib/products";
 import { parsePersonInput } from "@/lib/validate";
@@ -27,12 +27,17 @@ export async function POST(req: Request) {
   if (denied) return denied;
 
   const body = (await req.json()) as {
-    action: "seed" | "info";
+    action: "seed" | "info" | "clear_limits";
     productCode?: string;
     persons?: unknown[];
     token?: string;
   };
   const db = getDb();
+
+  if (body.action === "clear_limits") {
+    await db.delete(rateLimits);
+    return NextResponse.json({ ok: true });
+  }
 
   if (body.action === "seed") {
     const product = getProduct(body.productCode ?? "");
