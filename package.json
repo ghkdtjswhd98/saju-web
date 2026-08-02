@@ -10,8 +10,10 @@
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.110.0",
+    "@electric-sql/pglite": "^0.5.4",
     "@fullstackfamily/manseryeok": "^1.0.8",
     "@tosspayments/tosspayments-sdk": "^2.7.1",
+    "@vercel/analytics": "^2.0.1",
     "drizzle-orm": "^0.45.2",
     "nanoid": "^5.1.16",
     "next": "16.2.10",
@@ -28,6 +30,7 @@
     "eslint": "^9",
     "eslint-config-next": "16.2.10",
     "tailwindcss": "^4",
+    "tsx": "^4.23.1",
     "typescript": "^5",
     "vitest": "^4.1.10"
   }

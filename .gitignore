@@ -40,3 +40,6 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# 로컬 임베디드 DB (PGlite 폴백)
+/.pglite-data

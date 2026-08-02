@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { Analytics } from "@vercel/analytics/next";
 import { Noto_Sans_KR } from "next/font/google";
 import Link from "next/link";
 import { SITE } from "@/lib/site";
@@ -70,6 +71,8 @@ export default function RootLayout({
             </div>
           </div>
         </footer>
+        {/* 방문→무료→체크아웃→리포트 퍼널은 페이지뷰 경로로 측정 (Vercel 배포 시 활성화) */}
+        <Analytics />
       </body>
     </html>
   );

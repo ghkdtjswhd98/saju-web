@@ -27,6 +27,7 @@ export const reports = pgTable(
     model: text("model"),
     status: text("status").notNull().default("pending"), // pending | generating | done | failed
     usage: jsonb("usage"), // { input_tokens, output_tokens, ... } 원가 추적
+    generatingAt: timestamp("generating_at", { withTimezone: true }), // 생성 락 시각 — 고착 복구용
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
     completedAt: timestamp("completed_at", { withTimezone: true }),
   },

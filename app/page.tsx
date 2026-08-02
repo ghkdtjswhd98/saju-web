@@ -1,5 +1,6 @@
 import Link from "next/link";
 import FreeForm from "@/components/FreeForm";
+import LandingFaq from "@/components/LandingFaq";
 import { PRODUCTS } from "@/lib/products";
 
 export default function Home() {
@@ -58,6 +59,29 @@ export default function Home() {
           </li>
         </ul>
       </section>
+
+      <section className="mt-12 rounded-2xl border border-line bg-card p-5">
+        <h2 className="text-sm font-bold tracking-widest text-accent-strong">어떻게 계산하나요</h2>
+        <ol className="mt-3 space-y-2.5 text-sm leading-6">
+          <li>
+            <b>1. 만세력 대조.</b> 입력한 생년월일시를 만세력 데이터(1900~2050년, 절기·음력 변환 포함)와
+            대조해 사주팔자 여덟 글자를 확정해요.
+          </li>
+          <li>
+            <b>2. 명리 요소 계산.</b> 일간을 기준으로 오행 분포(지장간 가중치 반영), 십신, 신살을
+            결정론적 알고리즘으로 계산해요. 같은 생년월일시면 언제나 같은 결과가 나와요.
+          </li>
+          <li>
+            <b>3. AI 해석.</b> 확정된 계산값만을 근거로 AI가 해석문을 지어요. AI는 계산에 관여할 수
+            없어서, 챗봇 사주에서 흔한 &quot;팔자 자체가 틀리는 문제&quot;가 구조적으로 불가능해요.
+          </li>
+        </ol>
+        <p className="mt-3 text-xs text-ink-soft">
+          결과 페이지의 &quot;사주팔자&quot; 표를 다른 만세력 서비스와 대조해보셔도 좋아요 — 같은 값이 나와요.
+        </p>
+      </section>
+
+      <LandingFaq />
     </div>
   );
 }

@@ -52,10 +52,16 @@ async function handle(req: Request) {
   }
 
   // 새 생성은 레이트리밋 적용 (재열람은 제한 없음)
-  const allowed = await checkRateLimit(getClientIp(req));
-  if (!allowed) {
+  const limit = await checkRateLimit(getClientIp(req));
+  if (limit === "ip_limited") {
     return NextResponse.json(
       { error: "오늘 무료 사주 횟수를 모두 사용했어요. 내일 다시 만나요!" },
+      { status: 429 },
+    );
+  }
+  if (limit === "global_limited") {
+    return NextResponse.json(
+      { error: "오늘 준비된 무료 사주가 모두 소진됐어요. 내일 자정에 다시 열려요!" },
       { status: 429 },
     );
   }

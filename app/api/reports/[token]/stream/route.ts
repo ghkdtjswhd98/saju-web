@@ -1,6 +1,6 @@
 // 리포트 해석 생성 SSE — 무료/유료 공용.
 // 리포트 행이 존재한다는 것 자체가 생성 권한 (유료는 결제 confirm에서만 행이 생성됨).
-import { and, eq } from "drizzle-orm";
+import { and, eq, lt, or, sql } from "drizzle-orm";
 import { getDb, reports } from "@/lib/db";
 import { FREE_MODEL, PAID_MODEL, streamReport } from "@/lib/anthropic";
 import { parseBlocks } from "@/lib/parse-blocks";
@@ -43,11 +43,21 @@ export async function GET(
     return new Response(stream, { headers: { "content-type": "text/event-stream" } });
   }
 
-  // 생성 락: pending → generating 전환에 성공한 요청만 생성 수행
+  // 생성 락: pending → generating 전환에 성공한 요청만 생성 수행.
+  // 서버 강제 종료 등으로 generating에 고착된 경우(10분 경과) 재락을 허용해 자동 복구.
+  const staleBefore = new Date(Date.now() - 10 * 60 * 1000);
   const locked = await db
     .update(reports)
-    .set({ status: "generating" })
-    .where(and(eq(reports.token, token), eq(reports.status, "pending")))
+    .set({ status: "generating", generatingAt: sql`now()` })
+    .where(
+      and(
+        eq(reports.token, token),
+        or(
+          eq(reports.status, "pending"),
+          and(eq(reports.status, "generating"), lt(reports.generatingAt, staleBefore)),
+        ),
+      ),
+    )
     .returning({ token: reports.token });
 
   if (!locked.length) {

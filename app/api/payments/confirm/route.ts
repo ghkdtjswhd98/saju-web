@@ -55,23 +55,32 @@ async function handle(req: Request) {
     return NextResponse.json({ error: "결제 설정이 완료되지 않았어요." }, { status: 500 });
   }
 
-  // 토스 결제 승인 API
-  const tossRes = await fetch("https://api.tosspayments.com/v1/payments/confirm", {
-    method: "POST",
-    headers: {
-      Authorization: `Basic ${Buffer.from(`${secretKey}:`).toString("base64")}`,
-      "content-type": "application/json",
-    },
-    body: JSON.stringify({ paymentKey, orderId, amount }),
-  });
+  // dev 전용 mock 승인 — 결제창 없이 성공 경로를 E2E 테스트하기 위한 우회로.
+  // 프로덕션 빌드에서는 절대 동작하지 않는다.
+  const isMockApproval =
+    process.env.NODE_ENV !== "production" &&
+    process.env.TOSS_MOCK === "1" &&
+    paymentKey.startsWith("mock_");
 
-  if (!tossRes.ok) {
-    const err = (await tossRes.json().catch(() => ({}))) as { message?: string };
-    await db.update(orders).set({ status: "failed" }).where(eq(orders.id, orderId));
-    return NextResponse.json(
-      { error: err.message ?? "결제 승인에 실패했어요." },
-      { status: 402 },
-    );
+  if (!isMockApproval) {
+    // 토스 결제 승인 API
+    const tossRes = await fetch("https://api.tosspayments.com/v1/payments/confirm", {
+      method: "POST",
+      headers: {
+        Authorization: `Basic ${Buffer.from(`${secretKey}:`).toString("base64")}`,
+        "content-type": "application/json",
+      },
+      body: JSON.stringify({ paymentKey, orderId, amount }),
+    });
+
+    if (!tossRes.ok) {
+      const err = (await tossRes.json().catch(() => ({}))) as { message?: string };
+      await db.update(orders).set({ status: "failed" }).where(eq(orders.id, orderId));
+      return NextResponse.json(
+        { error: err.message ?? "결제 승인에 실패했어요." },
+        { status: 402 },
+      );
+    }
   }
 
   // 승인 성공 → 리포트 발급 (사주 계산 스냅샷 포함)

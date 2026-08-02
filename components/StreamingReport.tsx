@@ -61,6 +61,30 @@ function SectionCard({ label, body }: Section) {
   );
 }
 
+// 생성 대기 중(특히 Opus thinking 구간의 무음 시간)에 보여줄 단계 메시지
+const WAIT_STAGES = [
+  "만세력과 팔자 구조를 대조하는 중…",
+  "오행의 균형과 흐름을 읽는 중…",
+  "타고난 기질의 결을 살피는 중…",
+  "당신에게만 해당하는 문장을 고르는 중…",
+  "리포트를 집필하는 중… (곧 첫 문장이 나와요)",
+];
+
+function WaitIndicator() {
+  const [stage, setStage] = useState(0);
+  useEffect(() => {
+    const t = setInterval(() => setStage((s) => Math.min(s + 1, WAIT_STAGES.length - 1)), 9000);
+    return () => clearInterval(t);
+  }, []);
+  return (
+    <div className="rounded-2xl border border-line bg-card p-6 text-center">
+      <span className="inline-block h-2.5 w-2.5 animate-pulse rounded-full bg-accent" />
+      <p className="mt-3 text-sm font-medium">{WAIT_STAGES[stage]}</p>
+      <p className="mt-1 text-xs text-ink-soft">보통 1~2분 정도 걸려요. 화면을 닫아도 링크로 다시 볼 수 있어요.</p>
+    </div>
+  );
+}
+
 export default function StreamingReport({ token, initialStatus, initialRawText }: Props) {
   const [text, setText] = useState(initialRawText ?? "");
   const [phase, setPhase] = useState<"idle" | "streaming" | "done" | "error">(
@@ -123,10 +147,11 @@ export default function StreamingReport({ token, initialStatus, initialRawText }
       {sections.map((s, i) => (
         <SectionCard key={`${s.label}-${i}`} label={s.label} body={s.body} />
       ))}
-      {phase === "streaming" && (
+      {phase === "streaming" && sections.length === 0 && <WaitIndicator />}
+      {phase === "streaming" && sections.length > 0 && (
         <div className="flex items-center justify-center gap-2 py-4 text-sm text-ink-soft">
           <span className="inline-block h-2 w-2 animate-pulse rounded-full bg-accent" />
-          {sections.length === 0 ? "해석을 짓는 중이에요… 잠시만요" : "이어서 쓰는 중…"}
+          이어서 쓰는 중…
         </div>
       )}
       {phase === "error" && (
