@@ -49,7 +49,10 @@ export default function ProductsPage() {
       <p className="mt-8 text-center text-xs text-ink-soft">
         리포트는 생성 완료 후 언제든 같은 링크로 다시 볼 수 있어요.
         <br />
-        디지털 콘텐츠 특성상 생성 완료 후에는 환불이 어려워요.
+        맞춤형 디지털 콘텐츠 특성상 생성 완료 후에는 청약철회(환불)가 제한돼요.{" "}
+        <Link href="/refund" className="underline">
+          환불정책
+        </Link>
       </p>
     </div>
   );

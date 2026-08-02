@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Noto_Sans_KR } from "next/font/google";
 import Link from "next/link";
+import { SITE } from "@/lib/site";
 import "./globals.css";
 
 const notoKr = Noto_Sans_KR({
@@ -48,9 +49,25 @@ export default function RootLayout({
         </header>
         <main className="flex-1">{children}</main>
         <footer className="border-t border-line mt-16">
-          <div className="mx-auto max-w-xl px-5 py-8 text-xs text-ink-soft space-y-1">
-            <p>오롭미 | All of Me — 재미와 자기 이해를 위한 콘텐츠이며, 의료·법률·투자 판단의 근거가 될 수 없어요.</p>
-            <p>팔자 계산은 만세력 데이터 기반 결정론적 알고리즘으로 수행됩니다.</p>
+          <div className="mx-auto max-w-xl px-5 py-8 text-xs text-ink-soft space-y-3">
+            <nav className="flex gap-4">
+              <Link href="/terms" className="hover:underline">이용약관</Link>
+              <Link href="/privacy" className="font-medium hover:underline">개인정보처리방침</Link>
+              <Link href="/refund" className="hover:underline">환불정책</Link>
+            </nav>
+            <div className="space-y-0.5">
+              <p>
+                상호: {SITE.brandName} · 대표: {SITE.ownerName} · 사업자등록번호: {SITE.bizNumber}
+              </p>
+              <p>주소: {SITE.address}</p>
+              <p>
+                문의: {SITE.email} · {SITE.mailOrderNote}
+              </p>
+            </div>
+            <div className="space-y-0.5 border-t border-line pt-3">
+              <p>오롭미 | All of Me — 재미와 자기 이해를 위한 콘텐츠이며, 의료·법률·투자 판단의 근거가 될 수 없어요.</p>
+              <p>팔자 계산은 만세력 데이터 기반 결정론적 알고리즘으로 수행됩니다.</p>
+            </div>
           </div>
         </footer>
       </body>
