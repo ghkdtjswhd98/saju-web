@@ -46,3 +46,6 @@ next-env.d.ts
 
 .vercel
 .env*
+
+# 카드뉴스 PNG는 스크립트로 재생성 가능 — 저장소 비대화 방지
+marketing/cards/
