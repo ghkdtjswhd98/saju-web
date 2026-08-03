@@ -31,6 +31,21 @@ export default async function Home() {
         <FreeForm />
       </section>
 
+      <section className="mt-5">
+        <Link
+          href="/test/ohaeng"
+          className="flex items-center justify-between rounded-2xl border border-line bg-card px-5 py-4 transition hover:border-accent"
+        >
+          <div>
+            <p className="text-[15px] font-bold">🌱🔥⛰️💎🌊 오행 캐릭터 테스트</p>
+            <p className="mt-0.5 text-xs text-ink-soft">
+              생년월일 몰라도 OK — 12문항 1분이면 내 기운이 나와요
+            </p>
+          </div>
+          <span className="text-lg text-accent-strong">→</span>
+        </Link>
+      </section>
+
       <section className="mt-12">
         <h2 className="text-center text-lg font-bold">더 깊이 알고 싶다면</h2>
         <p className="mt-1 text-center text-sm text-ink-soft">무료 결과가 마음에 들면, 심층 리포트로 이어가세요.</p>

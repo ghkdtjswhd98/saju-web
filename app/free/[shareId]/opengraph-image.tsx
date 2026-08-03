@@ -32,7 +32,7 @@ export default async function Image({
       : `${persons[0].name}님의 사주`
     : "오롭미 무료사주";
 
-  const text = `${title}"${summary}"오롭미 | All of Me목화토금수 무료사주 궁합 보러가기0123456789.♥`;
+  const text = `${title}“${summary}”오롭미 | All of Me목화토금수 무료사주 궁합 보러가기0123456789.♥`;
   const font = await loadKoreanFont(text);
 
   return new ImageResponse(
@@ -53,7 +53,7 @@ export default async function Image({
         <div style={{ fontSize: 28, color: "#8f7bb8", letterSpacing: 6 }}>오롭미 | All of Me</div>
         <div style={{ fontSize: 36, marginTop: 28, color: "#7a7a7a" }}>{title}</div>
         <div style={{ fontSize: 64, fontWeight: 700, marginTop: 16, maxWidth: 1000, textAlign: "center" }}>
-          &ldquo;{summary}&rdquo;
+          {`“${summary}”`}
         </div>
         {saju && (
           <div style={{ display: "flex", gap: 18, marginTop: 48 }}>

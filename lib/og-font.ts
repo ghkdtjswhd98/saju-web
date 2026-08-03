@@ -3,13 +3,10 @@
 export async function loadKoreanFont(text: string): Promise<ArrayBuffer> {
   const unique = Array.from(new Set(text)).join("");
   const url = `https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@700&text=${encodeURIComponent(unique)}`;
-  const css = await (
-    await fetch(url, {
-      // woff2 대신 ttf/otf를 받기 위한 구형 UA (ImageResponse는 woff2 미지원)
-      headers: { "User-Agent": "Mozilla/5.0 (Windows NT 6.1; rv:20.0) Gecko/20100101 Firefox/20.0" },
-    })
-  ).text();
-  const match = css.match(/src:\s*url\((.+?)\)\s*format\(['"](?:opentype|truetype)['"]\)/);
+  // UA 헤더 없이 요청해야 ttf를 반환한다 (브라우저 UA를 주면 woff/woff2로 응답 —
+  // 2026-08 확인: 구형 Firefox UA도 woff를 받게 바뀜. Satori는 ttf/otf/woff만 지원)
+  const css = await (await fetch(url)).text();
+  const match = css.match(/src:\s*url\((.+?)\)\s*format\(['"](?:opentype|truetype|woff)['"]\)/);
   if (!match) throw new Error("폰트 로드 실패");
   return (await fetch(match[1])).arrayBuffer();
 }
