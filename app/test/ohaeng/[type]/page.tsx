@@ -90,12 +90,19 @@ export default async function OhaengResultPage({
         </p>
       </div>
 
-      <div className="mt-5">
+      <div className="mt-5 space-y-2">
         <ShareBar
           path={`/test/ohaeng/${t.key}`}
           title={`${t.emoji} 나는 "${t.name}"이래!`}
           description={`${t.tagline} — 너는 어떤 기운이야? 1분 테스트`}
         />
+        <a
+          href={`/test/ohaeng/${t.key}/story-image`}
+          download={`ohaeng-${t.key}.png`}
+          className="block rounded-xl border border-line bg-card px-4 py-3 text-center text-sm font-bold transition hover:border-accent"
+        >
+          📱 스토리용 이미지 저장 (9:16)
+        </a>
       </div>
 
       {/* 사주 전환 CTA */}

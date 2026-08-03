@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Analytics } from "@vercel/analytics/next";
 import { Noto_Sans_KR } from "next/font/google";
 import Link from "next/link";
+import MetaPixel from "@/components/MetaPixel";
 import { SITE } from "@/lib/site";
 import "./globals.css";
 
@@ -73,6 +74,8 @@ export default function RootLayout({
         </footer>
         {/* 방문→무료→체크아웃→리포트 퍼널은 페이지뷰 경로로 측정 (Vercel 배포 시 활성화) */}
         <Analytics />
+        {/* NEXT_PUBLIC_META_PIXEL_ID 설정 시에만 활성화 — 광고 집행 단계에서 등록 */}
+        <MetaPixel />
       </body>
     </html>
   );

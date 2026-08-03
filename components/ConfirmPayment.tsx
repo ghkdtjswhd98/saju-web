@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
+import { trackPixel } from "@/components/MetaPixel";
 
 interface Props {
   paymentKey: string;
@@ -30,6 +31,7 @@ export default function ConfirmPayment({ paymentKey, orderId, amount }: Props) {
           setError(data.error ?? "결제 승인에 실패했어요.");
           return;
         }
+        trackPixel("Purchase", { value: Number(amount), currency: "KRW" });
         router.replace(`/report/${data.token}`);
       } catch {
         setError("네트워크 오류가 발생했어요. 새로고침 해주세요.");

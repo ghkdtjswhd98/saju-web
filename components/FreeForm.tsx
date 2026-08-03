@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { trackPixel } from "@/components/MetaPixel";
 import PersonFields, { EMPTY_PERSON, personToApiInput, type PersonFormValue } from "./PersonFields";
 
 type Mode = "single" | "couple";
@@ -35,6 +36,7 @@ export default function FreeForm() {
         setError(data.error ?? "잠시 후 다시 시도해주세요.");
         return;
       }
+      trackPixel("Lead"); // 무료 리포트 생성 = 광고 최적화 기준 전환
       router.push(`/free/${data.shareId}`);
     } catch {
       setError("네트워크 오류가 발생했어요. 다시 시도해주세요.");

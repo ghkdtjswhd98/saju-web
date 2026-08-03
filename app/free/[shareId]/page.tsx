@@ -8,6 +8,7 @@ import ShareBar from "@/components/ShareBar";
 import StreamingReport from "@/components/StreamingReport";
 import UpsellTeaser from "@/components/UpsellTeaser";
 import { computeChemistry } from "@/lib/saju/chemistry";
+import { ILGAN_MAP, STEM_TO_KEY } from "@/lib/ilgan-content";
 import { getPricing } from "@/lib/pricing";
 import type { PersonInput, SajuResult } from "@/lib/saju/types";
 
@@ -126,6 +127,21 @@ export default async function FreeResultPage({
             <PillarTable saju={sajus[0]} />
             <StarProfile saju={sajus[0]} />
             <ElementChart saju={sajus[0]} />
+            {(() => {
+              const ilganKey = STEM_TO_KEY[sajus[0].dayMaster.char];
+              const ilgan = ilganKey ? ILGAN_MAP[ilganKey] : null;
+              return ilgan ? (
+                <Link
+                  href={`/ilgan/${ilgan.key}`}
+                  className="flex items-center justify-between rounded-2xl border border-line bg-card px-5 py-3.5 text-sm transition hover:border-accent"
+                >
+                  <span>
+                    {ilgan.emoji} 내 일간 <b>{ilgan.korean}({ilgan.hanja})</b>은 어떤 사람일까?
+                  </span>
+                  <span className="text-accent-strong">→</span>
+                </Link>
+              ) : null;
+            })()}
           </>
         )}
 

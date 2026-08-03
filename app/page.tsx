@@ -1,6 +1,7 @@
 import Link from "next/link";
 import FreeForm from "@/components/FreeForm";
 import LandingFaq from "@/components/LandingFaq";
+import Orobi from "@/components/Orobi";
 import ReviewList from "@/components/ReviewList";
 import { PriceTag } from "@/components/PriceTag";
 import { getPricing } from "@/lib/pricing";
@@ -14,7 +15,10 @@ export default async function Home() {
   return (
     <div className="mx-auto max-w-xl px-5 py-10">
       <section className="text-center">
-        <p className="text-sm font-medium text-accent-strong">회원가입 없는 무료 AI 사주</p>
+        <div className="flex justify-center">
+          <Orobi size={104} />
+        </div>
+        <p className="mt-3 text-sm font-medium text-accent-strong">회원가입 없는 무료 AI 사주</p>
         <h1 className="mt-2 text-[26px] font-bold leading-snug tracking-tight">
           계산은 만세력으로 정확하게,
           <br />

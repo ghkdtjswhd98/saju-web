@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import Orobi from "@/components/Orobi";
 import { QUESTIONS, scoreAnswers, type ElementKey } from "@/lib/ohaeng-test";
 
 export default function OhaengQuiz() {
@@ -24,8 +25,11 @@ export default function OhaengQuiz() {
   if (!started) {
     return (
       <div className="rounded-2xl border border-line bg-card p-6 text-center">
-        <p className="text-5xl">🌱🔥⛰️💎🌊</p>
-        <h2 className="mt-4 text-lg font-bold leading-snug">
+        <div className="flex justify-center">
+          <Orobi size={96} />
+        </div>
+        <p className="mt-2 text-3xl">🌱🔥⛰️💎🌊</p>
+        <h2 className="mt-3 text-lg font-bold leading-snug">
           12개 질문이면 나의 기운이 보여요
         </h2>
         <p className="mt-2 text-sm leading-6 text-ink-soft">
