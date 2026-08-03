@@ -1,5 +1,7 @@
-// 무료 결과 하단 유료 전환 티저 — 잠긴 섹션 미리보기 + 상품 목록
+// 무료 결과 하단 유료 전환 티저 — 잠긴 섹션 미리보기 + 상품 목록 (서버 컴포넌트)
 import Link from "next/link";
+import { PriceCounter, PriceTag } from "@/components/PriceTag";
+import { getPricing } from "@/lib/pricing";
 import { PRODUCTS } from "@/lib/products";
 
 // 유료 리포트에서 실제로 다루는 주제를 "잠긴 상태"로 보여준다 (내용 과장 없이 목차 기반)
@@ -10,7 +12,10 @@ const LOCKED_PREVIEWS = [
   { title: "관계의 패턴", hint: "연애에서 반복되는 끌림과 갈등의 이유" },
 ];
 
-export default function UpsellTeaser({ fromShareId }: { fromShareId: string }) {
+export default async function UpsellTeaser({ fromShareId }: { fromShareId: string }) {
+  const pricing = await getPricing();
+  const allAtCap = Object.values(pricing.prices).every((p) => p.atCap);
+
   return (
     <section className="mt-8">
       {/* 잠긴 섹션 티저 */}
@@ -39,30 +44,48 @@ export default function UpsellTeaser({ fromShareId }: { fromShareId: string }) {
         <p className="mt-1 text-xs text-ink-soft">
           결제 즉시 생성 · 링크로 영구 보관 · 입력 정보 그대로 이어져요
         </p>
+        <div className="mt-3">
+          <PriceCounter
+            paidCount={pricing.paidCount}
+            remaining={pricing.remainingToIncrease}
+            allAtCap={allAtCap}
+          />
+        </div>
         <div className="mt-4 space-y-2">
           {Object.values(PRODUCTS).map((p) => {
+            const price = pricing.prices[p.code];
+            const isBundle = p.code === "bundle";
             const recommended = p.code === "lifetime";
             return (
               <Link
                 key={p.code}
                 href={`/checkout/new?product=${p.code}&from=${fromShareId}`}
                 className={`flex items-center justify-between rounded-xl border px-4 py-3 text-left transition hover:border-accent ${
-                  recommended ? "border-accent bg-accent-soft/40" : "border-line bg-bg"
+                  isBundle
+                    ? "border-accent bg-accent-soft/40"
+                    : recommended
+                      ? "border-accent bg-bg"
+                      : "border-line bg-bg"
                 }`}
               >
                 <span>
                   <span className="block text-[15px] font-bold">
                     {p.name}
-                    {recommended && (
+                    {isBundle && (
                       <span className="ml-1.5 rounded-full bg-accent-strong px-2 py-0.5 align-middle text-[10px] font-bold text-white">
+                        가장 알뜰
+                      </span>
+                    )}
+                    {recommended && (
+                      <span className="ml-1.5 rounded-full bg-ink-soft px-2 py-0.5 align-middle text-[10px] font-bold text-white">
                         가장 많이 선택
                       </span>
                     )}
                   </span>
                   <span className="block text-xs text-ink-soft">{p.tagline}</span>
                 </span>
-                <span className="ml-3 shrink-0 text-sm font-bold text-accent-strong">
-                  {p.price.toLocaleString()}원
+                <span className="ml-3 shrink-0 text-right">
+                  <PriceTag current={price.current} list={price.list} size="sm" />
                 </span>
               </Link>
             );

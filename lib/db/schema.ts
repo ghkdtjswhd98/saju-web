@@ -40,3 +40,15 @@ export const rateLimits = pgTable("rate_limits", {
   count: integer("count").notNull().default(0),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
 });
+
+// 후기 — 리포트 토큰 기반(실보유자만 작성 가능), 리포트당 1건.
+// isTester: 주문 없이 발급된 리포트(체험단 증정)의 후기 — 공정위 지침에 따라 "체험단" 라벨 표기용
+export const reviews = pgTable("reviews", {
+  reportToken: text("report_token").primaryKey().references(() => reports.token),
+  rating: integer("rating").notNull(), // 1~5
+  text: text("text").notNull(),
+  displayName: text("display_name").notNull(), // "지민***" 형태 익명화
+  productCode: text("product_code").notNull(),
+  isTester: integer("is_tester").notNull().default(0), // 0=구매, 1=체험단
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+});

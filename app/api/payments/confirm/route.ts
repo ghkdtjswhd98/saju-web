@@ -2,6 +2,7 @@ import { eq } from "drizzle-orm";
 import { nanoid } from "nanoid";
 import { NextResponse } from "next/server";
 import { getDb, orders, reports } from "@/lib/db";
+import { getProduct } from "@/lib/products";
 import { computeAll } from "@/lib/saju/compute";
 import type { PersonInput } from "@/lib/saju/types";
 
@@ -84,27 +85,33 @@ async function handle(req: Request) {
   }
 
   // 승인 성공 → 리포트 발급 (사주 계산 스냅샷 포함)
+  // 번들이면 포함 상품 각각의 리포트를 발급하고, 대표 토큰은 첫 상품 것으로.
   const persons = (order.inputData as { persons: PersonInput[] }).persons;
   const sajuData =
     persons.length === 2
       ? persons.map((p) => computeAll(p))
       : computeAll(persons[0]);
 
-  const token = nanoid(24);
+  const product = getProduct(order.productCode);
+  const reportCodes = product?.bundleCodes ?? [order.productCode];
+  const tokens = reportCodes.map(() => nanoid(24));
+
   await db.transaction(async (tx) => {
-    await tx.insert(reports).values({
-      token,
-      orderId,
-      productCode: order.productCode,
-      inputData: { persons },
-      sajuData,
-      status: "pending",
-    });
+    for (let i = 0; i < reportCodes.length; i++) {
+      await tx.insert(reports).values({
+        token: tokens[i],
+        orderId,
+        productCode: reportCodes[i],
+        inputData: { persons },
+        sajuData,
+        status: "pending",
+      });
+    }
     await tx
       .update(orders)
-      .set({ status: "paid", paymentKey, reportToken: token, approvedAt: new Date() })
+      .set({ status: "paid", paymentKey, reportToken: tokens[0], approvedAt: new Date() })
       .where(eq(orders.id, orderId));
   });
 
-  return NextResponse.json({ token });
+  return NextResponse.json({ token: tokens[0] });
 }

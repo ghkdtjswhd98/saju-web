@@ -2,7 +2,9 @@ import { notFound } from "next/navigation";
 import { eq } from "drizzle-orm";
 import CheckoutForm from "@/components/CheckoutForm";
 import type { PersonFormValue } from "@/components/PersonFields";
+import { PriceTag } from "@/components/PriceTag";
 import { getDb, reports } from "@/lib/db";
+import { getPricing } from "@/lib/pricing";
 import { getProduct } from "@/lib/products";
 import type { PersonInput } from "@/lib/saju/types";
 
@@ -48,7 +50,8 @@ export default async function CheckoutNewPage({
   const product = getProduct(productCode ?? "");
   if (!product) notFound();
 
-  const prefill = await getPrefill(from);
+  const [prefill, pricing] = await Promise.all([getPrefill(from), getPricing()]);
+  const price = pricing.prices[product.code];
 
   return (
     <div className="mx-auto max-w-xl px-5 py-8">
@@ -56,7 +59,7 @@ export default async function CheckoutNewPage({
         <p className="text-xs tracking-widest text-ink-soft">STEP 1 / 2 — 정보 입력</p>
         <h1 className="mt-1 text-xl font-bold">{product.name}</h1>
         <p className="mt-1 text-sm text-ink-soft">
-          {product.tagline} · <b className="text-accent-strong">{product.price.toLocaleString()}원</b>
+          {product.tagline} · <PriceTag current={price.current} list={price.list} size="sm" />
         </p>
       </header>
       <div className="mt-6">

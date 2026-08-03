@@ -37,6 +37,15 @@ create table if not exists rate_limits (
   count integer not null default 0,
   updated_at timestamptz not null default now()
 );
+create table if not exists reviews (
+  report_token text primary key references reports(token),
+  rating integer not null,
+  text text not null,
+  display_name text not null,
+  product_code text not null,
+  is_tester integer not null default 0,
+  created_at timestamptz not null default now()
+);
 `;
 
 // USE_PGLITE=1 이면 로컬 파일 DB 사용 (Supabase 장애/미설정 시 개발용 폴백).
@@ -73,4 +82,4 @@ export function getDb() {
   return globalForDb.__db;
 }
 
-export { orders, reports, rateLimits } from "./schema";
+export { orders, reports, rateLimits, reviews } from "./schema";

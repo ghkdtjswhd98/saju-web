@@ -1,9 +1,16 @@
 import Link from "next/link";
 import FreeForm from "@/components/FreeForm";
 import LandingFaq from "@/components/LandingFaq";
+import ReviewList from "@/components/ReviewList";
+import { PriceTag } from "@/components/PriceTag";
+import { getPricing } from "@/lib/pricing";
 import { PRODUCTS } from "@/lib/products";
 
-export default function Home() {
+// 단계 가격 반영을 위해 60초 캐시
+export const revalidate = 60;
+
+export default async function Home() {
+  const pricing = await getPricing();
   return (
     <div className="mx-auto max-w-xl px-5 py-10">
       <section className="text-center">
@@ -36,8 +43,12 @@ export default function Home() {
             >
               <p className="text-[15px] font-bold leading-tight">{p.name}</p>
               <p className="mt-1.5 line-clamp-2 text-xs text-ink-soft">{p.tagline}</p>
-              <p className="mt-2 text-sm font-bold text-accent-strong">
-                {p.price.toLocaleString()}원
+              <p className="mt-2">
+                <PriceTag
+                  current={pricing.prices[p.code].current}
+                  list={pricing.prices[p.code].list}
+                  size="sm"
+                />
               </p>
             </Link>
           ))}
@@ -80,6 +91,8 @@ export default function Home() {
           결과 페이지의 &quot;사주팔자&quot; 표를 다른 만세력 서비스와 대조해보셔도 좋아요 — 같은 값이 나와요.
         </p>
       </section>
+
+      <ReviewList limit={4} />
 
       <LandingFaq />
     </div>

@@ -1,6 +1,7 @@
 import { nanoid } from "nanoid";
 import { NextResponse } from "next/server";
 import { getDb, orders } from "@/lib/db";
+import { getPricing } from "@/lib/pricing";
 import { getProduct } from "@/lib/products";
 import { computeAll } from "@/lib/saju/compute";
 import { parsePersonInput } from "@/lib/validate";
@@ -53,14 +54,18 @@ async function handle(req: Request) {
     );
   }
 
+  // 가격은 주문 생성 시점의 단계 가격으로 서버가 확정 (이후 인상돼도 이 주문은 고정)
+  const pricing = await getPricing();
+  const amount = pricing.prices[product.code].current;
+
   const orderId = `ord_${nanoid(18)}`;
   await getDb().insert(orders).values({
     id: orderId,
     productCode: product.code,
-    amount: product.price,
+    amount,
     status: "pending",
     inputData: { persons },
   });
 
-  return NextResponse.json({ orderId });
+  return NextResponse.json({ orderId, amount });
 }

@@ -77,7 +77,8 @@ export async function GET(
   const persons = (report.inputData as { persons: PersonInput[] }).persons;
   const isFree = productCode.startsWith("free");
   const model = isFree ? FREE_MODEL : PAID_MODEL;
-  const maxTokens = isFree ? 1024 : 16000;
+  // 유료는 분량 강화(평생사주 7,000자급 ≈ 9K 토큰) + adaptive thinking 여유분
+  const maxTokens = isFree ? 1024 : 24000;
 
   let userPrompt: string;
   if (productCode === "love" || productCode === "free_love") {

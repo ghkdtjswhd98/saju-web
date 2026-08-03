@@ -1,10 +1,13 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { notFound } from "next/navigation";
 import { eq } from "drizzle-orm";
 import { ElementChart, PillarTable, StarProfile } from "@/components/SajuCards";
+import ReviewForm from "@/components/ReviewForm";
 import StreamingReport from "@/components/StreamingReport";
 import { getDb, reports } from "@/lib/db";
 import { getProduct } from "@/lib/products";
+import { getReviewByToken } from "@/lib/reviews";
 import type { PersonInput, SajuResult } from "@/lib/saju/types";
 
 export const dynamic = "force-dynamic";
@@ -12,8 +15,18 @@ export const dynamic = "force-dynamic";
 async function getReport(token: string) {
   const rows = await getDb().select().from(reports).where(eq(reports.token, token)).limit(1);
   const r = rows[0];
-  if (!r || r.productCode === "free") return null; // 무료는 /free 경로 사용
+  if (!r || r.productCode.startsWith("free")) return null; // 무료는 /free 경로 사용
   return r;
+}
+
+// 같은 주문(번들)의 다른 리포트들
+async function getSiblings(orderId: string | null, currentToken: string) {
+  if (!orderId) return [];
+  const rows = await getDb()
+    .select({ token: reports.token, productCode: reports.productCode })
+    .from(reports)
+    .where(eq(reports.orderId, orderId));
+  return rows.filter((r) => r.token !== currentToken);
 }
 
 export async function generateMetadata({
@@ -39,6 +52,10 @@ export default async function ReportPage({
   const { token } = await params;
   const report = await getReport(token);
   if (!report) notFound();
+  const [siblings, existingReview] = await Promise.all([
+    getSiblings(report.orderId, token),
+    getReviewByToken(token),
+  ]);
 
   const product = getProduct(report.productCode);
   const persons = (report.inputData as { persons: PersonInput[] }).persons;
@@ -58,6 +75,19 @@ export default async function ReportPage({
         <p className="mt-2 rounded-lg bg-accent-soft/60 px-3 py-2 text-xs text-accent-strong">
           이 페이지 주소가 리포트 열람 링크예요. 브라우저에 저장하거나 나에게 카톡으로 보내두세요.
         </p>
+        {siblings.length > 0 && (
+          <nav className="mt-3 flex flex-wrap justify-center gap-2">
+            {siblings.map((s) => (
+              <Link
+                key={s.token}
+                href={`/report/${s.token}`}
+                className="rounded-full border border-line bg-card px-3 py-1.5 text-xs font-medium text-accent-strong transition hover:border-accent"
+              >
+                {getProduct(s.productCode)?.name ?? s.productCode} 보기 →
+              </Link>
+            ))}
+          </nav>
+        )}
       </header>
 
       <div className="mt-6 space-y-4">
@@ -82,6 +112,8 @@ export default async function ReportPage({
           initialStatus={report.status}
           initialRawText={content?.rawText ?? null}
         />
+
+        <ReviewForm token={token} initial={existingReview} />
       </div>
     </div>
   );

@@ -8,7 +8,7 @@ import ShareBar from "@/components/ShareBar";
 import StreamingReport from "@/components/StreamingReport";
 import UpsellTeaser from "@/components/UpsellTeaser";
 import { computeChemistry } from "@/lib/saju/chemistry";
-import { PRODUCTS } from "@/lib/products";
+import { getPricing } from "@/lib/pricing";
 import type { PersonInput, SajuResult } from "@/lib/saju/types";
 
 export const dynamic = "force-dynamic";
@@ -83,6 +83,13 @@ export default async function FreeResultPage({
   const sajus: SajuResult[] = isLove
     ? (report.sajuData as SajuResult[])
     : [report.sajuData as SajuResult];
+  const pricing = await getPricing();
+  const lovePrice = pricing.prices.love.current;
+  const minPrice = Math.min(
+    pricing.prices.lifetime.current,
+    pricing.prices.year.current,
+    pricing.prices.career.current,
+  );
 
   return (
     <div className="mx-auto max-w-xl px-5 py-8">
@@ -158,7 +165,7 @@ export default async function FreeResultPage({
             href={`/checkout/new?product=love&from=${shareId}`}
             className="mt-4 block rounded-xl bg-accent-strong px-4 py-3.5 text-[15px] font-bold text-white transition hover:opacity-90"
           >
-            심층 궁합 리포트 열기 — {PRODUCTS.love.price.toLocaleString()}원
+            심층 궁합 리포트 열기 — {lovePrice.toLocaleString()}원
           </Link>
           <p className="mt-2 text-xs text-ink-soft">6개 섹션 · 결제 즉시 생성 · 링크로 영구 보관</p>
         </section>
@@ -185,7 +192,9 @@ export default async function FreeResultPage({
               {isLove ? "두 사람 정보 그대로 이어서" : `${persons[0].name}님 사주로 이어서`}
             </p>
             <p className="text-sm font-bold">
-              {isLove ? `심층 궁합 ${PRODUCTS.love.price.toLocaleString()}원` : "심층 리포트 9,900원~"}
+              {isLove
+                ? `심층 궁합 ${lovePrice.toLocaleString()}원`
+                : `심층 리포트 ${minPrice.toLocaleString()}원~`}
             </p>
           </div>
           <Link
