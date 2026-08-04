@@ -81,8 +81,8 @@ export async function GET(
   const isFree = productCode.startsWith("free");
   const model = isFree ? FREE_MODEL : PAID_MODEL;
   // 유료는 분량 강화(평생사주 7,000자급 ≈ 9K 토큰) + adaptive thinking 여유분
-  // 무료도 6블록 700자+로 개편돼 1024로는 잘린다
-  const maxTokens = isFree ? 3000 : 24000;
+  // 무료도 6블록 700자+로 개편돼 1024로는 잘린다. deep은 20,000자(≈27K 토큰) + thinking 여유분.
+  const maxTokens = isFree ? 3000 : productCode === "deep" ? 40000 : 24000;
 
   let userPrompt: string;
   if (productCode === "love" || productCode === "free_love") {
@@ -96,7 +96,8 @@ export async function GET(
   } else {
     // lifetime/career는 대운 시간표를 근거 데이터로 제공 ("언제"를 말할 수 있게)
     userPrompt = buildSingleUserPrompt(persons[0], report.sajuData as SajuResult, {
-      withDaewoon: productCode === "lifetime" || productCode === "career",
+      withDaewoon:
+        productCode === "lifetime" || productCode === "career" || productCode === "deep",
     });
   }
 
