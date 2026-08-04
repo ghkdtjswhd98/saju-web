@@ -19,10 +19,13 @@ export default async function ReviewList({ limit = 4 }: { limit?: number }) {
 
   return (
     <section className="mt-12">
-      <h2 className="text-center text-lg font-bold">먼저 받아본 분들의 이야기</h2>
+      {/* 수치를 헤드라인 자리로 승격 — 상위 판매자는 전부 별점·후기수를 제목 옆 최상단에 둔다 */}
+      <h2 className="text-center text-lg font-bold">
+        <span className="text-amber-400">★</span> {avg.toFixed(1)} · 후기{" "}
+        {count.toLocaleString()}건
+      </h2>
       <p className="mt-1 text-center text-sm text-ink-soft">
-        평균 <b className="text-accent-strong">{avg.toFixed(1)}점</b> · 리포트를 실제로 받은{" "}
-        {count.toLocaleString()}명이 남긴 후기예요
+        리포트를 실제로 받은 분들만 남길 수 있어요
       </p>
       <div className="mt-4 space-y-3">
         {recent.map((r) => (

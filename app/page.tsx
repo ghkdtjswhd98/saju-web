@@ -18,7 +18,9 @@ export default async function Home() {
         <div className="flex justify-center">
           <Orobi size={104} />
         </div>
-        <p className="mt-3 text-sm font-medium text-accent-strong">회원가입 없는 무료 AI 사주</p>
+        <p className="mt-3 text-sm font-medium text-accent-strong">
+          회원가입 없이 30초 · 만세력 기반
+        </p>
         <h1 className="mt-2 text-[26px] font-bold leading-snug tracking-tight">
           계산은 만세력으로 정확하게,
           <br />
@@ -51,8 +53,10 @@ export default async function Home() {
       </section>
 
       <section className="mt-12">
-        <h2 className="text-center text-lg font-bold">더 깊이 알고 싶다면</h2>
-        <p className="mt-1 text-center text-sm text-ink-soft">무료 결과가 마음에 들면, 심층 리포트로 이어가세요.</p>
+        <h2 className="text-center text-lg font-bold">무료로는 안 보이는 것</h2>
+        <p className="mt-1 text-center text-sm text-ink-soft">
+          방금 본 건 요약이에요. 재물·직업·연애의 흐름은 따로 있어요.
+        </p>
         <div className="mt-5 grid grid-cols-2 gap-3">
           {Object.values(PRODUCTS).map((p) => (
             <Link
@@ -75,7 +79,9 @@ export default async function Home() {
       </section>
 
       <section className="mt-12 rounded-2xl border border-line bg-card p-5">
-        <h2 className="text-sm font-bold tracking-widest text-accent-strong">오롭미가 다른 이유</h2>
+        <h2 className="text-sm font-bold tracking-widest text-accent-strong">
+          챗봇 사주는 왜 팔자부터 틀릴까요
+        </h2>
         <ul className="mt-3 space-y-2.5 text-sm leading-6">
           <li>
             <b>정확한 팔자.</b> AI에게 계산을 맡기면 사주팔자 자체가 틀리는 경우가 많아요. 오롭미는

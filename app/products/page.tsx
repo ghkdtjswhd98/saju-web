@@ -38,7 +38,7 @@ export default async function ProductsPage() {
               📄 결제 전에 샘플 먼저 보기
             </p>
             <p className="mt-0.5 text-xs text-ink-soft">
-              실제 발급된 리포트 전문을 그대로 공개했어요
+              리포트 전문을 통째로 공개해요 — 결제 전에 다 읽어보고 결정하세요
             </p>
           </div>
           <span className="text-accent-strong">→</span>
@@ -125,14 +125,23 @@ export default async function ProductsPage() {
 
       <ReviewList limit={3} />
 
-      <p className="mt-8 text-center text-xs text-ink-soft">
-        리포트는 생성 완료 후 언제든 같은 링크로 다시 볼 수 있어요.
-        <br />
-        맞춤형 디지털 콘텐츠 특성상 생성 완료 후에는 청약철회(환불)가 제한돼요.{" "}
-        <Link href="/refund" className="underline">
-          환불정책
-        </Link>
-      </p>
+      {/* 환불 조건을 각주가 아니라 신뢰 장치로 — 왜 제한되는지 이유까지 붙인다 */}
+      <div className="mt-8 rounded-2xl border border-line bg-card p-5 text-center text-xs leading-6 text-ink-soft">
+        <p className="text-sm font-bold text-ink">🛡️ 생성 전에는 100% 환불해드려요</p>
+        <p className="mt-1.5">
+          결제 전에{" "}
+          <Link href="/sample" className="text-accent-strong underline">
+            샘플로 전문
+          </Link>
+          을 미리 읽어보실 수 있고, 생성 전이라면 사유 없이 전액 환불해드려요.
+          <br />
+          다만 리포트가 완성된 뒤에는 맞춤형 디지털 콘텐츠라 청약철회가 제한돼요.{" "}
+          <Link href="/refund" className="underline">
+            환불정책
+          </Link>
+        </p>
+        <p className="mt-2">리포트는 생성 후 언제든 같은 링크로 다시 볼 수 있어요.</p>
+      </div>
     </div>
   );
 }
