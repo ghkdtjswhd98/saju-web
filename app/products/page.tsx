@@ -26,7 +26,24 @@ export default async function ProductsPage() {
         </p>
       </header>
 
-      <div className="mt-6">
+      <div className="mt-5">
+        <Link
+          href="/sample"
+          className="flex items-center justify-between rounded-2xl border border-accent bg-accent-soft/40 px-5 py-3.5 transition hover:bg-accent-soft/70"
+        >
+          <div>
+            <p className="text-sm font-bold text-accent-strong">
+              📄 결제 전에 샘플 먼저 보기
+            </p>
+            <p className="mt-0.5 text-xs text-ink-soft">
+              실제 발급된 리포트 전문을 그대로 공개했어요
+            </p>
+          </div>
+          <span className="text-accent-strong">→</span>
+        </Link>
+      </div>
+
+      <div className="mt-4">
         <PriceCounter
           paidCount={pricing.paidCount}
           remaining={pricing.remainingToIncrease}

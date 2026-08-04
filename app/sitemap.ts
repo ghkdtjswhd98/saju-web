@@ -8,6 +8,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
   return [
     { url: `${SITE_URL}/`, changeFrequency: "weekly", priority: 1 },
     { url: `${SITE_URL}/products`, changeFrequency: "weekly", priority: 0.8 },
+    { url: `${SITE_URL}/sample`, changeFrequency: "monthly", priority: 0.75 },
     { url: `${SITE_URL}/test/ohaeng`, changeFrequency: "monthly", priority: 0.7 },
     { url: `${SITE_URL}/ilgan`, changeFrequency: "monthly", priority: 0.7 },
     ...ILGAN_LIST.map((i) => ({
