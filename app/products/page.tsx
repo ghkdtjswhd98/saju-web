@@ -22,7 +22,9 @@ export default async function ProductsPage() {
       <header className="text-center">
         <h1 className="text-2xl font-bold">심층 리포트</h1>
         <p className="mt-2 text-sm text-ink-soft">
-          결제 즉시 나만의 심층 리포트가 완성돼요. 결과는 링크로 영구 보관.
+          기다리는 곳이 많지만, 오롭미는 <b className="text-accent-strong">1~2분</b>이면 완성돼요.
+          <br />
+          링크로 평생 보관하고, PDF로도 받아보실 수 있어요.
         </p>
       </header>
 
@@ -91,7 +93,19 @@ export default async function ProductsPage() {
                   )}
                 </div>
               </div>
-              <ul className="mt-3 flex flex-wrap gap-1.5">
+              {/* 비대면 상품은 분량·납기가 유일한 품질 시그널 — 실측값을 전면에 */}
+              <div className="mt-3 flex flex-wrap gap-1.5 text-xs">
+                <span className="rounded-full bg-accent-soft/60 px-2.5 py-1 font-medium text-accent-strong">
+                  📄 PDF {p.pdfPages}페이지
+                </span>
+                <span className="rounded-full bg-accent-soft/60 px-2.5 py-1 font-medium text-accent-strong">
+                  ✍️ {p.charCount} 분량
+                </span>
+                <span className="rounded-full bg-accent-soft/60 px-2.5 py-1 font-medium text-accent-strong">
+                  ⚡ 1~2분 즉시 발급
+                </span>
+              </div>
+              <ul className="mt-2.5 flex flex-wrap gap-1.5">
                 {p.sections.map((s) => (
                   <li key={s} className="rounded-full bg-bg px-2.5 py-1 text-xs text-ink-soft">
                     {s}

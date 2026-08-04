@@ -12,6 +12,10 @@ export interface Product {
   personCount: 1 | 2;
   sections: string[]; // 리포트 목차 (상품 페이지 노출용)
   bundleCodes?: ProductCode[]; // 번들이면 포함 상품
+  // 비대면 사주는 실물이 없어 "분량"이 유일한 품질 시그널 — 상위 판매자 전원이 페이지 수를
+  // 전면에 내건다(52페이지/150페이지 등). 실측값만 표기한다.
+  pdfPages: number;
+  charCount: string; // 실측 자수 범위
 }
 
 export const PRODUCTS: Record<ProductCode, Product> = {
@@ -24,6 +28,8 @@ export const PRODUCTS: Record<ProductCode, Product> = {
     personCount: 1,
     sections: ["평생사주 종합 리포트", "올해 운세 리포트", "직업·재물운 리포트"],
     bundleCodes: ["lifetime", "year", "career"],
+    pdfPages: 26,
+    charCount: "16,000자",
   },
   lifetime: {
     code: "lifetime",
@@ -33,6 +39,8 @@ export const PRODUCTS: Record<ProductCode, Product> = {
     listPrice: 9900,
     personCount: 1,
     sections: ["인생 총평", "타고난 기질", "재물운", "직업운", "연애운", "건강운", "인생 국면별 흐름", "실천 조언"],
+    pdfPages: 10,
+    charCount: "6,000자",
   },
   love: {
     code: "love",
@@ -42,6 +50,8 @@ export const PRODUCTS: Record<ProductCode, Product> = {
     listPrice: 12900,
     personCount: 2,
     sections: ["케미 총평", "나의 연애 스타일", "상대의 연애 스타일", "끌림 포인트", "갈등 포인트", "관계 조언"],
+    pdfPages: 8,
+    charCount: "4,000자",
   },
   year: {
     code: "year",
@@ -51,6 +61,8 @@ export const PRODUCTS: Record<ProductCode, Product> = {
     listPrice: 9900,
     personCount: 1,
     sections: ["올해 총평", "커리어·재물", "관계·연애", "건강·컨디션", "월별 흐름", "올해의 전략"],
+    pdfPages: 8,
+    charCount: "4,000자",
   },
   career: {
     code: "career",
@@ -60,6 +72,8 @@ export const PRODUCTS: Record<ProductCode, Product> = {
     listPrice: 9900,
     personCount: 1,
     sections: ["총평", "강점과 재능", "맞는 일과 환경", "재물의 그릇", "올해의 커리어 흐름", "실천 조언"],
+    pdfPages: 8,
+    charCount: "3,700자",
   },
 };
 
