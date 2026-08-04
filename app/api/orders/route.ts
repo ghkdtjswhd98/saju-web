@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import { getDb, orders } from "@/lib/db";
 import { getPricing } from "@/lib/pricing";
 import { getProduct } from "@/lib/products";
+import { checkActionLimit, getClientIp } from "@/lib/ratelimit";
 import { computeAll } from "@/lib/saju/compute";
 import { parsePersonInput } from "@/lib/validate";
 import type { PersonInput } from "@/lib/saju/types";
@@ -21,6 +22,14 @@ export async function POST(req: Request) {
 }
 
 async function handle(req: Request) {
+  // 주문 생성 스팸 방지 (DB 행 + computeAll CPU + 판매수 COUNT 쿼리 남용 차단)
+  if (!(await checkActionLimit("order", getClientIp(req), 20))) {
+    return NextResponse.json(
+      { error: "주문 시도가 너무 많아요. 내일 다시 시도해주세요." },
+      { status: 429 },
+    );
+  }
+
   let body: { productCode?: string; persons?: unknown[] };
   try {
     body = await req.json();

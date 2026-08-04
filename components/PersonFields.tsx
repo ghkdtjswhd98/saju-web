@@ -139,7 +139,9 @@ export default function PersonFields({
             </option>
           ))}
         </select>
-        <p className="mt-1 text-xs text-ink-soft">시간을 모르면 &quot;모름&quot;으로 두세요. 3주 기준으로 해석해드려요.</p>
+        <p className="mt-1 text-xs text-ink-soft">
+          시간을 모르면 &quot;모름&quot;으로 두세요. 년·월·일 여섯 글자만으로도 충분히 해석돼요.
+        </p>
       </div>
     </div>
   );

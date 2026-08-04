@@ -1,7 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { eq } from "drizzle-orm";
 import { getDb, reports, reviews } from "@/lib/db";
+import { checkActionLimit, getClientIp } from "@/lib/ratelimit";
 import type { PersonInput } from "@/lib/saju/types";
+
+// 후기는 랜딩·상품 페이지에 공개 노출되므로 링크·연락처 삽입(광고/피싱)을 차단
+const REVIEW_BANNED =
+  /(https?:\/\/|www\.|\.com|\.co\.kr|\.kr\/|\.net|010[-.\s]?\d{3,4}[-.\s]?\d{4}|오픈\s*채팅|카톡\s*아이디|카카오\s*아이디|텔레그램)/i;
 
 // 이름 익명화 — "지민" → "지**", "김서연" → "김**"
 function anonymize(name: string) {
@@ -29,6 +34,18 @@ export async function POST(req: NextRequest) {
     return NextResponse.json(
       { error: "후기는 5자 이상 300자 이하로 적어주세요." },
       { status: 400 },
+    );
+  }
+  if (REVIEW_BANNED.test(text)) {
+    return NextResponse.json(
+      { error: "후기에는 링크나 연락처를 담을 수 없어요." },
+      { status: 400 },
+    );
+  }
+  if (!(await checkActionLimit("review", getClientIp(req), 10))) {
+    return NextResponse.json(
+      { error: "오늘은 더 이상 후기를 수정할 수 없어요." },
+      { status: 429 },
     );
   }
 

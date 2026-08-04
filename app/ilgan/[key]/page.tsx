@@ -8,6 +8,13 @@ export function generateStaticParams() {
   return ILGAN_LIST.map(({ key }) => ({ key }));
 }
 
+// 마지막 글자 받침 유무 — 조사(이라도/라도) 선택용
+function hasBatchim(word: string): boolean {
+  const code = word.charCodeAt(word.length - 1);
+  if (code < 0xac00 || code > 0xd7a3) return false;
+  return (code - 0xac00) % 28 !== 0;
+}
+
 export async function generateMetadata({
   params,
 }: {
@@ -88,7 +95,7 @@ export default async function IlganPage({
         </div>
         <p className="mt-2 text-sm text-ink-soft">여기까지는 일간 하나로 본 이야기예요</p>
         <h2 className="mt-1 text-lg font-bold leading-snug">
-          같은 {c.korean}라도 나머지 일곱 글자에
+          같은 {c.korean}{hasBatchim(c.korean) ? "이" : ""}라도 나머지 일곱 글자에
           <br />
           따라 완전히 다른 사람이 돼요
         </h2>

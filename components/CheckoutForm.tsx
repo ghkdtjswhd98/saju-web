@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import type { Product } from "@/lib/products";
 import PersonFields, { EMPTY_PERSON, personToApiInput, type PersonFormValue } from "./PersonFields";
 
@@ -20,6 +20,17 @@ export default function CheckoutForm({ product, prefill }: Props) {
   );
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // 무료 결과를 본 적 있는데 from 파라미터 없이 들어온 경우(상품 페이지 경유) —
+  // 같은 정보 재입력이 최대 이탈 지점이라, 저장해둔 shareId로 프리필 경로를 제안
+  const [lastFreeId, setLastFreeId] = useState<string | null>(null);
+  useEffect(() => {
+    if (prefill?.length) return;
+    try {
+      setLastFreeId(localStorage.getItem("orobmi_last_free"));
+    } catch {
+      /* private 모드 등 */
+    }
+  }, [prefill]);
 
   async function submit() {
     for (const p of persons) {
@@ -56,6 +67,14 @@ export default function CheckoutForm({ product, prefill }: Props) {
 
   return (
     <div className="space-y-5">
+      {lastFreeId && (
+        <a
+          href={`/checkout/new?product=${product.code}&from=${lastFreeId}`}
+          className="block rounded-xl border border-accent bg-accent-soft/40 px-4 py-3 text-center text-sm font-medium text-accent-strong transition hover:bg-accent-soft/70"
+        >
+          ⚡ 무료 사주에서 입력한 내 정보 그대로 불러오기
+        </a>
+      )}
       {persons.map((p, i) => (
         <div key={i} className="rounded-2xl border border-line bg-card p-5">
           {labels[i] && (
@@ -77,6 +96,9 @@ export default function CheckoutForm({ product, prefill }: Props) {
       >
         {loading ? "주문 준비 중..." : "결제 단계로"}
       </button>
+      <p className="text-center text-xs text-ink-soft">
+        🔒 결제는 토스페이먼츠 안전결제로 진행돼요. 카드 정보는 저희에게 저장되지 않아요.
+      </p>
     </div>
   );
 }

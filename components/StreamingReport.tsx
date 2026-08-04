@@ -42,6 +42,17 @@ function SectionCard({ label, body }: Section) {
       </div>
     );
   }
+  if (key === "의식할그늘") {
+    // 무료에서도 그늘을 짚는다는 브랜드 약속의 시각적 앵커
+    return (
+      <div className="rounded-2xl border border-line bg-card p-5">
+        <h3 className="mb-2 text-sm font-bold tracking-widest text-accent-strong">
+          🌘 의식하면 좋은 것
+        </h3>
+        <p className="whitespace-pre-wrap text-[15px] leading-7">{body}</p>
+      </div>
+    );
+  }
   if (key === "해시태그") {
     return (
       <div className="flex flex-wrap justify-center gap-2">
@@ -88,12 +99,16 @@ function WaitIndicator() {
 export default function StreamingReport({ token, initialStatus, initialRawText }: Props) {
   const [text, setText] = useState(initialRawText ?? "");
   const [phase, setPhase] = useState<"idle" | "streaming" | "done" | "error">(
-    initialStatus === "done" ? "done" : "idle",
+    initialStatus === "done" ? "done" : initialStatus === "failed" ? "error" : "idle",
   );
+  // failed 상태는 자동 재생성하지 않는다 — "다시 시도" 클릭 시에만 retryKey가 올라가며 접속
+  // (지속 장애 시 새로고침마다 유료 모델이 재호출되는 비용 누수 방지)
+  const [retryKey, setRetryKey] = useState(0);
   const esRef = useRef<EventSource | null>(null);
 
   useEffect(() => {
     if (initialStatus === "done") return;
+    if (initialStatus === "failed" && retryKey === 0) return;
     let retryTimer: ReturnType<typeof setTimeout> | null = null;
     let closed = false;
 
@@ -138,7 +153,7 @@ export default function StreamingReport({ token, initialStatus, initialRawText }
       if (retryTimer) clearTimeout(retryTimer);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [token, initialStatus]);
+  }, [token, initialStatus, retryKey]);
 
   const sections = splitSections(text);
 
@@ -156,10 +171,10 @@ export default function StreamingReport({ token, initialStatus, initialRawText }
       )}
       {phase === "error" && (
         <div className="rounded-2xl border border-danger/40 bg-card p-5 text-center text-sm">
-          <p>해석 생성 중 문제가 생겼어요.</p>
+          <p>해석 생성 중 문제가 생겼어요. 잠시 후 아래 버튼으로 다시 시도해주세요.</p>
           <button
             type="button"
-            onClick={() => location.reload()}
+            onClick={() => setRetryKey((k) => k + 1)}
             className="mt-3 rounded-lg border border-line px-4 py-2 text-sm hover:bg-bg"
           >
             다시 시도

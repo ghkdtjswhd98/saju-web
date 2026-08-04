@@ -7,10 +7,10 @@ import {
   MUNCHANG_MAP, YANGIN_MAP, STEMS_ORDER, BRANCHES_ORDER, BRANCH_INDEX,
   TWELVE_STAGES, STAGE_START, NAEUM, TRIPLE_GROUP, SINSAL12_TABLE,
   SOON_GONGMANG, JIJI_CHUNG, JIJI_HAP, JIJI_SAMHAP, JIJI_BANHAP,
-  JIJI_HYUNG_THREE, JIJI_HYUNG_TWO, JIJI_SELF_HYUNG,
+  JIJI_HYUNG_THREE, JIJI_HYUNG_TWO, JIJI_SELF_HYUNG, STEM_HANJA, BRANCH_HANJA,
 } from "./constants";
 import type {
-  ElementDist, ExpertPillarRow, JijiRelations, Pillars, Ratings, RatingKey,
+  Daewoon, ElementDist, ExpertPillarRow, JijiRelations, Pillars, Ratings, RatingKey,
   SajuInput, SajuResult, SipsinEntry, SipsinWeights,
 } from "./types";
 
@@ -222,7 +222,60 @@ export function getMonthlyPillars(year: number): { month: number; hangul: string
   });
 }
 
-export function computeAll(input: SajuInput): SajuResult {
+// 대운(10년 단위 인생 국면) — 결정론적 계산.
+// 방향: 년간이 양간이면 남자 순행·여자 역행, 음간이면 반대.
+// 대운수: 생일부터 (순행) 다음 절입일 / (역행) 직전 절입일까지의 일수 ÷ 3, 반올림.
+// 절입일은 "같은 엔진의 월주가 바뀌는 날"을 일 단위로 스캔해 찾는다 — 절기 시각 데이터가
+// 전 연도를 커버하지 않아도 1900~2050 전 범위에서 월주 계산과 100% 자기일관.
+// (일 단위 정밀도 → 대운수 오차 최대 ±4개월. 나이 표기는 근사임을 전제로 사용)
+export function computeDaewoon(
+  solar: { year: number; month: number; day: number },
+  yearStem: string,
+  monthPillarHangul: string,
+  gender: "남" | "여",
+): Daewoon {
+  const forward = (STEM_YINYANG[yearStem] === "양") === (gender === "남");
+
+  const pillarAt = (d: Date) =>
+    calculateSaju(d.getUTCFullYear(), d.getUTCMonth() + 1, d.getUTCDate(), 12, 0).monthPillar;
+
+  const birthDate = new Date(Date.UTC(solar.year, solar.month - 1, solar.day));
+  const birthMonthPillar = pillarAt(birthDate);
+  let days = 15; // 방어 기본값 (스캔 실패 시 중간값)
+  const cursor = new Date(birthDate);
+  for (let i = 1; i <= 40; i++) {
+    cursor.setUTCDate(cursor.getUTCDate() + (forward ? 1 : -1));
+    try {
+      if (pillarAt(cursor) !== birthMonthPillar) {
+        days = i;
+        break;
+      }
+    } catch {
+      // 만세력 지원 범위(1900~2050) 경계 밖 — 경계까지의 일수로 근사
+      days = i;
+      break;
+    }
+  }
+  const startAge = Math.min(10, Math.max(1, Math.round(days / 3)));
+
+  const si = STEMS_ORDER.indexOf(monthPillarHangul[0]);
+  const bi = BRANCHES_ORDER.indexOf(monthPillarHangul[1]);
+  const pillars = Array.from({ length: 8 }, (_, k) => {
+    const step = (k + 1) * (forward ? 1 : -1);
+    const stem = STEMS_ORDER[(((si + step) % 10) + 10) % 10];
+    const branch = BRANCHES_ORDER[(((bi + step) % 12) + 12) % 12];
+    return {
+      startAge: startAge + k * 10,
+      endAge: startAge + k * 10 + 9,
+      hangul: `${stem}${branch}`,
+      hanja: `${STEM_HANJA[stem]}${BRANCH_HANJA[branch]}`,
+    };
+  });
+
+  return { direction: forward ? "순행" : "역행", startAge, pillars };
+}
+
+export function computeAll(input: SajuInput & { gender?: "남" | "여" }): SajuResult {
   // 1. 음력 → 양력 변환
   let { year, month, day } = input;
   const { hourValue, isLunar, isLeap } = input;
@@ -334,9 +387,14 @@ export function computeAll(input: SajuInput): SajuResult {
     천을위치: (CHEONEUL_MAP[dayStem] || []).filter((b) => new Set(branchesAll).has(b)),
   };
 
+  // 성별이 주어진 경우에만 대운 계산 (year/month/day는 음력 입력 시 위에서 양력으로 변환됨)
+  const daewoon = input.gender
+    ? computeDaewoon({ year, month, day }, pillars.year.stem, pillars.month.hangul, input.gender)
+    : undefined;
+
   return {
     pillars, dayMaster, elementDist, sipsin, sipsinWeights,
     sinsal, ratings, hasHour, currentYear, currentYearPillar,
-    expert, expertExtra,
+    expert, expertExtra, daewoon,
   };
 }

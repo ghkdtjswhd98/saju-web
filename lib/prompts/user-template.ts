@@ -49,11 +49,30 @@ ${r.sinsal.length ? r.sinsal.join(", ") : "(해당 없음)"}
 
 const NO_RECALC = `위 값은 결정론적 계산으로 확정된 값입니다. 절대 재계산·반박·재서술하지 마십시오.`;
 
+// 대운 시간표 블록 — lifetime/career에서 "언제"를 말할 수 있게 하는 근거 데이터
+function daewoonBlock(r: SajuResult): string {
+  if (!r.daewoon) return "";
+  const rows = r.daewoon.pillars
+    .map((pl) => `${pl.startAge}세~${pl.endAge}세: ${pl.hangul}(${pl.hanja}) 대운`)
+    .join("\n");
+  return `
+
+<대운_시간표>
+(10년 단위 인생 국면. 나이는 만세력 기준 근사 — "무렵"의 언어로 쓸 것)
+방향: ${r.daewoon.direction} / 첫 대운 시작: ${r.daewoon.startAge}세 무렵
+${rows}
+</대운_시간표>`;
+}
+
 // 1인 상품 (free / lifetime / career)
-export function buildSingleUserPrompt(p: PersonInput, r: SajuResult): string {
+export function buildSingleUserPrompt(
+  p: PersonInput,
+  r: SajuResult,
+  opts?: { withDaewoon?: boolean },
+): string {
   return `${personBlock(p, r)}
 
-<세운>${r.currentYear}년 (${r.currentYearPillar.hangul} ${r.currentYearPillar.hanja})</세운>
+<세운>${r.currentYear}년 (${r.currentYearPillar.hangul} ${r.currentYearPillar.hanja})</세운>${opts?.withDaewoon ? daewoonBlock(r) : ""}
 
 ${NO_RECALC}`;
 }

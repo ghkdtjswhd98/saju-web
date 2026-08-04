@@ -10,10 +10,12 @@ function Stars({ n }: { n: number }) {
   );
 }
 
-// 실후기 노출 섹션 — 후기 0건이면 아무것도 렌더하지 않음 (가짜 후기 절대 금지)
+// 실후기 노출 섹션 — 가짜 후기 절대 금지.
+// 5건 미만이면 미노출: "후기 1명 · 평균 5.0"은 사회적 증거가 아니라 무실적 인증(역프루프)이다.
+// 수집(리포트 페이지 폼)은 계속되고, 5건이 쌓이면 자동으로 켜진다.
 export default async function ReviewList({ limit = 4 }: { limit?: number }) {
   const { count, avg, recent } = await getReviewSummary(limit);
-  if (count === 0) return null;
+  if (count < 5) return null;
 
   return (
     <section className="mt-12">

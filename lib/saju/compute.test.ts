@@ -1,8 +1,9 @@
 import { describe, expect, it } from "vitest";
 import {
-  computeAll, computeOhaengDistribution, computeRatings, computeSipsinWeights,
+  computeAll, computeDaewoon, computeOhaengDistribution, computeRatings, computeSipsinWeights,
   deriveSipsin, detectJijiRelations, get12Unseong, getGongmang, getNaeum,
 } from "./compute";
+import { BRANCHES_ORDER, STEMS_ORDER } from "./constants";
 import type { Pillars } from "./types";
 
 // 십신 유도 — 명리학 정의로 수기 검증한 케이스
@@ -122,5 +123,72 @@ describe("computeAll (만세력 통합)", () => {
       year: 1990, month: 2, day: 19, hourValue: "unknown", isLunar: true, isLeap: false,
     });
     expect(lunar.pillars.day.hangul).toBe(solar.pillars.day.hangul);
+  });
+});
+
+describe("computeDaewoon (대운)", () => {
+  const next = (hangul: string) => {
+    const s = STEMS_ORDER.indexOf(hangul[0]);
+    const b = BRANCHES_ORDER.indexOf(hangul[1]);
+    return `${STEMS_ORDER[(s + 1) % 10]}${BRANCHES_ORDER[(b + 1) % 12]}`;
+  };
+  const prev = (hangul: string) => {
+    const s = STEMS_ORDER.indexOf(hangul[0]);
+    const b = BRANCHES_ORDER.indexOf(hangul[1]);
+    return `${STEMS_ORDER[(s + 9) % 10]}${BRANCHES_ORDER[(b + 11) % 12]}`;
+  };
+
+  it("방향 규칙 — 양간년(2000 경진): 남=순행, 여=역행", () => {
+    const base = { year: 2000, month: 6, day: 15, hourValue: "unknown", isLunar: false, isLeap: false } as const;
+    const man = computeAll({ ...base, gender: "남" });
+    const woman = computeAll({ ...base, gender: "여" });
+    expect(man.pillars.year.stem).toBe("경"); // 양간 전제 확인
+    expect(man.daewoon?.direction).toBe("순행");
+    expect(woman.daewoon?.direction).toBe("역행");
+    // 첫 대운 간지는 월주의 다음/이전 간지
+    expect(man.daewoon?.pillars[0].hangul).toBe(next(man.pillars.month.hangul));
+    expect(woman.daewoon?.pillars[0].hangul).toBe(prev(woman.pillars.month.hangul));
+  });
+
+  it("방향 규칙 — 음간년(2001 신사): 남=역행, 여=순행", () => {
+    const base = { year: 2001, month: 6, day: 15, hourValue: "unknown", isLunar: false, isLeap: false } as const;
+    const man = computeAll({ ...base, gender: "남" });
+    expect(man.pillars.year.stem).toBe("신"); // 음간 전제 확인
+    expect(man.daewoon?.direction).toBe("역행");
+    expect(computeAll({ ...base, gender: "여" }).daewoon?.direction).toBe("순행");
+  });
+
+  it("대운수 — 절입 직후 출생이면 역행 대운수는 1, 순행은 큼", () => {
+    // 2000-02-05 = 입춘(2/4) 바로 다음날. 여자(역행)는 직전 절입까지 1일 → 대운수 1.
+    // 남자(순행)는 다음 절입(경칩, 약 한 달 뒤)까지 ~29일 → 대운수 9~10.
+    const base = { year: 2000, month: 2, day: 5, hourValue: "unknown", isLunar: false, isLeap: false } as const;
+    const woman = computeAll({ ...base, gender: "여" });
+    const man = computeAll({ ...base, gender: "남" });
+    expect(woman.daewoon?.startAge).toBe(1);
+    expect(man.daewoon?.startAge).toBeGreaterThanOrEqual(9);
+    expect(man.daewoon?.startAge).toBeLessThanOrEqual(10);
+  });
+
+  it("대운 구간 — 8개, 10년 간격, 60갑자 연속", () => {
+    const r = computeAll({
+      year: 1994, month: 7, day: 22, hourValue: "unknown", isLunar: false, isLeap: false, gender: "여",
+    });
+    const dw = r.daewoon!;
+    expect(dw.pillars).toHaveLength(8);
+    for (let i = 0; i < 8; i++) {
+      expect(dw.pillars[i].startAge).toBe(dw.startAge + i * 10);
+      expect(dw.pillars[i].endAge).toBe(dw.startAge + i * 10 + 9);
+      if (i > 0) {
+        const expected = dw.direction === "순행" ? next(dw.pillars[i - 1].hangul) : prev(dw.pillars[i - 1].hangul);
+        expect(dw.pillars[i].hangul).toBe(expected);
+      }
+    }
+  });
+
+  it("성별 없으면 daewoon 미계산", () => {
+    const r = computeAll({
+      year: 1994, month: 7, day: 22, hourValue: "unknown", isLunar: false, isLeap: false,
+    });
+    expect(r.daewoon).toBeUndefined();
   });
 });

@@ -86,6 +86,20 @@ export interface SajuInput {
   isLeap: boolean;
 }
 
+// 대운 — 10년 단위 인생 국면 시간표 (성별이 있어야 계산 가능)
+export interface DaewoonPillar {
+  startAge: number; // 한국식 나이 근사 (대운수 기준)
+  endAge: number;
+  hangul: string; // 예: "기묘"
+  hanja: string; // 예: "己卯"
+}
+
+export interface Daewoon {
+  direction: "순행" | "역행";
+  startAge: number; // 첫 대운 시작 나이 (대운수)
+  pillars: DaewoonPillar[]; // 8개 (80년치)
+}
+
 export interface SajuResult {
   pillars: Pillars;
   dayMaster: DayMaster;
@@ -99,6 +113,7 @@ export interface SajuResult {
   currentYearPillar: { hangul: string; hanja: string };
   expert: ExpertPillarRow[];
   expertExtra: ExpertExtra;
+  daewoon?: Daewoon; // 성별이 주어진 경우에만
 }
 
 export interface PersonInput extends SajuInput {

@@ -45,6 +45,8 @@ export async function GET(
 
   // 생성 락: pending → generating 전환에 성공한 요청만 생성 수행.
   // 서버 강제 종료 등으로 generating에 고착된 경우(10분 경과) 재락을 허용해 자동 복구.
+  // failed도 재락 허용 — 단, 클라이언트는 failed 상태에서 자동 접속하지 않고
+  // 사용자가 "다시 시도"를 눌렀을 때만 접속한다 (지속 장애 시 새로고침마다 재과금 방지).
   const staleBefore = new Date(Date.now() - 10 * 60 * 1000);
   const locked = await db
     .update(reports)
@@ -54,6 +56,7 @@ export async function GET(
         eq(reports.token, token),
         or(
           eq(reports.status, "pending"),
+          eq(reports.status, "failed"),
           and(eq(reports.status, "generating"), lt(reports.generatingAt, staleBefore)),
         ),
       ),
@@ -78,7 +81,8 @@ export async function GET(
   const isFree = productCode.startsWith("free");
   const model = isFree ? FREE_MODEL : PAID_MODEL;
   // 유료는 분량 강화(평생사주 7,000자급 ≈ 9K 토큰) + adaptive thinking 여유분
-  const maxTokens = isFree ? 1024 : 24000;
+  // 무료도 6블록 700자+로 개편돼 1024로는 잘린다
+  const maxTokens = isFree ? 3000 : 24000;
 
   let userPrompt: string;
   if (productCode === "love" || productCode === "free_love") {
@@ -90,11 +94,25 @@ export async function GET(
   } else if (productCode === "year") {
     userPrompt = buildYearUserPrompt(persons[0], report.sajuData as SajuResult);
   } else {
-    userPrompt = buildSingleUserPrompt(persons[0], report.sajuData as SajuResult);
+    // lifetime/career는 대운 시간표를 근거 데이터로 제공 ("언제"를 말할 수 있게)
+    userPrompt = buildSingleUserPrompt(persons[0], report.sajuData as SajuResult, {
+      withDaewoon: productCode === "lifetime" || productCode === "career",
+    });
   }
 
   const stream = new ReadableStream({
     async start(c) {
+      // 클라이언트가 중간에 이탈해도 생성은 완주해 저장한다 — 이탈 시 enqueue가 던지는데,
+      // 그때 생성을 중단하면 결제된 Opus 호출이 통째로 버려지고 재접속 시 전액 재과금된다.
+      let clientGone = false;
+      const send = (data: object) => {
+        if (clientGone) return;
+        try {
+          c.enqueue(encoder.encode(sse(data)));
+        } catch {
+          clientGone = true;
+        }
+      };
       try {
         const claudeStream = streamReport({
           model,
@@ -105,7 +123,7 @@ export async function GET(
         });
 
         claudeStream.on("text", (delta) => {
-          c.enqueue(encoder.encode(sse({ t: "delta", text: delta })));
+          send({ t: "delta", text: delta });
         });
 
         const final = await claudeStream.finalMessage();
@@ -131,18 +149,24 @@ export async function GET(
           })
           .where(eq(reports.token, token));
 
-        c.enqueue(encoder.encode(sse({ t: "done" })));
+        send({ t: "done" });
       } catch (err) {
         console.error("[report-stream] 생성 실패:", err);
-        // 재시도 가능하도록 pending으로 복구
+        // failed로 종결 — 사용자가 "다시 시도"를 눌러야만 재생성 (자동 무한 재호출 금지)
         await db
           .update(reports)
-          .set({ status: "pending" })
+          .set({ status: "failed" })
           .where(eq(reports.token, token))
           .catch(() => {});
-        c.enqueue(encoder.encode(sse({ t: "error" })));
+        send({ t: "error" });
       } finally {
-        c.close();
+        if (!clientGone) {
+          try {
+            c.close();
+          } catch {
+            /* 이미 닫힘 */
+          }
+        }
       }
     },
   });

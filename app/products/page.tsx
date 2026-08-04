@@ -22,7 +22,7 @@ export default async function ProductsPage() {
       <header className="text-center">
         <h1 className="text-2xl font-bold">심층 리포트</h1>
         <p className="mt-2 text-sm text-ink-soft">
-          결제 즉시 AI가 나만의 리포트를 지어드려요. 결과는 링크로 영구 보관.
+          결제 즉시 나만의 심층 리포트가 완성돼요. 결과는 링크로 영구 보관.
         </p>
       </header>
 

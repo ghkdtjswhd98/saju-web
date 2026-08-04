@@ -28,11 +28,23 @@ export type RateLimitResult = "ok" | "ip_limited" | "global_limited";
 
 export async function checkRateLimit(ip: string): Promise<RateLimitResult> {
   const day = kstDay();
-  const globalCount = await bumpCounter(`global:${day}`);
-  if (globalCount > DAILY_LIMIT_GLOBAL) return "global_limited";
+  // IP 체크가 반드시 먼저 — 전역 카운터를 먼저 올리면 단일 IP의 반복 요청(4회째부터
+  // 거절이어도 전역은 계속 증가)만으로 그날 무료 퍼널 전체를 잠글 수 있다(그리핑 DoS).
   const ipCount = await bumpCounter(`${ip}:${day}`);
   if (ipCount > DAILY_LIMIT_PER_IP) return "ip_limited";
+  const globalCount = await bumpCounter(`global:${day}`);
+  if (globalCount > DAILY_LIMIT_GLOBAL) return "global_limited";
   return "ok";
+}
+
+// 범용 IP 액션 리밋 — 주문 생성·후기 작성 등 무제한이면 안 되는 쓰기 경로에 사용
+export async function checkActionLimit(
+  action: string,
+  ip: string,
+  dailyLimit: number,
+): Promise<boolean> {
+  const count = await bumpCounter(`${action}:${ip}:${kstDay()}`);
+  return count <= dailyLimit;
 }
 
 export function getClientIp(req: Request): string {

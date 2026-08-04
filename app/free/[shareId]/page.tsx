@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { eq } from "drizzle-orm";
 import { getDb, reports } from "@/lib/db";
 import { ElementChart, PillarTable, StarProfile } from "@/components/SajuCards";
+import RememberFreeResult from "@/components/RememberFreeResult";
 import ShareBar from "@/components/ShareBar";
 import StreamingReport from "@/components/StreamingReport";
 import UpsellTeaser from "@/components/UpsellTeaser";
@@ -94,6 +95,7 @@ export default async function FreeResultPage({
 
   return (
     <div className="mx-auto max-w-xl px-5 py-8">
+      <RememberFreeResult shareId={shareId} />
       <header className="text-center">
         <p className="text-xs tracking-widest text-ink-soft">
           {isLove ? "무료 궁합 케미" : "무료 사주 결과"}

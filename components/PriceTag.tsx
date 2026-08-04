@@ -23,6 +23,8 @@ export function PriceTag({
 }
 
 // 실판매 기반 인상 카운터 배너 (진짜 데이터만 표시)
+// 판매량이 적을 때는 "정직한 카운터"가 오히려 무실적 인증이 된다 —
+// 신뢰 자산이 쌓인 뒤(30건+)에만 노출. 가격 로직 자체는 항상 동작.
 export function PriceCounter({
   paidCount,
   remaining,
@@ -32,7 +34,7 @@ export function PriceCounter({
   remaining: number;
   allAtCap: boolean;
 }) {
-  if (allAtCap) return null;
+  if (allAtCap || paidCount < 30) return null;
   return (
     <div className="rounded-xl border border-accent bg-accent-soft/50 px-4 py-3 text-center text-sm">
       <b className="text-accent-strong">오픈 특가 진행 중</b> — 지금까지{" "}

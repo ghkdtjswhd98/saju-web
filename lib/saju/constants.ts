@@ -95,6 +95,13 @@ export const YANGIN_MAP: Record<string, string> = {
 
 export const STEMS_ORDER = "갑을병정무기경신임계";
 export const BRANCHES_ORDER = "자축인묘진사오미신유술해";
+export const STEM_HANJA: Record<string, string> = {
+  갑: "甲", 을: "乙", 병: "丙", 정: "丁", 무: "戊", 기: "己", 경: "庚", 신: "辛", 임: "壬", 계: "癸",
+};
+export const BRANCH_HANJA: Record<string, string> = {
+  자: "子", 축: "丑", 인: "寅", 묘: "卯", 진: "辰", 사: "巳",
+  오: "午", 미: "未", 신: "申", 유: "酉", 술: "戌", 해: "亥",
+};
 export const BRANCH_INDEX: Record<string, number> = {
   자: 0, 축: 1, 인: 2, 묘: 3, 진: 4, 사: 5, 오: 6, 미: 7, 신: 8, 유: 9, 술: 10, 해: 11,
 };
