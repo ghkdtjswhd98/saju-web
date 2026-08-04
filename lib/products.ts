@@ -33,8 +33,8 @@ export const PRODUCTS: Record<ProductCode, Product> = {
       "인생 총평", "타고난 기질", "숨은 재능", "재물운", "직업운", "연애·결혼운",
       "건강운", "인간관계", "대운 10년별 흐름", "올해와 내년", "인생의 전환점", "실천 조언",
     ],
-    pdfPages: 32,
-    charCount: "20,000자",
+    pdfPages: 18,
+    charCount: "14,000자",
   },
   bundle: {
     code: "bundle",
