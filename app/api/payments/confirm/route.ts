@@ -21,6 +21,19 @@ export async function POST(req: Request) {
 }
 
 async function handle(req: Request) {
+  // 토스 공식 문서의 공용 데모 키는 secret이 전 세계에 공개돼 있어, 누구든 데모 위젯으로
+  // 유효한 paymentKey를 만들어 승인을 통과시킬 수 있다(= 유료 리포트 무한 무료 발급 + Opus 비용 실지출).
+  // 실키(전자결제 심사 완료)로 교체되기 전까지 프로덕션 승인을 차단한다. 키 교체만으로 자동 해제.
+  if (
+    process.env.NODE_ENV === "production" &&
+    (process.env.TOSS_SECRET_KEY ?? "").startsWith("test_gsk_docs")
+  ) {
+    return NextResponse.json(
+      { error: "결제 시스템 오픈 준비 중이에요. 조금만 기다려주세요." },
+      { status: 403 },
+    );
+  }
+
   let body: { paymentKey?: string; orderId?: string; amount?: number | string };
   try {
     body = await req.json();
@@ -54,16 +67,6 @@ async function handle(req: Request) {
   const secretKey = process.env.TOSS_SECRET_KEY;
   if (!secretKey) {
     return NextResponse.json({ error: "결제 설정이 완료되지 않았어요." }, { status: 500 });
-  }
-
-  // 토스 공식 문서의 공용 데모 키는 secret이 전 세계에 공개돼 있어, 누구든 데모 위젯으로
-  // 유효한 paymentKey를 만들어 승인을 통과시킬 수 있다(= 유료 리포트 무한 무료 발급 + Opus 비용 실지출).
-  // 실키(전자결제 심사 완료)로 교체되기 전까지 프로덕션 승인을 차단한다. 키 교체만으로 자동 해제.
-  if (process.env.NODE_ENV === "production" && secretKey.startsWith("test_gsk_docs")) {
-    return NextResponse.json(
-      { error: "결제 시스템 오픈 준비 중이에요. 조금만 기다려주세요." },
-      { status: 403 },
-    );
   }
 
   // dev 전용 mock 승인 — 결제창 없이 성공 경로를 E2E 테스트하기 위한 우회로.

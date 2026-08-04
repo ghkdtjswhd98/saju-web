@@ -113,6 +113,15 @@ export default async function ReportPage({
           initialRawText={content?.rawText ?? null}
         />
 
+        {report.status === "done" && (
+          <a
+            href={`/report/${token}/pdf`}
+            className="block rounded-xl border border-line bg-card px-4 py-3.5 text-center text-sm font-bold transition hover:border-accent"
+          >
+            📄 PDF로 저장하기
+          </a>
+        )}
+
         <ReviewForm token={token} initial={existingReview} />
       </div>
     </div>

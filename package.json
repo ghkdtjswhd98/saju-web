@@ -13,10 +13,12 @@
     "@electric-sql/pglite": "^0.5.4",
     "@fullstackfamily/manseryeok": "^1.0.8",
     "@tosspayments/tosspayments-sdk": "^2.7.1",
+    "@types/pdfkit": "^0.17.6",
     "@vercel/analytics": "^2.0.1",
     "drizzle-orm": "^0.45.2",
     "nanoid": "^5.1.16",
     "next": "16.2.10",
+    "pdfkit": "^0.19.1",
     "postgres": "^3.4.9",
     "react": "19.2.4",
     "react-dom": "19.2.4"
