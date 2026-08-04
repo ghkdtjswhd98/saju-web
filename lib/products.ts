@@ -1,7 +1,7 @@
 // 유료 상품 카탈로그 — 가격의 진실의 원천 (클라이언트가 보낸 금액은 절대 신뢰하지 않는다)
 // 실제 판매 가격은 lib/pricing.ts의 단계 인상제로 계산된다 (openPrice → listPrice).
 
-export type ProductCode = "lifetime" | "love" | "year" | "career" | "bundle";
+export type ProductCode = "lifetime" | "love" | "year" | "career" | "bundle" | "deep";
 
 export interface Product {
   code: ProductCode;
@@ -19,6 +19,23 @@ export interface Product {
 }
 
 export const PRODUCTS: Record<ProductCode, Product> = {
+  // 가격 사다리 상단 — 당근 상위 판매자(2~4.5만원, 100~170페이지)와 같은 링에 서는 상품.
+  // 2026-08-05 실측: 명리학도 사주박사 35,000원(후기 2,741), 사주대가 29,900원(후기 3,018),
+  // 명리심리연구소 20,000원(후기 2,568). 우리는 같은 깊이를 1~2분 만에 준다.
+  deep: {
+    code: "deep",
+    name: "정통 심층사주 (프리미엄)",
+    tagline: "10년 단위 대운까지 한 장씩, 평생 한 번 제대로 보는 사주",
+    openPrice: 19900,
+    listPrice: 29900,
+    personCount: 1,
+    sections: [
+      "인생 총평", "타고난 기질", "숨은 재능", "재물운", "직업운", "연애·결혼운",
+      "건강운", "인간관계", "대운 10년별 흐름", "올해와 내년", "인생의 전환점", "실천 조언",
+    ],
+    pdfPages: 32,
+    charCount: "20,000자",
+  },
   bundle: {
     code: "bundle",
     name: "풀패키지 (종합+올해+직업 3종)",
