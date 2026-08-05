@@ -138,6 +138,11 @@ export default function StreamingReport({
             closed = true;
             es.close();
             setPhase("done");
+          } else if (msg.t === "partial") {
+            // 장문 상품의 한 파트가 끝났다 — 서버리스 시간 제한 때문에 파트마다 요청을 나눈다.
+            // 저장된 본문을 받아 이어붙이도록 즉시 재접속한다.
+            es.close();
+            retryTimer = setTimeout(connect, 500);
           } else if (msg.t === "busy") {
             // 다른 요청이 생성 중 — 잠시 후 재접속 (완료돼 있으면 full로 받음)
             es.close();

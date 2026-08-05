@@ -74,6 +74,22 @@ export async function GET(
     return new Response(stream, { headers: { "content-type": "text/event-stream" } });
   }
 
+  // 여러 파트로 나눠 쓰는 상품의 진행 상태. 이전 요청이 남긴 본문·누적 usage를 이어받는다.
+  const prevContent = report.content as
+    | { rawText?: string; partsDone?: number }
+    | null;
+  const prevUsage = (report.usage ?? {}) as Record<string, number | undefined>;
+  const prevProgress = {
+    rawText: prevContent?.rawText ?? "",
+    partsDone: prevContent?.partsDone ?? 0,
+    usage: {
+      input_tokens: prevUsage.input_tokens ?? 0,
+      output_tokens: prevUsage.output_tokens ?? 0,
+      cache_creation_input_tokens: prevUsage.cache_creation_input_tokens ?? 0,
+      cache_read_input_tokens: prevUsage.cache_read_input_tokens ?? 0,
+    },
+  };
+
   // 상품별 모델/형식/프롬프트 구성
   const productCode = report.productCode;
   const format = FORMATS[productCode];
@@ -115,65 +131,70 @@ export async function GET(
         }
       };
       try {
-        // 장문 상품은 2단 생성 — 한 호출로는 전 섹션이 목표의 50~76%에 그친다(2026-08-05 실측).
-        // parts가 없으면 기존과 동일한 1회 호출.
+        // 장문 상품은 여러 파트로 나눠 쓴다. 이유가 둘이다:
+        //  ① 한 호출로 12섹션을 요구하면 전 섹션이 목표의 50~76%에 그친다(2026-08-05 실측).
+        //  ② 서버리스 함수 시간 제한(300초) — 한 요청에서 전부 생성하면 프로덕션에서 죽는다.
+        // 그래서 "요청 1회 = 파트 1개"로 처리하고, 남은 파트가 있으면 클라이언트가 재접속한다.
         const parts = format.parts ?? [{ system: format.system, markers: format.markers }];
+        const done = prevProgress.partsDone;
+        const part = parts[done];
+
+        // 뒤 파트에는 앞부분을 넘겨 중복 서술을 막는다 (입력 토큰은 저렴)
+        const prior = prevProgress.rawText
+          ? `\n\n<이미_작성한_앞부분>\n${prevProgress.rawText}\n</이미_작성한_앞부분>\n위 내용과 중복되는 서술은 피하고, 지정된 섹션만 이어서 작성하세요.`
+          : "";
+
+        const claudeStream = streamReport({
+          model,
+          formatSystem: part.system,
+          userPrompt: userPrompt + prior,
+          maxTokens,
+          useThinking: !isFree,
+        });
+        claudeStream.on("text", (delta) => {
+          send({ t: "delta", text: delta });
+        });
+
+        const final = await claudeStream.finalMessage();
+        const partText = final.content
+          .filter((b) => b.type === "text")
+          .map((b) => (b as { text: string }).text)
+          .join("");
+
+        const rawText = prevProgress.rawText
+          ? `${prevProgress.rawText}\n\n${partText}`
+          : partText;
+        const partsDone = done + 1;
+        const isLast = partsDone >= parts.length;
+
+        // usage는 파트별로 누적 (원가 추적 정확도 유지)
         const usage = {
-          input_tokens: 0,
-          output_tokens: 0,
-          cache_creation_input_tokens: 0,
-          cache_read_input_tokens: 0,
+          input_tokens: prevProgress.usage.input_tokens + (final.usage.input_tokens ?? 0),
+          output_tokens: prevProgress.usage.output_tokens + (final.usage.output_tokens ?? 0),
+          cache_creation_input_tokens:
+            prevProgress.usage.cache_creation_input_tokens +
+            (final.usage.cache_creation_input_tokens ?? 0),
+          cache_read_input_tokens:
+            prevProgress.usage.cache_read_input_tokens + (final.usage.cache_read_input_tokens ?? 0),
         };
-        let rawText = "";
-
-        for (let i = 0; i < parts.length; i++) {
-          // 뒤 호출에는 앞부분을 그대로 넘겨 중복 서술을 막는다 (입력 토큰은 저렴)
-          const prior =
-            i === 0
-              ? ""
-              : `\n\n<이미_작성한_앞부분>\n${rawText}\n</이미_작성한_앞부분>\n위 내용과 중복되는 서술은 피하고, 지정된 섹션만 이어서 작성하세요.`;
-
-          const claudeStream = streamReport({
-            model,
-            formatSystem: parts[i].system,
-            userPrompt: userPrompt + prior,
-            maxTokens,
-            useThinking: !isFree,
-          });
-          claudeStream.on("text", (delta) => {
-            send({ t: "delta", text: delta });
-          });
-
-          const final = await claudeStream.finalMessage();
-          const partText = final.content
-            .filter((b) => b.type === "text")
-            .map((b) => (b as { text: string }).text)
-            .join("");
-          rawText += (i > 0 ? "\n\n" : "") + partText;
-
-          usage.input_tokens += final.usage.input_tokens ?? 0;
-          usage.output_tokens += final.usage.output_tokens ?? 0;
-          usage.cache_creation_input_tokens += final.usage.cache_creation_input_tokens ?? 0;
-          usage.cache_read_input_tokens += final.usage.cache_read_input_tokens ?? 0;
-        }
-
-        const blocks = parseBlocks(rawText, format.markers);
 
         await db
           .update(reports)
           .set({
-            status: "done",
-            content: { blocks, rawText },
+            // 남은 파트가 있으면 pending으로 되돌려 다음 요청이 락을 잡게 한다
+            status: isLast ? "done" : "pending",
+            content: { blocks: parseBlocks(rawText, format.markers), rawText, partsDone },
             model,
             usage,
-            completedAt: new Date(),
+            ...(isLast ? { completedAt: new Date() } : {}),
           })
           .where(eq(reports.token, token));
 
-        send({ t: "done" });
+        send(isLast ? { t: "done" } : { t: "partial", partsDone, total: parts.length });
       } catch (err) {
         console.error("[report-stream] 생성 실패:", err);
-        // failed로 종결 — 사용자가 "다시 시도"를 눌러야만 재생성 (자동 무한 재호출 금지)
+        // failed로 종결 — 사용자가 "다시 시도"를 눌러야만 재생성 (자동 무한 재호출 금지).
+        // 이미 끝난 파트는 content에 남아 있으므로 재시도 시 그 다음 파트부터 이어간다.
         await db
           .update(reports)
           .set({ status: "failed" })

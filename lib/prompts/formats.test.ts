@@ -14,15 +14,30 @@ describe("출력 형식", () => {
     expect(FORMATS.deep.markers).toHaveLength(PRODUCTS.deep.sections.length);
   });
 
-  it("deep은 2단 생성이고, parts의 마커 합집합이 전체 마커와 일치한다", () => {
+  it("deep은 분할 생성이고, parts의 마커가 순서까지 전체 마커와 일치한다", () => {
     const parts = FORMATS.deep.parts!;
-    expect(parts).toHaveLength(2);
+    expect(parts.length).toBeGreaterThan(1);
     const fromParts = parts.flatMap((p) => p.markers.map((m) => m.token));
     expect(fromParts).toEqual(FORMATS.deep.markers.map((m) => m.token));
   });
 
-  it("deep 2부는 대운 시간표 활용을 지시한다", () => {
-    expect(FORMATS.deep.parts![1].system).toContain("대운_시간표");
+  it("deep의 대운 섹션을 맡은 파트가 대운 시간표 활용을 지시한다", () => {
+    const daewoonPart = FORMATS.deep.parts!.find((p) =>
+      p.markers.some((m) => m.token === "SECTION_대운흐름"),
+    );
+    expect(daewoonPart, "대운 섹션을 맡은 파트가 없음").toBeDefined();
+    expect(daewoonPart!.system).toContain("대운_시간표");
+  });
+
+  it("각 파트가 자기 마커의 구분자를 전부 프롬프트에 포함한다", () => {
+    for (const fmt of Object.values(FORMATS)) {
+      if (!fmt.parts) continue;
+      for (const part of fmt.parts) {
+        for (const m of part.markers) {
+          expect(part.system, `${m.token} 구분자 누락`).toContain(`===${m.token}===`);
+        }
+      }
+    }
   });
 
   it("parts를 쓰는 형식은 각 part의 마커가 서로 겹치지 않는다", () => {
