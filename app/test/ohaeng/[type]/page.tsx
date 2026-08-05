@@ -90,7 +90,11 @@ export default async function OhaengResultPage({
         </p>
       </div>
 
+      {/* 공유 유도 — 심리테스트는 자발적 공유가 도달을 만드는 유일한 엔진이라 앞에 세운다 */}
       <div className="mt-5 space-y-2">
+        <p className="text-center text-sm font-medium">
+          이 결과, 친구도 궁금해할걸요? 👀
+        </p>
         <ShareBar
           path={`/test/ohaeng/${t.key}`}
           title={`${t.emoji} 나는 "${t.name}"이래!`}
@@ -104,6 +108,25 @@ export default async function OhaengResultPage({
           📱 스토리용 이미지 저장 (9:16)
         </a>
       </div>
+
+      {/* 다른 유형 궁금증 — 체류·재방문 장치 */}
+      <section className="mt-6 rounded-2xl border border-line bg-card p-5">
+        <h2 className="text-sm font-bold">다섯 기운, 나머지는 어떤 사람일까요</h2>
+        <div className="mt-3 flex flex-wrap gap-2">
+          {TYPE_ORDER.filter((k) => k !== t.key).map((k) => {
+            const other = OHAENG_TYPES[k];
+            return (
+              <Link
+                key={k}
+                href={`/test/ohaeng/${k}`}
+                className="rounded-full border border-line bg-bg px-3 py-1.5 text-xs transition hover:border-accent"
+              >
+                {other.emoji} {other.name}
+              </Link>
+            );
+          })}
+        </div>
+      </section>
 
       {/* 사주 전환 CTA */}
       <section className="mt-8 rounded-2xl border-2 border-accent bg-card p-5 text-center">

@@ -94,8 +94,18 @@ export default function AdminConsole() {
       setIssued(tokens.map((t) => ({ token: t, productCode, status: "생성 중" })));
 
       for (let i = 0; i < tokens.length; i++) {
-        setBusy(`리포트 생성 중… (${i + 1}/${tokens.length}) 1~2분 걸려요`);
-        await fetch(`/api/reports/${tokens[i]}/stream`).then((r) => r.text());
+        // 장문 상품은 서버리스 시간 제한 때문에 파트마다 요청이 나뉜다.
+        // done이 될 때까지 이어서 호출해야 리포트가 완성된다.
+        for (let attempt = 1; attempt <= 8; attempt++) {
+          setBusy(
+            `리포트 생성 중… (${i + 1}/${tokens.length})` +
+              (attempt > 1 ? ` · ${attempt}번째 구간` : " · 1~2분 걸려요"),
+          );
+          const body = await fetch(`/api/reports/${tokens[i]}/stream`).then((r) => r.text());
+          if (body.includes('"t":"done"') || body.includes('"t":"full"')) break;
+          if (body.includes('"t":"error"')) throw new Error("리포트 생성에 실패했어요. 다시 시도해주세요.");
+          // partial/busy면 이어서 다음 구간 호출
+        }
         setIssued((arr) =>
           arr.map((x) => (x.token === tokens[i] ? { ...x, status: "완료" } : x)),
         );
