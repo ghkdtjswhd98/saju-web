@@ -102,7 +102,8 @@ export default async function ProductsPage() {
                   ✍️ {p.charCount} 분량
                 </span>
                 <span className="rounded-full bg-accent-soft/60 px-2.5 py-1 font-medium text-accent-strong">
-                  ⚡ 1~2분 즉시 발급
+                  {/* 프리미엄은 4단계로 나눠 써서 더 걸린다 — 실측 기준으로 정직하게 */}
+                  ⚡ {p.code === "deep" ? "10분 내 발급" : "1~2분 즉시 발급"}
                 </span>
               </div>
               <ul className="mt-2.5 flex flex-wrap gap-1.5">

@@ -95,7 +95,7 @@ function WaitIndicator({ longForm }: { longForm: boolean }) {
       <p className="mt-3 text-sm font-medium">{WAIT_STAGES[stage]}</p>
       <p className="mt-1 text-xs text-ink-soft">
         {longForm
-          ? "분량이 많아 5분 정도 걸려요. 화면을 닫아도 링크로 다시 볼 수 있어요."
+          ? "분량이 많아 10분 정도 걸려요. 화면을 닫아도 링크로 다시 볼 수 있어요."
           : "보통 1~2분 정도 걸려요. 화면을 닫아도 링크로 다시 볼 수 있어요."}
       </p>
     </div>
