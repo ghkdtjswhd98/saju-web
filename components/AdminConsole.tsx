@@ -213,6 +213,13 @@ export default function AdminConsole() {
         >
           {busy ?? "발급하고 생성하기"}
         </button>
+        {productCode === "deep" && (
+          <p className="text-xs leading-5 text-ink-soft">
+            💡 정통 심층사주는 4단계로 나눠 작성해서 <b>10분쯤</b> 걸려요. 그동안 이 화면을 켜두세요.
+            <br />
+            중간에 화면이 꺼져도 진행분은 저장되니, 다시 열어서 &quot;최근 발급&quot;의 해당 건을 열면 이어서 완성됩니다.
+          </p>
+        )}
       </div>
 
       {issued.length > 0 && (
