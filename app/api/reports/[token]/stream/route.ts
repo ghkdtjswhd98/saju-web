@@ -115,23 +115,48 @@ export async function GET(
         }
       };
       try {
-        const claudeStream = streamReport({
-          model,
-          formatSystem: format.system,
-          userPrompt,
-          maxTokens,
-          useThinking: !isFree,
-        });
+        // 장문 상품은 2단 생성 — 한 호출로는 전 섹션이 목표의 50~76%에 그친다(2026-08-05 실측).
+        // parts가 없으면 기존과 동일한 1회 호출.
+        const parts = format.parts ?? [{ system: format.system, markers: format.markers }];
+        const usage = {
+          input_tokens: 0,
+          output_tokens: 0,
+          cache_creation_input_tokens: 0,
+          cache_read_input_tokens: 0,
+        };
+        let rawText = "";
 
-        claudeStream.on("text", (delta) => {
-          send({ t: "delta", text: delta });
-        });
+        for (let i = 0; i < parts.length; i++) {
+          // 뒤 호출에는 앞부분을 그대로 넘겨 중복 서술을 막는다 (입력 토큰은 저렴)
+          const prior =
+            i === 0
+              ? ""
+              : `\n\n<이미_작성한_앞부분>\n${rawText}\n</이미_작성한_앞부분>\n위 내용과 중복되는 서술은 피하고, 지정된 섹션만 이어서 작성하세요.`;
 
-        const final = await claudeStream.finalMessage();
-        const rawText = final.content
-          .filter((b) => b.type === "text")
-          .map((b) => (b as { text: string }).text)
-          .join("");
+          const claudeStream = streamReport({
+            model,
+            formatSystem: parts[i].system,
+            userPrompt: userPrompt + prior,
+            maxTokens,
+            useThinking: !isFree,
+          });
+          claudeStream.on("text", (delta) => {
+            send({ t: "delta", text: delta });
+          });
+
+          const final = await claudeStream.finalMessage();
+          const partText = final.content
+            .filter((b) => b.type === "text")
+            .map((b) => (b as { text: string }).text)
+            .join("");
+          rawText += (i > 0 ? "\n\n" : "") + partText;
+
+          usage.input_tokens += final.usage.input_tokens ?? 0;
+          usage.output_tokens += final.usage.output_tokens ?? 0;
+          usage.cache_creation_input_tokens += final.usage.cache_creation_input_tokens ?? 0;
+          usage.cache_read_input_tokens += final.usage.cache_read_input_tokens ?? 0;
+        }
+
         const blocks = parseBlocks(rawText, format.markers);
 
         await db
@@ -140,12 +165,7 @@ export async function GET(
             status: "done",
             content: { blocks, rawText },
             model,
-            usage: {
-              input_tokens: final.usage.input_tokens,
-              output_tokens: final.usage.output_tokens,
-              cache_creation_input_tokens: final.usage.cache_creation_input_tokens,
-              cache_read_input_tokens: final.usage.cache_read_input_tokens,
-            },
+            usage,
             completedAt: new Date(),
           })
           .where(eq(reports.token, token));

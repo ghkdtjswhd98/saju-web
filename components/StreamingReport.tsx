@@ -3,6 +3,8 @@
 import { useEffect, useRef, useState } from "react";
 
 interface Props {
+  /** 2단 생성 상품(정통 심층사주)은 5분가량 걸려 안내 문구가 달라진다 */
+  longForm?: boolean;
   token: string;
   initialStatus: string; // pending | generating | done | failed
   initialRawText: string | null;
@@ -81,7 +83,7 @@ const WAIT_STAGES = [
   "리포트를 집필하는 중… (곧 첫 문장이 나와요)",
 ];
 
-function WaitIndicator() {
+function WaitIndicator({ longForm }: { longForm: boolean }) {
   const [stage, setStage] = useState(0);
   useEffect(() => {
     const t = setInterval(() => setStage((s) => Math.min(s + 1, WAIT_STAGES.length - 1)), 9000);
@@ -91,12 +93,21 @@ function WaitIndicator() {
     <div className="rounded-2xl border border-line bg-card p-6 text-center">
       <span className="inline-block h-2.5 w-2.5 animate-pulse rounded-full bg-accent" />
       <p className="mt-3 text-sm font-medium">{WAIT_STAGES[stage]}</p>
-      <p className="mt-1 text-xs text-ink-soft">보통 1~2분 정도 걸려요. 화면을 닫아도 링크로 다시 볼 수 있어요.</p>
+      <p className="mt-1 text-xs text-ink-soft">
+        {longForm
+          ? "분량이 많아 5분 정도 걸려요. 화면을 닫아도 링크로 다시 볼 수 있어요."
+          : "보통 1~2분 정도 걸려요. 화면을 닫아도 링크로 다시 볼 수 있어요."}
+      </p>
     </div>
   );
 }
 
-export default function StreamingReport({ token, initialStatus, initialRawText }: Props) {
+export default function StreamingReport({
+  token,
+  initialStatus,
+  initialRawText,
+  longForm = false,
+}: Props) {
   const [text, setText] = useState(initialRawText ?? "");
   const [phase, setPhase] = useState<"idle" | "streaming" | "done" | "error">(
     initialStatus === "done" ? "done" : initialStatus === "failed" ? "error" : "idle",
@@ -162,7 +173,7 @@ export default function StreamingReport({ token, initialStatus, initialRawText }
       {sections.map((s, i) => (
         <SectionCard key={`${s.label}-${i}`} label={s.label} body={s.body} />
       ))}
-      {phase === "streaming" && sections.length === 0 && <WaitIndicator />}
+      {phase === "streaming" && sections.length === 0 && <WaitIndicator longForm={longForm} />}
       {phase === "streaming" && sections.length > 0 && (
         <div className="flex items-center justify-center gap-2 py-4 text-sm text-ink-soft">
           <span className="inline-block h-2 w-2 animate-pulse rounded-full bg-accent" />

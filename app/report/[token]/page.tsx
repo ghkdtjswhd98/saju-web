@@ -111,6 +111,7 @@ export default async function ReportPage({
           token={token}
           initialStatus={report.status}
           initialRawText={content?.rawText ?? null}
+          longForm={report.productCode === "deep"}
         />
 
         {report.status === "done" && (
