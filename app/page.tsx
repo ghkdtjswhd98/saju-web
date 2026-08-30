@@ -64,7 +64,7 @@ export default async function Home() {
               href={`/products#${p.code}`}
               className="rounded-2xl border border-line bg-card p-4 transition hover:border-accent"
             >
-              <p className="text-[15px] font-bold leading-tight">{p.name}</p>
+              <p className="text-[15px] font-bold leading-tight">{p.cardTitle}</p>
               <p className="mt-1.5 line-clamp-2 text-xs text-ink-soft">{p.tagline}</p>
               <p className="mt-2">
                 <PriceTag

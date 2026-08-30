@@ -1,9 +1,6 @@
 import { eq } from "drizzle-orm";
 import { getDb, reports } from "@/lib/db";
-import { buildReportPdf } from "@/lib/pdf";
-import { getProduct } from "@/lib/products";
-import { FORMATS } from "@/lib/prompts/formats";
-import type { PersonInput, SajuResult } from "@/lib/saju/types";
+import { buildPdfForReport } from "@/lib/report-pdf";
 
 // 리포트 PDF 다운로드 — 링크(토큰) 보유자면 누구나. 당근 채팅 판매 시 이 파일을 그대로 전달한다.
 export const runtime = "nodejs";
@@ -21,24 +18,7 @@ export async function GET(
     return new Response("리포트가 아직 생성 중이에요. 완료 후 다시 시도해주세요.", { status: 409 });
   }
 
-  const content = report.content as { blocks?: Record<string, string> } | null;
-  const blocks = content?.blocks ?? {};
-  const format = FORMATS[report.productCode];
-  const order = format ? format.markers.map((m) => m.key) : Object.keys(blocks);
-  const persons = (report.inputData as { persons: PersonInput[] }).persons;
-  const saju = Array.isArray(report.sajuData)
-    ? (report.sajuData as SajuResult[])[0]
-    : (report.sajuData as SajuResult);
-
-  const productName = getProduct(report.productCode)?.name ?? "사주 리포트";
-  const pdf = await buildReportPdf({
-    productName,
-    persons,
-    saju,
-    blocks,
-    order,
-    createdAt: report.completedAt ?? report.createdAt,
-  });
+  const { pdf, productName, persons } = await buildPdfForReport(report);
 
   // 파일명은 ASCII 폴백 + RFC 5987 UTF-8 (한글 파일명 깨짐 방지)
   const nameKo = `오롭미_${productName}_${persons[0].name}.pdf`;

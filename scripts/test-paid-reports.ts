@@ -33,8 +33,11 @@ async function devApi(body: object): Promise<Record<string, unknown>> {
   return json;
 }
 
+// 2인 상품 목록 — products.ts의 personCount와 일치해야 한다
+const TWO_PERSON = ["love", "reunion", "crush"];
+
 async function generateOne(productCode: string): Promise<void> {
-  const persons = productCode === "love" ? [P_A, P_B] : [P_A];
+  const persons = TWO_PERSON.includes(productCode) ? [P_A, P_B] : [P_A];
   const { token } = (await devApi({ action: "seed", productCode, persons })) as { token: string };
 
   console.log(`\n━━━ [${productCode}] 생성 시작 (token=${token})`);
@@ -70,8 +73,9 @@ async function generateOne(productCode: string): Promise<void> {
     console.log(`  - ${k}: ${(content.blocks[k] ?? "").length}자`);
   }
 
-  // 3. 금지어 검사
-  const leaks = FORBIDDEN.filter((w) => content.rawText.includes(w));
+  // 3. 금지어 검사 — dohwa는 상품 정체성상 도화살·홍염살 노출이 허용된다 (formats.ts 예외 규칙)
+  const allowed = productCode === "dohwa" ? ["도화살", "홍염살"] : [];
+  const leaks = FORBIDDEN.filter((w) => !allowed.includes(w) && content.rawText.includes(w));
   console.log(`금지어: ${leaks.length === 0 ? "✅ 없음" : `❌ 누출: ${leaks.join(", ")}`}`);
 
   // 4. 원가 (Opus 4.8: 입력 $5/M, 출력 $25/M, 캐시쓰기 1.25x, 캐시읽기 0.1x — 환율 1400원)

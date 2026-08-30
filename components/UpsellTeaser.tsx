@@ -70,7 +70,7 @@ export default async function UpsellTeaser({ fromShareId }: { fromShareId: strin
               >
                 <span>
                   <span className="block text-[15px] font-bold">
-                    {p.name}
+                    {p.cardTitle}
                     {isBundle && (
                       <span className="ml-1.5 rounded-full bg-accent-strong px-2 py-0.5 align-middle text-[10px] font-bold text-white">
                         가장 알뜰

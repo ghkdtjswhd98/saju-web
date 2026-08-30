@@ -68,14 +68,16 @@ export default async function ProductsPage() {
               <div className="flex items-start justify-between gap-3">
                 <div>
                   <h2 className="text-lg font-bold">
-                    {p.name}
+                    {p.cardTitle}
                     {isBundle && (
                       <span className="ml-1.5 rounded-full bg-accent-strong px-2 py-0.5 align-middle text-[10px] font-bold text-white">
                         가장 알뜰
                       </span>
                     )}
                   </h2>
-                  <p className="mt-1 text-sm text-ink-soft">{p.tagline}</p>
+                  <p className="mt-1 text-sm text-ink-soft">
+                    <span className="font-semibold text-ink">{p.name}</span> — {p.tagline}
+                  </p>
                 </div>
                 <div className="shrink-0 text-right">
                   <PriceTag current={price.current} list={price.list} size="lg" />
@@ -102,8 +104,8 @@ export default async function ProductsPage() {
                   ✍️ {p.charCount} 분량
                 </span>
                 <span className="rounded-full bg-accent-soft/60 px-2.5 py-1 font-medium text-accent-strong">
-                  {/* 프리미엄은 4단계로 나눠 써서 더 걸린다 — 실측 기준으로 정직하게 */}
-                  ⚡ {p.code === "deep" ? "10분 내 발급" : "1~2분 즉시 발급"}
+                  {/* 프리미엄은 4단계로 나눠 써서 더 걸린다 — 실측 12~13분, 표기는 여유 있게 15분 */}
+                  ⚡ {p.code === "deep" ? "15분 내 발급" : "1~2분 즉시 발급"}
                 </span>
               </div>
               <ul className="mt-2.5 flex flex-wrap gap-1.5">
@@ -128,15 +130,16 @@ export default async function ProductsPage() {
 
       {/* 환불 조건을 각주가 아니라 신뢰 장치로 — 왜 제한되는지 이유까지 붙인다 */}
       <div className="mt-8 rounded-2xl border border-line bg-card p-5 text-center text-xs leading-6 text-ink-soft">
-        <p className="text-sm font-bold text-ink">🛡️ 생성 전에는 100% 환불해드려요</p>
+        <p className="text-sm font-bold text-ink">🛡️ 읽어보시고 별로면 환불해드려요</p>
         <p className="mt-1.5">
           결제 전에{" "}
           <Link href="/sample" className="text-accent-strong underline">
             샘플로 전문
           </Link>
-          을 미리 읽어보실 수 있고, 생성 전이라면 사유 없이 전액 환불해드려요.
+          을 미리 읽어보실 수 있어요.
           <br />
-          다만 리포트가 완성된 뒤에는 맞춤형 디지털 콘텐츠라 청약철회가 제한돼요.{" "}
+          다 받아보신 뒤에도 만족스럽지 않으면 <b>어떤 점이 부족했는지 알려주시면 환불</b>해드려요.
+          법으로는 안 해도 되지만, 그 얘기를 들어야 다음 리포트를 고칠 수 있거든요.{" "}
           <Link href="/refund" className="underline">
             환불정책
           </Link>

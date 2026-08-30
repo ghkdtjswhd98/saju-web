@@ -1,11 +1,16 @@
 // 유료 상품 카탈로그 — 가격의 진실의 원천 (클라이언트가 보낸 금액은 절대 신뢰하지 않는다)
 // 실제 판매 가격은 lib/pricing.ts의 단계 인상제로 계산된다 (openPrice → listPrice).
 
-export type ProductCode = "lifetime" | "love" | "year" | "career" | "bundle" | "deep";
+export type ProductCode =
+  | "lifetime" | "love" | "year" | "career" | "bundle" | "deep"
+  | "reunion" | "marriage" | "dohwa" | "crush";
 
 export interface Product {
   code: ProductCode;
   name: string;
+  // 카드·목록에서만 쓰는 후킹 제목 (질문형). 결제창·PDF·주문 내역은 name을 유지한다 —
+  // 압구정연애박사 벤치마킹(2026-08-27): 기능 설명형보다 감정·질문형 제목이 클릭을 만든다.
+  cardTitle: string;
   tagline: string;
   openPrice: number; // 오픈 특가 (시작가)
   listPrice: number; // 정가 (단계 인상 상한)
@@ -25,22 +30,25 @@ export const PRODUCTS: Record<ProductCode, Product> = {
   deep: {
     code: "deep",
     name: "정통 심층사주 (프리미엄)",
+    cardTitle: "철학원 안 가도 되는 이유 — 26페이지 심층사주",
     tagline: "10년 단위 대운까지 한 장씩, 평생 한 번 제대로 보는 사주",
     openPrice: 19900,
     listPrice: 29900,
     personCount: 1,
     sections: [
-      "인생 총평", "타고난 기질", "숨은 재능", "재물운", "직업운", "연애·결혼운",
+      "먼저 맞혀볼게요", "인생 총평", "타고난 기질", "숨은 재능", "재물운", "직업운", "연애·결혼운",
       "건강운", "인간관계", "대운 10년별 흐름", "올해와 내년", "인생의 전환점", "실천 조언",
     ],
-    // 실측(2026-08-05, 4단 분할 생성본): 22,963자 / PDF 26페이지 / 파트당 106~196초.
-    // 과장 금지 — 광고 수치는 항상 실측 이하로 적는다.
+    // 실측(2026-08-05, 4단 분할 생성본): 22,963자 / 파트당 106~196초.
+    // PDF는 목차 페이지 추가 후 실측 27쪽 — 광고에는 26으로 적는다(수치는 항상 실측 이하).
+    // ⚠️ "먼저 맞혀볼게요"(900자+) 추가분은 아직 미실측 — 재생성 후 갱신할 것.
     pdfPages: 26,
     charCount: "22,000자",
   },
   bundle: {
     code: "bundle",
     name: "풀패키지 (종합+올해+직업 3종)",
+    cardTitle: "고민하지 말고 전부 — 3종 풀패키지",
     tagline: "나의 전체 설계도부터 올해의 타이밍까지, 한 번에 전부",
     openPrice: 17900,
     listPrice: 24900,
@@ -53,6 +61,7 @@ export const PRODUCTS: Record<ProductCode, Product> = {
   lifetime: {
     code: "lifetime",
     name: "평생사주 종합 리포트",
+    cardTitle: "타고난 내 팔자, 전부 펼쳐보기",
     tagline: "타고난 기질부터 재물·직업·연애·건강까지, 나의 전체 설계도",
     openPrice: 6900,
     listPrice: 9900,
@@ -64,6 +73,7 @@ export const PRODUCTS: Record<ProductCode, Product> = {
   love: {
     code: "love",
     name: "연애·궁합 리포트",
+    cardTitle: "우리 둘, 사주로 보면 몇 점일까?",
     tagline: "두 사람의 사주를 교차 분석한 케미 리포트",
     openPrice: 9900,
     listPrice: 12900,
@@ -75,6 +85,7 @@ export const PRODUCTS: Record<ProductCode, Product> = {
   year: {
     code: "year",
     name: "올해 운세 리포트",
+    cardTitle: "2026 병오년, 나의 남은 운은?",
     tagline: "올해의 흐름과 월별 리듬, 지금 잡아야 할 타이밍",
     openPrice: 6900,
     listPrice: 9900,
@@ -86,6 +97,7 @@ export const PRODUCTS: Record<ProductCode, Product> = {
   career: {
     code: "career",
     name: "직업·재물운 리포트",
+    cardTitle: "돈이 붙는 일은 따로 있다던데?",
     tagline: "나에게 맞는 일과 재물의 그릇, 커리어의 방향",
     openPrice: 6900,
     listPrice: 9900,
@@ -93,6 +105,69 @@ export const PRODUCTS: Record<ProductCode, Product> = {
     sections: ["총평", "강점과 재능", "맞는 일과 환경", "재물의 그릇", "올해의 커리어 흐름", "실천 조언"],
     pdfPages: 8,
     charCount: "3,700자",
+  },
+  // ── 2026-08-27 확장 4종 — 압구정연애박사 벤치마킹 (같은 엔진, 주제 특화 재포장) ──
+  // 실측(2026-08-30, Opus 1회씩): reunion 3,773자/9쪽, marriage 3,831자/9쪽,
+  // dohwa 3,441자/9쪽, crush 3,538자/9쪽. 표기는 실측 이하(단일 표본이라 여유 6%+).
+  reunion: {
+    code: "reunion",
+    name: "재회운세 리포트",
+    cardTitle: "헤어진 그 사람, 다시 만날 확률은?",
+    tagline: "두 사람의 사주가 말하는 재회 가능성의 구조, 그리고 타이밍",
+    openPrice: 12900,
+    listPrice: 16900,
+    personCount: 2,
+    sections: [
+      "지금 두 사람의 기운", "상대의 지금 마음결", "재회 가능성의 구조",
+      "다시 만난다면 달라져야 할 것", "움직인다면 언제", "마음을 위한 조언",
+    ],
+    pdfPages: 8,
+    charCount: "3,500자",
+  },
+  marriage: {
+    code: "marriage",
+    name: "결혼운세 리포트",
+    cardTitle: "나는 언제, 어떤 사람과 결혼할까?",
+    tagline: "배우자의 결과 결혼운이 짙어지는 시기를 나이로 짚어주는 리포트",
+    openPrice: 12900,
+    listPrice: 16900,
+    personCount: 1,
+    sections: [
+      "결혼운 총평", "만나게 될 배우자의 결", "결혼운이 짙어지는 시기",
+      "결혼 전 의식할 나의 패턴", "올해의 인연운", "실천 조언",
+    ],
+    pdfPages: 8,
+    charCount: "3,500자",
+  },
+  dohwa: {
+    code: "dohwa",
+    name: "도화살 리포트",
+    cardTitle: "내 사주에 도화살, 정말 있을까?",
+    tagline: "만세력이 판정한 나의 도화살 — 있으면 쓰는 법, 없으면 나만의 매력 구조",
+    openPrice: 9900,
+    listPrice: 12900,
+    personCount: 1,
+    sections: [
+      "판정 결과", "나의 매력 구조", "매력이 빛나는 순간과 그늘",
+      "연애에서의 도화", "올해의 이성운", "실천 조언",
+    ],
+    pdfPages: 8,
+    charCount: "3,000자",
+  },
+  crush: {
+    code: "crush",
+    name: "짝사랑·썸 리포트",
+    cardTitle: "그 사람도 나를 생각하고 있을까?",
+    tagline: "두 사람의 기운 교차로 읽는 지금의 온도, 다가가는 타이밍",
+    openPrice: 9900,
+    listPrice: 12900,
+    personCount: 2,
+    sections: [
+      "지금 두 사람의 온도", "상대가 나를 보는 결", "끌림의 구조",
+      "머뭇거리게 만드는 것", "다가간다면 어떻게, 언제", "마음을 위한 조언",
+    ],
+    pdfPages: 8,
+    charCount: "3,000자",
   },
 };
 
