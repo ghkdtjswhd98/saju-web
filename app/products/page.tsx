@@ -61,10 +61,21 @@ export default async function ProductsPage() {
             <section
               key={p.code}
               id={p.code}
-              className={`rounded-2xl border bg-card p-5 ${
+              className={`overflow-hidden rounded-2xl border bg-card ${
                 isBundle ? "border-2 border-accent" : "border-line"
               }`}
             >
+              {/* 포스터 — 압구정연애박사 벤치마킹: 이미지가 카드의 얼굴 */}
+              {/* eslint-disable-next-line @next/next/no-img-element -- 자체 생성 라우트 */}
+              <img
+                src={`/brand/poster?product=${p.code}`}
+                alt={p.name}
+                width={900}
+                height={600}
+                loading="lazy"
+                className="aspect-[3/2] w-full object-cover"
+              />
+              <div className="p-5">
               <div className="flex items-start justify-between gap-3">
                 <div>
                   <h2 className="text-lg font-bold">
@@ -121,6 +132,7 @@ export default async function ProductsPage() {
               >
                 {p.personCount === 2 ? "두 사람 정보 입력하기" : "내 정보 입력하기"}
               </Link>
+              </div>
             </section>
           );
         })}

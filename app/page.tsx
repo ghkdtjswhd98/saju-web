@@ -10,6 +10,57 @@ import { PRODUCTS } from "@/lib/products";
 // 단계 가격 반영을 위해 60초 캐시
 export const revalidate = 60;
 
+type Pricing = Awaited<ReturnType<typeof getPricing>>;
+
+// 포스터형 상품 섹션 — 이미지가 카드의 얼굴 (썸네일은 /brand/poster에서 자체 생성)
+function ProductPosterSection({
+  title, subtitle, codes, pricing,
+}: {
+  title: string; subtitle: string; codes: (keyof typeof PRODUCTS)[]; pricing: Pricing;
+}) {
+  return (
+    <section className="mt-12">
+      <h2 className="text-lg font-bold">{title}</h2>
+      <p className="mt-1 text-sm text-ink-soft">{subtitle}</p>
+      <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
+        {codes.map((code) => {
+          const p = PRODUCTS[code];
+          return (
+            <Link
+              key={p.code}
+              href={`/products#${p.code}`}
+              className="group overflow-hidden rounded-2xl border border-line bg-card transition hover:border-accent"
+            >
+              {/* eslint-disable-next-line @next/next/no-img-element -- 자체 생성 라우트라 최적화 불필요 */}
+              <img
+                src={`/brand/poster?product=${p.code}`}
+                alt={p.name}
+                width={900}
+                height={600}
+                loading="lazy"
+                className="aspect-[3/2] w-full object-cover transition group-hover:scale-[1.02]"
+              />
+              <div className="p-4">
+                <p className="text-[11px] font-semibold tracking-wide text-accent-strong">
+                  {p.name}
+                </p>
+                <p className="mt-1 text-[15px] font-bold leading-tight">{p.cardTitle}</p>
+                <p className="mt-2">
+                  <PriceTag
+                    current={pricing.prices[p.code].current}
+                    list={pricing.prices[p.code].list}
+                    size="sm"
+                  />
+                </p>
+              </div>
+            </Link>
+          );
+        })}
+      </div>
+    </section>
+  );
+}
+
 export default async function Home() {
   const pricing = await getPricing();
   return (
@@ -52,31 +103,20 @@ export default async function Home() {
         </Link>
       </section>
 
-      <section className="mt-12">
-        <h2 className="text-center text-lg font-bold">무료로는 안 보이는 것</h2>
-        <p className="mt-1 text-center text-sm text-ink-soft">
-          방금 본 건 요약이에요. 재물·직업·연애의 흐름은 따로 있어요.
-        </p>
-        <div className="mt-5 grid grid-cols-2 gap-3">
-          {Object.values(PRODUCTS).map((p) => (
-            <Link
-              key={p.code}
-              href={`/products#${p.code}`}
-              className="rounded-2xl border border-line bg-card p-4 transition hover:border-accent"
-            >
-              <p className="text-[15px] font-bold leading-tight">{p.cardTitle}</p>
-              <p className="mt-1.5 line-clamp-2 text-xs text-ink-soft">{p.tagline}</p>
-              <p className="mt-2">
-                <PriceTag
-                  current={pricing.prices[p.code].current}
-                  list={pricing.prices[p.code].list}
-                  size="sm"
-                />
-              </p>
-            </Link>
-          ))}
-        </div>
-      </section>
+      {/* 상품 포스터 그리드 — 압구정연애박사 벤치마킹(2026-08-30) 포스터 공식:
+          [무드 이미지] + [카테고리] + [질문형 제목] + [가격]. 섹션은 BEST/연애 2분할. */}
+      <ProductPosterSection
+        title="오롭미 BEST 사주"
+        subtitle="방금 본 무료는 요약이에요 — 재물·직업·인생의 흐름은 따로 있어요"
+        codes={["deep", "bundle", "lifetime", "year", "career"]}
+        pricing={pricing}
+      />
+      <ProductPosterSection
+        title="연애가 고민이라면"
+        subtitle="재회부터 결혼까지, 두 사람의 사주가 말해주는 것"
+        codes={["reunion", "crush", "love", "marriage", "dohwa"]}
+        pricing={pricing}
+      />
 
       <section className="mt-12 rounded-2xl border border-line bg-card p-5">
         <h2 className="text-sm font-bold tracking-widest text-accent-strong">
