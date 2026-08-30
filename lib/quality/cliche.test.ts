@@ -13,6 +13,33 @@ describe("findCliches", () => {
     expect(hits[0].excerpt).toContain("편인");
   });
 
+  it("일상 단어 속 십신 부분 문자열은 오탐하지 않는다 — 실제 오탐 사례", () => {
+    for (const ok of [
+      "기준을 높이는 소중한 과정인데, 그걸 답답해하면", // '과정인'의 정인 (프로덕션 실오탐)
+      "남의 시선과는 상관없이 밀고 나가요.", // '상관없이'
+      "그건 결과와 상관 없는 이야기예요.",
+      "긍정인 반응이 먼저 와요.", // '긍정인'
+    ]) {
+      expect(
+        findCliches(ok).map((h) => h.rule),
+        `오탐: ${ok}`,
+      ).not.toContain("전문용어");
+    }
+  });
+
+  it("문장 첫머리·공백 뒤의 진짜 십신 용어는 여전히 잡는다", () => {
+    for (const bad of [
+      "정인이 강한 구조예요.",
+      "이 사주는 상관이 발달해 있어요.",
+      "타고난 식신 기운 덕분에",
+    ]) {
+      expect(
+        findCliches(bad).map((h) => h.rule),
+        `놓침: ${bad}`,
+      ).toContain("전문용어");
+    }
+  });
+
   it("콜드리딩은 2회까지 허용하고 3회부터 잡는다", () => {
     const twice = "그런 적 있죠? 이런 적 있죠?";
     expect(findCliches(twice).map((h) => h.rule)).not.toContain("콜드리딩남발");

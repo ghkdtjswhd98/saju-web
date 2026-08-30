@@ -17,6 +17,7 @@ export default function ReviewForm({
   );
   const [error, setError] = useState("");
   const [editing, setEditing] = useState(!initial);
+  const [coupon, setCoupon] = useState<{ code: string; benefit: string } | null>(null);
 
   async function submit() {
     if (rating < 1) {
@@ -33,6 +34,7 @@ export default function ReviewForm({
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? "잠시 후 다시 시도해주세요.");
+      if (data.coupon) setCoupon(data.coupon);
       setState("done");
       setEditing(false);
     } catch (e) {
@@ -44,9 +46,18 @@ export default function ReviewForm({
   return (
     <section className="rounded-2xl border border-line bg-card p-5">
       <h2 className="text-sm font-bold">리포트가 도움이 됐나요?</h2>
-      <p className="mt-0.5 text-xs text-ink-soft">
+      <p className="mt-0.5 text-xs leading-5 text-ink-soft">
         남겨주신 후기는 익명({"○**"} 형태)으로 소개돼요.
       </p>
+      {/* 리워드를 미리 알려야 작성률이 오른다(무고지 2~3% → 고지 10%대).
+          별점과 무관하게 준다는 점을 명시해야 대가성 리뷰 유도가 아니게 된다. */}
+      {editing && (
+        <p className="mt-2 rounded-xl bg-accent-soft/40 px-3 py-2 text-xs leading-5 text-accent-strong">
+          🎁 후기를 남겨주시면 <b>올해 운세 리포트 1회 무료</b> 쿠폰을 드려요.
+          <br />
+          별점과 상관없이 드립니다. 낮은 점수도 그대로 남겨주세요 — 그게 저희한테 제일 필요해요.
+        </p>
+      )}
 
       <div className="mt-3 flex gap-1">
         {[1, 2, 3, 4, 5].map((n) => (
@@ -88,7 +99,19 @@ export default function ReviewForm({
       ) : (
         <div className="mt-2">
           <p className="text-sm leading-6">{text}</p>
-          <p className="mt-1 text-xs text-ink-soft">
+          {coupon && (
+            <div className="mt-3 rounded-xl border-2 border-accent bg-accent-soft/30 p-3.5">
+              <p className="text-xs font-bold text-accent-strong">🎁 {coupon.benefit} 쿠폰</p>
+              <p className="mt-1.5 select-all font-mono text-lg font-bold tracking-wider">
+                {coupon.code}
+              </p>
+              <p className="mt-1.5 text-xs leading-5 text-ink-soft">
+                이 코드를 캡처해두세요. 당근 채팅이나 메일로 코드를 보내주시면 올해 운세 리포트를
+                무료로 만들어 보내드려요. 유효기간은 없어요.
+              </p>
+            </div>
+          )}
+          <p className="mt-2 text-xs text-ink-soft">
             소중한 후기 감사해요!{" "}
             <button
               type="button"

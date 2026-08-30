@@ -63,8 +63,9 @@ export default function RootLayout({
               </p>
               <p>주소: {SITE.address}</p>
               <p>
-                문의: {SITE.email} · {SITE.mailOrderNote}
+                전화: {SITE.phone} · 문의: {SITE.email}
               </p>
+              <p>{SITE.mailOrderNote}</p>
             </div>
             <div className="space-y-0.5 border-t border-line pt-3">
               <p>오롭미 | All of Me — 재미와 자기 이해를 위한 콘텐츠이며, 의료·법률·투자 판단의 근거가 될 수 없어요.</p>

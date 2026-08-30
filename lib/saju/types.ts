@@ -114,9 +114,33 @@ export interface SajuResult {
   expert: ExpertPillarRow[];
   expertExtra: ExpertExtra;
   daewoon?: Daewoon; // 성별이 주어진 경우에만
+  /** 절입일 출생 정보 — adjusted면 월주(±연주)를 시각 기준으로 보정했음 (lib/saju/jeolip.ts) */
+  jeolip?: import("./jeolip").JeolipInfo;
 }
+
+// 상황 정보 선택지 — 입력 폼 칩과 검증 화이트리스트의 단일 진실.
+// 순서는 실측 수요 순(포스텔러 조회수·커뮤니티 질문 빈도)이라 폼 노출 순서로도 그대로 쓴다.
+export const LOVE_STATUS = ["솔로", "연애중", "기혼"] as const;
+export const LOVE_DURATION = ["1년 미만", "1~3년", "3~5년", "5년 이상"] as const;
+export const JOB_STATUS = [
+  "학생", "직장인", "사업·자영업", "프리랜서", "구직·이직 준비중", "쉬는 중",
+] as const;
+export const CONCERN_TOPIC = [
+  "연애·결혼", "직업·이직", "돈·재물", "인간관계", "건강", "학업·시험",
+] as const;
 
 export interface PersonInput extends SajuInput {
   name: string;
   gender: "남" | "여";
+  // ── 이하 전부 선택 — 없어도 리포트는 만들어진다 (기존 데이터 하위 호환) ──
+  /** 연애 상태. 연애·결혼 섹션을 상황에 맞게 쓰는 근거 */
+  loveStatus?: (typeof LOVE_STATUS)[number];
+  /** 연애/솔로 기간 */
+  loveDuration?: (typeof LOVE_DURATION)[number];
+  /** 직업 상황. 직업운을 뜬구름 잡지 않게 하는 근거 */
+  jobStatus?: (typeof JOB_STATUS)[number];
+  /** 지금 가장 궁금한 주제 */
+  concernTopic?: (typeof CONCERN_TOPIC)[number];
+  /** 자유 서술 고민 (200자). 위기 키워드 검출 시 프롬프트에 넣지 않는다 */
+  concern?: string;
 }

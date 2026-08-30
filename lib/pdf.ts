@@ -36,6 +36,9 @@ export async function buildReportPdf(input: PdfInput): Promise<Buffer> {
   const doc = new PDFDocument({
     size: "A4",
     margins: { top: 64, bottom: 64, left: 56, right: 56 },
+    // 목차의 쪽번호와 하단 "n / 총쪽수"는 전체 쪽수를 다 알아야 쓸 수 있다.
+    // bufferPages로 페이지를 붙들어 두고, 본문을 다 그린 뒤 되돌아가서 채운다.
+    bufferPages: true,
     info: {
       Title: `${input.persons[0].name}님의 ${input.productName}`,
       Author: SITE.brandFull,
@@ -113,19 +116,57 @@ export async function buildReportPdf(input: PdfInput): Promise<Buffer> {
     { width: W, align: "center" },
   );
 
+  // ── 목차 ────────────────────────────────────────────────
+  // 무형 상품의 부피를 한 장으로 물성화하는 장치. 상위 업체 10곳 중 5곳이 갤러리에
+  // 목차 이미지를 올려두고, 판매 문구의 항목 리스트와 실물을 대조시킨다.
+  const sections = input.order.filter((k) => input.blocks[k]?.trim());
+  doc.addPage();
+  doc.fontSize(9).fillColor(ACCENT).text(SITE.brandFull, 56, 64, { width: W });
+  doc.moveDown(0.6);
+  doc.fontSize(19).fillColor(INK).text("목차", 56, doc.y, { width: W });
+  doc.moveDown(0.4);
+  {
+    const y = doc.y;
+    doc.moveTo(56, y).lineTo(56 + W, y).strokeColor(LINE).lineWidth(1).stroke();
+  }
+  doc.moveDown(1.2);
+  // 쪽번호는 아직 모른다 — y좌표만 적어두고 본문을 다 그린 뒤 되돌아와 채운다
+  const tocRows: { key: string; y: number }[] = [];
+  for (const key of sections) {
+    const y = doc.y;
+    // 점선 리더를 먼저 깔고 그 위에 항목명을 얹는다 (순서가 반대면 글자가 점선에 뭉개진다)
+    doc.fontSize(11).fillColor(LINE).text(".".repeat(90), 56, y, {
+      width: W - 44,
+      align: "right",
+      lineBreak: false,
+    });
+    doc.fontSize(11.5).fillColor(INK).text(key, 56, y, { width: W - 60, align: "left" });
+    tocRows.push({ key, y });
+    doc.y = y + 26;
+  }
+  // 정렬 옵션이 붙은 text()는 doc.x를 옮겨놓는다. 여기서 되돌리지 않으면
+  // 이후 본문이 좁은 단으로 흘러 쪽수가 3배로 불어난다(실제로 26쪽 → 79쪽이 났다).
+  doc.x = 56;
+  const tocPageIndex = doc.bufferedPageRange().count - 1;
+
   // ── 본문 ────────────────────────────────────────────────
-  for (const key of input.order) {
+  const sectionStartPage: Record<string, number> = {};
+  for (const key of sections) {
     const body = input.blocks[key];
-    if (!body?.trim()) continue;
     doc.addPage();
-    doc.fontSize(9).fillColor(ACCENT).text(input.productName, { width: W });
+    sectionStartPage[key] = doc.bufferedPageRange().count - 1;
+    // x를 매번 명시한다 — doc.x에 기대면 앞선 정렬 텍스트에 밀려 단이 좁아진다
+    doc.fontSize(9).fillColor(ACCENT).text(input.productName, 56, 64, { width: W });
     doc.moveDown(0.6);
-    doc.fontSize(19).fillColor(INK).text(key, { width: W });
+    doc.fontSize(19).fillColor(INK).text(key, 56, doc.y, { width: W });
     doc.moveDown(0.3);
     const y = doc.y;
     doc.moveTo(56, y).lineTo(56 + W, y).strokeColor(LINE).lineWidth(1).stroke();
     doc.moveDown(1);
-    doc.fontSize(11).fillColor(INK).text(body.trim(), { width: W, align: "left", lineGap: 6 });
+    doc
+      .fontSize(11)
+      .fillColor(INK)
+      .text(body.trim(), 56, doc.y, { width: W, align: "left", lineGap: 6 });
   }
 
   // ── 안내 ────────────────────────────────────────────────
@@ -147,6 +188,51 @@ export async function buildReportPdf(input: PdfInput): Promise<Buffer> {
     { width: W, lineGap: 4 },
   );
 
+  // ── 되돌아가서 채우기 ───────────────────────────────────
+  const total = doc.bufferedPageRange().count;
+
+  // 목차 쪽번호 (사람이 세는 번호라 1부터)
+  doc.switchToPage(tocPageIndex);
+  for (const row of tocRows) {
+    doc
+      .fontSize(11.5)
+      .fillColor(ACCENT)
+      .text(String(sectionStartPage[row.key] + 1), 56, row.y, {
+        width: W,
+        align: "right",
+        lineBreak: false,
+      });
+  }
+
+  // 하단 쪽번호 "n / 총쪽수" — 표지(0쪽)는 비운다.
+  // 고객이 캡처해 후기에 올릴 때 분량이 화면 안 숫자로 증명된다(경쟁사 4곳이 쓰는 장치).
+  //
+  // ⚠️ 바닥 여백 안쪽이 아니면 pdfkit이 "넘쳤다"고 판단해 페이지를 새로 만든다.
+  //    쪽마다 두 줄을 쓰므로 26쪽짜리가 79쪽으로 불어났었다. 여백을 0으로 내리고 쓴 뒤 되돌린다.
+  const bottomMargin = doc.page.margins.bottom;
+  for (let i = 1; i < total; i++) {
+    doc.switchToPage(i);
+    doc.page.margins.bottom = 0;
+    doc
+      .fontSize(8.5)
+      .fillColor(SOFT)
+      .text(`${i + 1} / ${total}`, 56, doc.page.height - 44, {
+        width: W,
+        align: "center",
+        lineBreak: false,
+      });
+    doc
+      .fontSize(8.5)
+      .fillColor(LINE)
+      .text(SITE.brandName, 56, doc.page.height - 44, {
+        width: W,
+        align: "right",
+        lineBreak: false,
+      });
+    doc.page.margins.bottom = bottomMargin;
+  }
+
+  doc.flushPages();
   doc.end();
   await finished;
   return Buffer.concat(chunks);

@@ -19,6 +19,12 @@ function toFormValue(person: PersonInput): Partial<PersonFormValue> {
     isLeap: person.isLeap,
     date: `${person.year}-${pad(person.month)}-${pad(person.day)}`,
     hourValue: person.hourValue,
+    // 무료에서 이미 답한 상황 정보는 유료 폼에서 다시 묻지 않도록 프리필
+    loveStatus: person.loveStatus ?? "",
+    loveDuration: person.loveDuration ?? "",
+    jobStatus: person.jobStatus ?? "",
+    concernTopic: person.concernTopic ?? "",
+    concern: person.concern ?? "",
   };
 }
 

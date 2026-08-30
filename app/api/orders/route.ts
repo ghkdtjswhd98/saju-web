@@ -5,7 +5,7 @@ import { getPricing } from "@/lib/pricing";
 import { getProduct } from "@/lib/products";
 import { checkActionLimit, getClientIp } from "@/lib/ratelimit";
 import { computeAll } from "@/lib/saju/compute";
-import { parsePersonInput } from "@/lib/validate";
+import { parseEmail, parsePersonInput } from "@/lib/validate";
 import type { PersonInput } from "@/lib/saju/types";
 
 export const runtime = "nodejs";
@@ -30,11 +30,22 @@ async function handle(req: Request) {
     );
   }
 
-  let body: { productCode?: string; persons?: unknown[] };
+  let body: { productCode?: string; persons?: unknown[]; email?: unknown };
   try {
     body = await req.json();
   } catch {
     return NextResponse.json({ error: "잘못된 요청이에요." }, { status: 400 });
+  }
+
+  // 이메일은 필수 — 리포트 링크를 잃었을 때 재발송할 유일한 경로다.
+  // 단, 배포 전 탭(구 번들엔 이메일 칸이 없음)에서 오는 요청은 키 자체가 없다 —
+  // 그 경우만 통과시킨다(화면에 채울 칸이 없는 400은 막다른 길). 새 번들은 항상 키를 보낸다.
+  const email = parseEmail(body.email);
+  if (body.email !== undefined && !email) {
+    return NextResponse.json(
+      { error: "리포트를 보내드릴 이메일 주소를 정확히 입력해주세요." },
+      { status: 400 },
+    );
   }
 
   const product = getProduct(body.productCode ?? "");
@@ -74,6 +85,7 @@ async function handle(req: Request) {
     amount,
     status: "pending",
     inputData: { persons },
+    email,
   });
 
   return NextResponse.json({ orderId, amount });

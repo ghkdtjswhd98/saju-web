@@ -41,3 +41,15 @@ body {
   line-height: 1.6;
   word-break: keep-all;
 }
+
+/* 토스식 점진 입력 — 새 질문이 아래에서 떠오르는 등장 */
+@keyframes fadeSlideIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: none; }
+}
+.reveal-in {
+  animation: fadeSlideIn 0.35s ease-out;
+}
+@media (prefers-reduced-motion: reduce) {
+  .reveal-in { animation: none; }
+}

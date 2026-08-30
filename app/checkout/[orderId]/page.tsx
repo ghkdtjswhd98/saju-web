@@ -39,7 +39,9 @@ export default async function CheckoutPage({
         <p className="text-xs tracking-widest text-ink-soft">STEP 2 / 2 — 결제</p>
         <h1 className="mt-1 text-xl font-bold">{product.name}</h1>
         <p className="mt-1 text-sm text-ink-soft">
-          결제가 완료되면 바로 리포트 생성이 시작돼요 (약 1~2분)
+          {/* 서비스 제공기간 고지 — PG 심사 요건이자 원칙 1(실측 이하 표기): deep 실측 12~13분 */}
+          결제가 완료되면 바로 리포트 생성이 시작돼요 (
+          {product.code === "deep" ? "약 15분 이내" : "약 1~2분"})
         </p>
       </header>
       <div className="mt-6 rounded-2xl border border-line bg-card p-2">

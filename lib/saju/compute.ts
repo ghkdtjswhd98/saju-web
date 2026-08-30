@@ -1,6 +1,7 @@
 // 결정론적 사주 계산 엔진 — saju-mvp/index.html SECTION 7 이식
 // 환각 방지 원칙: 팔자/오행/십신/신살/별점은 전부 여기서 계산하고 Claude는 해석만 담당한다.
 import { calculateSaju, lunarToSolar } from "@fullstackfamily/manseryeok";
+import { checkJeolip, preciseDaewoonAge, type JeolipInfo } from "./jeolip";
 import {
   STEM_ELEMENT, BRANCH_ELEMENT, STEM_YINYANG, BRANCH_YINYANG, SHENG, KE,
   BRANCH_HIDDEN_STEMS, CHEONEUL_MAP, DOHWA_MAP, YEOKMA_MAP, HWAGAE_MAP,
@@ -228,35 +229,49 @@ export function getMonthlyPillars(year: number): { month: number; hangul: string
 // 절입일은 "같은 엔진의 월주가 바뀌는 날"을 일 단위로 스캔해 찾는다 — 절기 시각 데이터가
 // 전 연도를 커버하지 않아도 1900~2050 전 범위에서 월주 계산과 100% 자기일관.
 // (일 단위 정밀도 → 대운수 오차 최대 ±4개월. 나이 표기는 근사임을 전제로 사용)
+/** 간지 기둥을 60갑자 순환에서 step만큼 이동 (절입 보정용: -1 = 한 달 전 월주) */
+function shiftPillar(p: Pillars["month"], step: number): Pillars["month"] {
+  const s = STEMS_ORDER[(((STEMS_ORDER.indexOf(p.stem) + step) % 10) + 10) % 10];
+  const b = BRANCHES_ORDER[(((BRANCHES_ORDER.indexOf(p.branch) + step) % 12) + 12) % 12];
+  return { hangul: `${s}${b}`, hanja: `${STEM_HANJA[s]}${BRANCH_HANJA[b]}`, stem: s, branch: b };
+}
+
 export function computeDaewoon(
   solar: { year: number; month: number; day: number },
   yearStem: string,
   monthPillarHangul: string,
   gender: "남" | "여",
+  compIso?: string, // 출생 대표 시각 "YYYY-MM-DDTHH:mm" — 있으면 절입 테이블로 대운수 정밀 계산
 ): Daewoon {
   const forward = (STEM_YINYANG[yearStem] === "양") === (gender === "남");
 
-  const pillarAt = (d: Date) =>
-    calculateSaju(d.getUTCFullYear(), d.getUTCMonth() + 1, d.getUTCDate(), 12, 0).monthPillar;
+  // 1순위: 절입 시각 테이블 기반 정밀 대운수 (시각 단위 — 절입일 출생 보정과 일관됨)
+  let startAge = compIso ? preciseDaewoonAge(compIso, forward) : null;
 
-  const birthDate = new Date(Date.UTC(solar.year, solar.month - 1, solar.day));
-  const birthMonthPillar = pillarAt(birthDate);
-  let days = 15; // 방어 기본값 (스캔 실패 시 중간값)
-  const cursor = new Date(birthDate);
-  for (let i = 1; i <= 40; i++) {
-    cursor.setUTCDate(cursor.getUTCDate() + (forward ? 1 : -1));
-    try {
-      if (pillarAt(cursor) !== birthMonthPillar) {
+  // 폴백: 날짜 단위 스캔 (테이블 범위 밖 등)
+  if (startAge === null) {
+    const pillarAt = (d: Date) =>
+      calculateSaju(d.getUTCFullYear(), d.getUTCMonth() + 1, d.getUTCDate(), 12, 0).monthPillar;
+
+    const birthDate = new Date(Date.UTC(solar.year, solar.month - 1, solar.day));
+    const birthMonthPillar = pillarAt(birthDate);
+    let days = 15; // 방어 기본값 (스캔 실패 시 중간값)
+    const cursor = new Date(birthDate);
+    for (let i = 1; i <= 40; i++) {
+      cursor.setUTCDate(cursor.getUTCDate() + (forward ? 1 : -1));
+      try {
+        if (pillarAt(cursor) !== birthMonthPillar) {
+          days = i;
+          break;
+        }
+      } catch {
+        // 만세력 지원 범위(1900~2050) 경계 밖 — 경계까지의 일수로 근사
         days = i;
         break;
       }
-    } catch {
-      // 만세력 지원 범위(1900~2050) 경계 밖 — 경계까지의 일수로 근사
-      days = i;
-      break;
     }
+    startAge = Math.min(10, Math.max(1, Math.round(days / 3)));
   }
-  const startAge = Math.min(10, Math.max(1, Math.round(days / 3)));
 
   const si = STEMS_ORDER.indexOf(monthPillarHangul[0]);
   const bi = BRANCHES_ORDER.indexOf(monthPillarHangul[1]);
@@ -290,8 +305,10 @@ export function computeAll(input: SajuInput & { gender?: "남" | "여" }): SajuR
   }
 
   // 2. 만세력 호출 (시간 모름이면 정오 기준으로 호출하되 시주는 버림)
+  // 야자시("23", 23:30~24:00)는 일주를 당일로 유지해야 하므로 당일 00:00으로 호출하고
+  // 시주 천간만 아래 3.6에서 익일 일간 기준(오서둔)으로 교체한다.
   const hasHour = hourValue !== "unknown";
-  const hour = hasHour ? Number(hourValue) : 12;
+  const hour = hourValue === "23" ? 0 : hasHour ? Number(hourValue) : 12;
   const saju = calculateSaju(year, month, day, hour, 0);
 
   // 3. 4주(柱) 구조화
@@ -303,6 +320,32 @@ export function computeAll(input: SajuInput & { gender?: "남" | "여" }): SajuR
       ? { hangul: saju.hourPillar, hanja: saju.hourPillarHanja ?? "", stem: saju.hourPillar[0], branch: saju.hourPillar[1] }
       : null,
   };
+
+  // 3.5 절입(節入) 시각 보정 — 라이브러리는 절입일 00:00부터 새 달로 귀속(날짜 단위)하므로,
+  // 절입일에 절입 "시각 이전" 출생이면 월주를 한 칸 되돌린다 (입춘이면 연주도).
+  // 근거: 2026-08-25 교차검증(docs/saju-skills-benchmark.md) — 대운 방향까지 걸린 실버그.
+  const jc = checkJeolip(year, month, day, hasHour ? hourValue : "unknown");
+  if (jc.needShift) {
+    pillars.month = shiftPillar(pillars.month, -1);
+    if (jc.isIpchun) pillars.year = shiftPillar(pillars.year, -1);
+  }
+  const jeolip: JeolipInfo | undefined = jc.term
+    ? { adjusted: jc.adjusted, ambiguous: jc.ambiguous, term: jc.term, termTime: jc.termTime }
+    : undefined;
+
+  // 3.6 야자시(23:30~24:00) — 일주는 당일 유지(야자시파), 시주는 익일 일간 기준 자시(오서둔).
+  if (hourValue === "23") {
+    const nd = new Date(Date.UTC(year, month - 1, day + 1));
+    const nx = calculateSaju(nd.getUTCFullYear(), nd.getUTCMonth() + 1, nd.getUTCDate(), 0, 0);
+    if (nx.hourPillar) {
+      pillars.hour = {
+        hangul: nx.hourPillar,
+        hanja: nx.hourPillarHanja ?? "",
+        stem: nx.hourPillar[0],
+        branch: nx.hourPillar[1],
+      };
+    }
+  }
 
   // 4. 일간
   const dayStem = pillars.day.stem;
@@ -389,12 +432,12 @@ export function computeAll(input: SajuInput & { gender?: "남" | "여" }): SajuR
 
   // 성별이 주어진 경우에만 대운 계산 (year/month/day는 음력 입력 시 위에서 양력으로 변환됨)
   const daewoon = input.gender
-    ? computeDaewoon({ year, month, day }, pillars.year.stem, pillars.month.hangul, input.gender)
+    ? computeDaewoon({ year, month, day }, pillars.year.stem, pillars.month.hangul, input.gender, jc.compIso)
     : undefined;
 
   return {
     pillars, dayMaster, elementDist, sipsin, sipsinWeights,
     sinsal, ratings, hasHour, currentYear, currentYearPillar,
-    expert, expertExtra, daewoon,
+    expert, expertExtra, daewoon, jeolip,
   };
 }

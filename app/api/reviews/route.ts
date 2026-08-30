@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { eq } from "drizzle-orm";
+import { issueReviewCoupon, REVIEW_COUPON_BENEFIT } from "@/lib/coupons";
 import { getDb, reports, reviews } from "@/lib/db";
 import { checkActionLimit, getClientIp } from "@/lib/ratelimit";
 import type { PersonInput } from "@/lib/saju/types";
@@ -66,6 +67,7 @@ export async function POST(req: NextRequest) {
   }
 
   const persons = (report.inputData as { persons: PersonInput[] }).persons;
+  const isTester = report.orderId ? 0 : 1;
   await db
     .insert(reviews)
     .values({
@@ -75,12 +77,26 @@ export async function POST(req: NextRequest) {
       displayName: anonymize(persons?.[0]?.name ?? ""),
       productCode: report.productCode,
       // 주문 없이 발급된 리포트(체험단 증정)는 체험단 라벨 — 공정위 표시 지침
-      isTester: report.orderId ? 0 : 1,
+      isTester,
+      // 후기를 남기면 쿠폰을 주므로, 구매 후기라도 "대가를 받은 후기"가 된다.
+      // 체험단은 제품 자체가 대가이므로 그쪽 라벨을 우선한다.
+      rewardType: isTester ? "tester" : "coupon",
     })
     .onConflictDoUpdate({
       target: reviews.reportToken,
       set: { rating, text },
     });
 
-  return NextResponse.json({ ok: true });
+  // ⚠️ 별점과 무관하게 발급한다. 1점 후기에도 똑같이 준다 —
+  //    높은 별점에만 주는 순간 대가성 리뷰 유도가 되어 공정위 제재 대상이다.
+  //    발급 실패가 후기 저장을 되돌려서는 안 되므로 여기서 막지 않는다.
+  const coupon = await issueReviewCoupon(token).catch((e) => {
+    console.error("[api/reviews] 쿠폰 발급 실패:", e);
+    return null;
+  });
+
+  return NextResponse.json({
+    ok: true,
+    coupon: coupon ? { code: coupon, benefit: REVIEW_COUPON_BENEFIT } : null,
+  });
 }

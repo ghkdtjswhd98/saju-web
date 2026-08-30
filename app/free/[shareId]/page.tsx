@@ -9,6 +9,7 @@ import ShareBar from "@/components/ShareBar";
 import StreamingReport from "@/components/StreamingReport";
 import UpsellTeaser from "@/components/UpsellTeaser";
 import { computeChemistry } from "@/lib/saju/chemistry";
+import { getOhaengAffinity } from "@/lib/saju/ohaeng-chemistry";
 import { ILGAN_MAP, STEM_TO_KEY } from "@/lib/ilgan-content";
 import { getPricing } from "@/lib/pricing";
 import type { PersonInput, SajuResult } from "@/lib/saju/types";
@@ -125,26 +126,57 @@ export default async function FreeResultPage({
             ))}
           </>
         ) : (
-          <>
-            <PillarTable saju={sajus[0]} />
-            <StarProfile saju={sajus[0]} />
-            <ElementChart saju={sajus[0]} />
-            {(() => {
-              const ilganKey = STEM_TO_KEY[sajus[0].dayMaster.char];
-              const ilgan = ilganKey ? ILGAN_MAP[ilganKey] : null;
-              return ilgan ? (
-                <Link
-                  href={`/ilgan/${ilgan.key}`}
-                  className="flex items-center justify-between rounded-2xl border border-line bg-card px-5 py-3.5 text-sm transition hover:border-accent"
-                >
-                  <span>
-                    {ilgan.emoji} 내 일간 <b>{ilgan.korean}({ilgan.hanja})</b>은 어떤 사람일까?
-                  </span>
-                  <span className="text-accent-strong">→</span>
-                </Link>
-              ) : null;
-            })()}
-          </>
+          (() => {
+            const ilganKey = STEM_TO_KEY[sajus[0].dayMaster.char];
+            const ilgan = ilganKey ? ILGAN_MAP[ilganKey] : null;
+            const affinity = getOhaengAffinity(sajus[0].dayMaster.element);
+            return (
+              <>
+                {/* 일간 유형 배지 — "유형명 + 별명"이 한눈에 (16P 공식, 재미 조사 2026-08-12) */}
+                {ilgan && (
+                  <div className="rounded-2xl border-2 border-accent bg-accent-soft/40 p-5 text-center">
+                    <p className="text-lg font-bold text-accent-strong">
+                      {ilgan.emoji} {ilgan.korean}({ilgan.hanja}) 일간
+                    </p>
+                    <p className="mt-1 text-sm text-ink">{ilgan.nickname}</p>
+                  </div>
+                )}
+                <PillarTable saju={sajus[0]} />
+                <StarProfile saju={sajus[0]} />
+                <ElementChart saju={sajus[0]} />
+                {ilgan && (
+                  <Link
+                    href={`/ilgan/${ilgan.key}`}
+                    className="flex items-center justify-between rounded-2xl border border-line bg-card px-5 py-3.5 text-sm transition hover:border-accent"
+                  >
+                    <span>
+                      {ilgan.emoji} 내 일간 <b>{ilgan.korean}({ilgan.hanja})</b>은 어떤 사람일까?
+                    </span>
+                    <span className="text-accent-strong">→</span>
+                  </Link>
+                )}
+                {/* 궁합 유도 — 오행 상생상극(정적 규칙). "남 결과 궁금증"이 바이럴의 엔진 */}
+                {affinity && (
+                  <div className="rounded-2xl border border-line bg-card p-5">
+                    <p className="text-sm leading-6">
+                      {persons[0].name}님을 살려주는 건 <b>{affinity.feedsLabel}</b>,
+                      <br />
+                      긴장이 생기기 쉬운 건 <b>{affinity.pressesLabel}</b>이에요.
+                    </p>
+                    <p className="mt-1 text-[11px] text-ink-soft">
+                      오행 상생·상극 규칙으로 정해지는 값이에요 — 궁금한 그 사람은 무슨 일간일까요?
+                    </p>
+                    <Link
+                      href="/?mode=couple"
+                      className="mt-3 block rounded-xl border border-accent bg-accent-soft/40 px-4 py-2.5 text-center text-sm font-bold text-accent-strong transition hover:bg-accent-soft/70"
+                    >
+                      그 사람이랑 궁합 무료로 보기 →
+                    </Link>
+                  </div>
+                )}
+              </>
+            );
+          })()
         )}
 
         <StreamingReport
@@ -153,6 +185,17 @@ export default async function FreeResultPage({
           initialRawText={content?.rawText ?? null}
         />
       </div>
+
+      {/* 결과 카드 이미지 저장 — 캡처가 곧 광고 (워터마크 포함 한 장 카드) */}
+      {!isLove && report.status === "done" && (
+        <a
+          href={`/free/${shareId}/card-image`}
+          download={`오롭미_${persons[0].name}_사주카드.png`}
+          className="mt-4 block rounded-xl border border-line bg-card px-4 py-3 text-center text-sm font-bold transition hover:border-accent"
+        >
+          📸 결과 카드 이미지로 저장하기
+        </a>
+      )}
 
       <div className="mt-5">
         <ShareBar

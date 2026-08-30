@@ -16,12 +16,30 @@ export default function AdminConsole() {
   const [kind, setKind] = useState<"paid" | "tester">("paid");
   const [channel, setChannel] = useState("당근");
   const [amount, setAmount] = useState("");
+  const [email, setEmail] = useState("");
   const [persons, setPersons] = useState<PersonFormValue[]>([EMPTY_PERSON]);
   const [busy, setBusy] = useState<string | null>(null);
   const [error, setError] = useState("");
   const [issued, setIssued] = useState<Issued[]>([]);
+  const [emailed, setEmailed] = useState(false);
+  const [query, setQuery] = useState("");
+  const [couponCode, setCouponCode] = useState("");
+  const [couponResult, setCouponResult] = useState<{
+    status: string;
+    benefit?: string;
+    usedNote?: string | null;
+  } | null>(null);
   const [recent, setRecent] = useState<
-    { token: string; name: string; productCode: string; status: string; isPaid: boolean }[]
+    {
+      token: string;
+      name: string;
+      productCode: string;
+      status: string;
+      isPaid: boolean;
+      amount: number | null;
+      email: string | null;
+      channel: string | null;
+    }[]
   >([]);
 
   const product = PRODUCTS[productCode];
@@ -39,7 +57,7 @@ export default function AdminConsole() {
   useEffect(() => {
     setPersons((arr) => {
       if (arr.length === personCount) return arr;
-      return Array.from({ length: personCount }, (_, i) => arr[i] ?? { ...EMPTY_PERSON, gender: "남" });
+      return Array.from({ length: personCount }, (_, i) => arr[i] ?? EMPTY_PERSON);
     });
   }, [personCount]);
 
@@ -63,9 +81,25 @@ export default function AdminConsole() {
     return data;
   }
 
-  async function loadRecent() {
+  async function checkCoupon(redeem: boolean) {
+    setError("");
+    setCouponResult(null);
     try {
-      const data = await api({ action: "list" });
+      const data = await api({
+        action: "coupon",
+        code: couponCode.trim(),
+        redeem,
+        note: redeem ? "운영자 콘솔에서 사용 처리" : undefined,
+      });
+      setCouponResult(data);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "쿠폰 조회 실패");
+    }
+  }
+
+  async function loadRecent(q = query) {
+    try {
+      const data = await api({ action: "list", q, limit: 200 });
       setRecent(data.items);
     } catch (e) {
       setError(e instanceof Error ? e.message : "목록 조회 실패");
@@ -76,8 +110,13 @@ export default function AdminConsole() {
   async function issue() {
     setError("");
     setIssued([]);
-    if (!persons.every((p) => p.date)) {
-      setError("생년월일을 입력해주세요.");
+    setEmailed(false);
+    if (!persons.every((p) => p.date && p.gender)) {
+      setError("생년월일과 성별을 입력해주세요.");
+      return;
+    }
+    if (email.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email.trim())) {
+      setError("이메일 형식을 확인해주세요. (비워두면 메일 없이 발급돼요)");
       return;
     }
     setBusy("발급 중…");
@@ -88,9 +127,11 @@ export default function AdminConsole() {
         kind,
         channel,
         amount: amount ? Number(amount) : undefined,
+        email: email.trim() || undefined,
         persons: persons.map(personToApiInput),
       });
       const tokens: string[] = data.tokens;
+      setEmailed(Boolean(data.emailed));
       setIssued(tokens.map((t) => ({ token: t, productCode, status: "생성 중" })));
 
       for (let i = 0; i < tokens.length; i++) {
@@ -102,9 +143,11 @@ export default function AdminConsole() {
               (attempt > 1 ? ` · ${attempt}번째 구간` : " · 1~2분 걸려요"),
           );
           const body = await fetch(`/api/reports/${tokens[i]}/stream`).then((r) => r.text());
-          if (body.includes('"t":"done"') || body.includes('"t":"full"')) break;
+          // ⚠️ 완료 판정은 done만 본다. 이어받기 요청은 저장된 진행분을 t:"full"로 먼저
+          //    보내므로(재시도 화면 복구), full을 완료로 읽으면 2파트에서 멈춘다(실제 사고).
+          if (body.includes('"t":"done"')) break;
           if (body.includes('"t":"error"')) throw new Error("리포트 생성에 실패했어요. 다시 시도해주세요.");
-          // partial/busy면 이어서 다음 구간 호출
+          // partial/busy/full이면 이어서 다음 구간 호출
         }
         setIssued((arr) =>
           arr.map((x) => (x.token === tokens[i] ? { ...x, status: "완료" } : x)),
@@ -190,6 +233,21 @@ export default function AdminConsole() {
           </div>
         )}
 
+        {/* 당근 고객은 이메일을 안 주는 경우가 많아 선택값. 받아두면 링크 유실 문의가 사라진다. */}
+        <div>
+          <input
+            type="email"
+            inputMode="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            placeholder="이메일 (선택) — 넣으면 링크를 메일로도 보내요"
+            className="w-full rounded-xl border border-line bg-bg px-3 py-2.5 text-sm"
+          />
+          <p className="mt-1 text-xs text-ink-soft">
+            비워두면 메일 없이 발급돼요. 링크만 채팅으로 전달하면 됩니다.
+          </p>
+        </div>
+
         {persons.map((p, i) => (
           <div key={i} className="border-t border-line pt-4">
             {personCount === 2 && (
@@ -197,9 +255,14 @@ export default function AdminConsole() {
                 {i === 0 ? "신청자" : "상대"}
               </p>
             )}
+            {/* 운영자는 속도가 생명 — 점진 노출 없이 전부 펼친다.
+                고민 칸은 당근 채팅에서 손님이 말해준 걸 그대로 붙여넣는 용도 */}
             <PersonFields
               value={p}
               onChange={(v) => setPersons((arr) => arr.map((x, j) => (j === i ? v : x)))}
+              flow="all"
+              withExtras={i === 0}
+              withConcern={i === 0}
             />
           </div>
         ))}
@@ -225,6 +288,11 @@ export default function AdminConsole() {
       {issued.length > 0 && (
         <div className="rounded-2xl border-2 border-accent bg-card p-5 space-y-3">
           <h2 className="text-sm font-bold">발급 완료 — 아래를 당근 채팅에 붙여넣으세요</h2>
+          {emailed && (
+            <p className="rounded-lg bg-accent-soft/40 px-3 py-2 text-xs text-accent-strong">
+              📧 {email.trim()} 으로 링크 메일도 보냈어요.
+            </p>
+          )}
           {issued.map((r) => (
             <div key={r.token} className="rounded-xl bg-bg p-3 text-sm">
               <p className="font-medium">
@@ -257,31 +325,110 @@ export default function AdminConsole() {
         </div>
       )}
 
+      {/* 후기 쿠폰 조회 — 고객이 채팅으로 코드를 불러줄 때 여기서 확인하고 바로 사용 처리 */}
+      <div className="rounded-2xl border border-line bg-card p-5">
+        <h2 className="text-sm font-bold">후기 쿠폰 확인</h2>
+        <div className="mt-3 flex gap-2">
+          <input
+            value={couponCode}
+            onChange={(e) => setCouponCode(e.target.value.toUpperCase())}
+            placeholder="OROB-XXXX-XXXX"
+            className="flex-1 rounded-xl border border-line bg-bg px-3 py-2.5 font-mono text-sm"
+          />
+          <button
+            type="button"
+            onClick={() => checkCoupon(false)}
+            className="rounded-xl border border-line px-4 py-2.5 text-sm font-medium"
+          >
+            조회
+          </button>
+        </div>
+        {couponResult && (
+          <div className="mt-3 rounded-xl bg-bg p-3 text-sm">
+            {couponResult.status === "not_found" && (
+              <p className="text-danger">없는 코드예요. 다시 확인해주세요.</p>
+            )}
+            {couponResult.status === "used" && (
+              <p className="text-danger">
+                이미 사용된 코드예요{couponResult.usedNote ? ` (${couponResult.usedNote})` : ""}.
+              </p>
+            )}
+            {couponResult.status === "redeemed" && (
+              <p className="font-medium text-accent-strong">
+                ✅ 사용 처리 완료 — {couponResult.benefit}
+              </p>
+            )}
+            {couponResult.status === "valid" && (
+              <div>
+                <p className="font-medium text-accent-strong">
+                  ✅ 사용 가능 — {couponResult.benefit}
+                </p>
+                <button
+                  type="button"
+                  onClick={() => checkCoupon(true)}
+                  className="mt-2 rounded-lg bg-accent-strong px-3 py-1.5 text-xs font-bold text-white"
+                >
+                  사용 처리하기
+                </button>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+
       <div className="rounded-2xl border border-line bg-card p-5">
         <div className="flex items-center justify-between">
-          <h2 className="text-sm font-bold">최근 발급</h2>
-          <button type="button" onClick={loadRecent} className="text-xs text-accent-strong">
+          <h2 className="text-sm font-bold">발급 내역</h2>
+          <button type="button" onClick={() => loadRecent()} className="text-xs text-accent-strong">
             새로고침
           </button>
         </div>
-        <div className="mt-3 space-y-1.5">
+        {/* 계좌이체 주문은 입금자명으로 찾는다 — 검색이 없으면 채팅 응대가 막힌다 */}
+        <input
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") loadRecent();
+          }}
+          placeholder="이름 · 이메일 · 토큰으로 검색 (Enter)"
+          className="mt-3 w-full rounded-xl border border-line bg-bg px-3 py-2 text-sm"
+        />
+        <div className="mt-3 space-y-2">
           {recent.map((r) => (
-            <div key={r.token} className="flex items-center justify-between text-xs">
-              <span className="truncate">
-                {r.isPaid ? "💰" : "🎁"} {r.name} · {getProduct(r.productCode)?.name ?? r.productCode}
-              </span>
-              <span className="flex shrink-0 gap-2">
-                <span className="text-ink-soft">{r.status}</span>
-                <a href={`/report/${r.token}`} className="text-accent-strong">
-                  열기
-                </a>
-                <a href={`/report/${r.token}/pdf`} className="text-accent-strong">
-                  PDF
-                </a>
-              </span>
+            <div key={r.token} className="border-b border-line pb-2 last:border-0">
+              <div className="flex items-center justify-between text-xs">
+                <span className="truncate">
+                  {r.isPaid ? "💰" : "🎁"} <b>{r.name || "이름없음"}</b> ·{" "}
+                  {getProduct(r.productCode)?.name ?? r.productCode}
+                </span>
+                <span className="flex shrink-0 gap-2">
+                  <span className={r.status === "done" ? "text-ink-soft" : "text-danger"}>
+                    {r.status}
+                  </span>
+                  <a href={`/report/${r.token}`} className="text-accent-strong">
+                    열기
+                  </a>
+                  <a href={`/report/${r.token}/pdf`} className="text-accent-strong">
+                    PDF
+                  </a>
+                </span>
+              </div>
+              {(r.channel || r.amount || r.email) && (
+                <p className="mt-0.5 truncate text-[11px] text-ink-soft">
+                  {[
+                    r.channel,
+                    r.amount ? `${r.amount.toLocaleString()}원` : null,
+                    r.email,
+                  ]
+                    .filter(Boolean)
+                    .join(" · ")}
+                </p>
+              )}
             </div>
           ))}
-          {recent.length === 0 && <p className="text-xs text-ink-soft">새로고침을 눌러주세요.</p>}
+          {recent.length === 0 && (
+            <p className="text-xs text-ink-soft">새로고침을 눌러주세요.</p>
+          )}
         </div>
       </div>
     </div>

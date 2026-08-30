@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { trackPixel } from "@/components/MetaPixel";
 import PersonFields, { EMPTY_PERSON, personToApiInput, type PersonFormValue } from "./PersonFields";
 
@@ -10,14 +10,28 @@ type Mode = "single" | "couple";
 export default function FreeForm() {
   const router = useRouter();
   const [mode, setMode] = useState<Mode>("single");
+  // /?mode=couple 진입 지원 (무료 결과의 궁합 CTA가 이 링크를 씀).
+  // useSearchParams 대신 마운트 시 직접 읽는다 — 랜딩의 ISR 캐시(60초)를 깨지 않기 위해.
+  useEffect(() => {
+    try {
+      if (new URLSearchParams(window.location.search).get("mode") === "couple") setMode("couple");
+    } catch {
+      /* ignore */
+    }
+  }, []);
   const [me, setMe] = useState<PersonFormValue>(EMPTY_PERSON);
-  const [partner, setPartner] = useState<PersonFormValue>({ ...EMPTY_PERSON, gender: "남" });
+  // 상대 성별을 미리 정하지 않는다 — 명시적 선택이 점진 노출의 전제이고, 커플 구성을 가정하지 않는다
+  const [partner, setPartner] = useState<PersonFormValue>(EMPTY_PERSON);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   async function submit() {
     const persons = mode === "couple" ? [me, partner] : [me];
     for (const p of persons) {
+      if (!p.gender) {
+        setError("성별을 선택해주세요.");
+        return;
+      }
       if (!p.date) {
         setError(mode === "couple" ? "두 사람의 생년월일을 모두 입력해주세요." : "생년월일을 입력해주세요.");
         return;
@@ -68,14 +82,18 @@ export default function FreeForm() {
         ))}
       </div>
 
-      {mode === "single" ? (
-        <PersonFields value={me} onChange={setMe} />
-      ) : (
-        <div className="space-y-6">
-          <div>
+      {/* '나'의 PersonFields는 두 모드에서 같은 트리 위치를 유지해야 한다 —
+          삼항으로 갈라 그리면 탭 전환마다 리마운트되어 점진 노출 상태(reveal·시간 답변 여부)가
+          값 휴리스틱으로 재유도되면서 폼이 되감기거나 안 누른 답이 눌린 것처럼 표시된다.
+          상황 정보(연애·직업)는 무료에서도 받는다 — 유료 프리필로 이어짐. 고민은 유료 전용. */}
+      <div className="space-y-6">
+        <div>
+          {mode === "couple" && (
             <h3 className="mb-3 text-sm font-bold tracking-widest text-accent-strong">나</h3>
-            <PersonFields value={me} onChange={setMe} />
-          </div>
+          )}
+          <PersonFields value={me} onChange={setMe} withExtras />
+        </div>
+        {mode === "couple" && (
           <div className="border-t border-line pt-5">
             <h3 className="mb-3 text-sm font-bold tracking-widest text-accent-strong">상대</h3>
             <PersonFields
@@ -84,8 +102,8 @@ export default function FreeForm() {
               namePlaceholder="상대 이름 (또는 별칭)"
             />
           </div>
-        </div>
-      )}
+        )}
+      </div>
 
       {error && <p className="mt-3 text-sm text-danger">{error}</p>}
       <button

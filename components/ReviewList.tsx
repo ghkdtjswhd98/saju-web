@@ -11,11 +11,11 @@ function Stars({ n }: { n: number }) {
 }
 
 // 실후기 노출 섹션 — 가짜 후기 절대 금지.
-// 5건 미만이면 미노출: "후기 1명 · 평균 5.0"은 사회적 증거가 아니라 무실적 인증(역프루프)이다.
-// 수집(리포트 페이지 폼)은 계속되고, 5건이 쌓이면 자동으로 켜진다.
+// 3건 미만이면 미노출: "후기 1명 · 평균 5.0"은 사회적 증거가 아니라 무실적 인증(역프루프)이다.
+// 당근 진입으로 후기 수집 속도가 붙어 임계를 5→3으로 낮췄다. 3건이면 "여러 명"으로 읽힌다.
 export default async function ReviewList({ limit = 4 }: { limit?: number }) {
   const { count, avg, recent } = await getReviewSummary(limit);
-  if (count < 5) return null;
+  if (count < 3) return null;
 
   return (
     <section className="mt-12">
@@ -38,16 +38,23 @@ export default async function ReviewList({ limit = 4 }: { limit?: number }) {
               </span>
             </div>
             <p className="mt-2 text-sm leading-6">{r.text}</p>
+            {/* 대가성 표시 — 공정위 추천·보증 심사지침상 후기와 같은 화면에 붙어야 한다.
+                체험단은 제품 자체가 대가이므로 그 라벨 하나로 충분하고,
+                구매 후기라도 쿠폰을 받았으면 "리워드 제공"을 함께 단다. */}
             <p className="mt-2 text-xs text-ink-soft">
               {r.displayName} · {getProduct(r.productCode)?.name ?? r.productCode}
-              {r.isTester === 1 && (
+              {r.isTester === 1 ? (
                 <span className="ml-1.5 rounded-full bg-bg px-2 py-0.5 text-[10px]">
                   체험단 제공
                 </span>
-              )}
-              {r.isTester === 0 && (
+              ) : (
                 <span className="ml-1.5 rounded-full bg-accent-soft/60 px-2 py-0.5 text-[10px] text-accent-strong">
                   구매 확인됨
+                </span>
+              )}
+              {r.isTester === 0 && r.rewardType === "coupon" && (
+                <span className="ml-1.5 rounded-full bg-bg px-2 py-0.5 text-[10px]">
+                  리워드 제공
                 </span>
               )}
             </p>

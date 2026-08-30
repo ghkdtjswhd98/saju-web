@@ -25,9 +25,11 @@ export const HOUR_BRANCH_LABEL: Record<string, string> = {
   "12": "오시", "14": "미시", "16": "신시", "18": "유시", "20": "술시", "22": "해시",
 };
 
+// 자시는 조자시("0", 00:00~01:30)와 야자시("23", 23:30~24:00)로 분리 —
+// 야자시는 일주 유지 + 시천간 익일 기준(오서둔)이라 계산이 다르다 (compute.ts 3.6).
 export const HOUR_OPTIONS: { value: string; label: string }[] = [
   { value: "unknown", label: "모름" },
-  { value: "0", label: "자시 (23:30~01:30)" },
+  { value: "0", label: "자시 (00:00~01:30)" },
   { value: "2", label: "축시 (01:30~03:30)" },
   { value: "4", label: "인시 (03:30~05:30)" },
   { value: "6", label: "묘시 (05:30~07:30)" },
@@ -39,6 +41,7 @@ export const HOUR_OPTIONS: { value: string; label: string }[] = [
   { value: "18", label: "유시 (17:30~19:30)" },
   { value: "20", label: "술시 (19:30~21:30)" },
   { value: "22", label: "해시 (21:30~23:30)" },
+  { value: "23", label: "자시 (23:30~24:00)" },
 ];
 
 // 지장간 (본기 1.0, 중기 0.3, 여기 0.2) — 오행 분포 가중치 계산용

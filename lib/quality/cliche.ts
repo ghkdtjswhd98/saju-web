@@ -49,12 +49,24 @@ export function findCliches(text: string): ClicheHit[] {
     if (m) hits.push({ rule, excerpt: excerptAround(text, m.index) });
   }
 
+  // 십신 명칭은 두 글자라 일상 단어의 부분 문자열로 자주 오탐된다 —
+  // "과정인데"의 '정인', "상관없어요"의 '상관', "인식신경"의 '식신' 등 (실제 오탐 사례).
+  // 한국어에는 단어 경계가 없으므로: ① 앞이 한글이면 다른 단어의 꼬리로 보고 제외,
+  // ② '상관'은 뒤에 없/안/하지 가 붙는 관용 표현을 제외한다.
   for (const term of SIPSIN) {
-    const idx = text.indexOf(term);
-    if (idx >= 0) {
+    let from = 0;
+    while (true) {
+      const idx = text.indexOf(term, from);
+      if (idx < 0) break;
+      from = idx + 1;
+      const prev = idx > 0 ? text[idx - 1] : "";
+      if (/[가-힣]/.test(prev)) continue; // 앞이 한글 → "과정인데" 류
+      const after = text.slice(idx + term.length, idx + term.length + 3);
+      if (term === "상관" && /^\s*(없|안 |이?\s*아니|하지)/.test(after)) continue; // "상관없이" 류
       hits.push({ rule: "전문용어", excerpt: excerptAround(text, idx) });
-      break; // 하나만 나와도 실패라 첫 건만 보고
+      break;
     }
+    if (hits.some((h) => h.rule === "전문용어")) break; // 하나만 나와도 실패라 첫 건만 보고
   }
 
   const colds = text.match(COLD_READ) ?? [];

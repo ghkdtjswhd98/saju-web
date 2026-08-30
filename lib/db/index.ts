@@ -13,6 +13,7 @@ create table if not exists orders (
   payment_key text,
   input_data jsonb not null,
   report_token text,
+  email text,
   created_at timestamptz not null default now(),
   approved_at timestamptz
 );
@@ -44,6 +45,24 @@ create table if not exists reviews (
   display_name text not null,
   product_code text not null,
   is_tester integer not null default 0,
+  reward_type text not null default 'none',
+  created_at timestamptz not null default now()
+);
+create table if not exists coupon_codes (
+  code text primary key,
+  kind text not null,
+  benefit text not null,
+  issued_for_token text not null unique,
+  used_at timestamptz,
+  used_note text,
+  created_at timestamptz not null default now()
+);
+create table if not exists refund_requests (
+  id text primary key,
+  report_token text not null,
+  reason text not null,
+  contact text,
+  resolved integer not null default 0,
   created_at timestamptz not null default now()
 );
 `;
@@ -82,4 +101,4 @@ export function getDb() {
   return globalForDb.__db;
 }
 
-export { orders, reports, rateLimits, reviews } from "./schema";
+export { orders, reports, rateLimits, reviews, refundRequests, couponCodes } from "./schema";

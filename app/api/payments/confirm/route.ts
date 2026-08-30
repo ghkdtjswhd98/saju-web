@@ -1,9 +1,11 @@
 import { and, eq } from "drizzle-orm";
 import { nanoid } from "nanoid";
-import { NextResponse } from "next/server";
+import { after, NextResponse } from "next/server";
 import { getDb, orders, reports } from "@/lib/db";
+import { sendReportLinks } from "@/lib/email";
 import { getProduct } from "@/lib/products";
 import { computeAll } from "@/lib/saju/compute";
+import { siteUrl } from "@/lib/site";
 import type { PersonInput } from "@/lib/saju/types";
 
 export const runtime = "nodejs";
@@ -129,6 +131,26 @@ async function handle(req: Request) {
       .set({ status: "paid", paymentKey, reportToken: tokens[0], approvedAt: new Date() })
       .where(eq(orders.id, orderId));
   });
+
+  // 결제 폼에서 "이 주소로도 보내드려요"라고 약속했으므로 반드시 발송한다.
+  // after()로 응답 뒤에 실행 — 메일 지연이 결제 완료 화면을 붙잡지 않게 한다.
+  // (서버리스에서 await 없이 띄우면 함수가 먼저 죽어 발송이 유실되므로 after가 필수)
+  if (order.email) {
+    const base = siteUrl();
+    const to = order.email;
+    const links = reportCodes.map((code, i) => ({
+      label: getProduct(code)?.name ?? "리포트",
+      url: `${base}/report/${tokens[i]}`,
+    }));
+    after(async () => {
+      await sendReportLinks({
+        to,
+        name: persons[0].name || "고객",
+        productName: product?.name ?? "사주 리포트",
+        links,
+      });
+    });
+  }
 
   return NextResponse.json({ token: tokens[0] });
 }

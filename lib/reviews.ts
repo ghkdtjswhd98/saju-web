@@ -7,6 +7,8 @@ export type ReviewItem = {
   displayName: string;
   productCode: string;
   isTester: number;
+  /** none | tester | coupon — 대가성 표시 근거 (공정위 추천·보증 심사지침) */
+  rewardType: string;
   createdAt: Date;
 };
 
@@ -19,6 +21,7 @@ export async function getReviewSummary(limit = 6) {
       displayName: reviews.displayName,
       productCode: reviews.productCode,
       isTester: reviews.isTester,
+      rewardType: reviews.rewardType,
       createdAt: reviews.createdAt,
     })
     .from(reviews)
