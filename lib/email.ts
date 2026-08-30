@@ -108,6 +108,44 @@ export async function sendReportPdf(args: {
   }
 }
 
+/** 예측 검증 리마인더 — 6개월 전 리포트의 예측을 채점하러 오게 하는 재방문 트리거 */
+export async function sendPredictionReminder(args: {
+  to: string;
+  name: string;
+  token: string;
+}): Promise<boolean> {
+  const resend = getClient();
+  if (!resend) return false;
+  const name = escapeHtml(args.name);
+  const url = `${process.env.NEXT_PUBLIC_SITE_URL ?? "https://saju-web-orobmi.vercel.app"}/report/${args.token}`;
+  try {
+    const { error } = await resend.emails.send({
+      from: FROM,
+      to: args.to,
+      subject: `${name}님, 6개월 전 그 예측 — 맞았을까요? 🗓`,
+      html: `<div style="font-family:-apple-system,'Malgun Gothic',sans-serif;max-width:520px;margin:0 auto;padding:24px;color:#3d3d3d;line-height:1.7">
+  <p style="color:#8f7bb8;letter-spacing:4px;font-size:13px;margin:0">오롭미 | All of Me</p>
+  <h1 style="font-size:20px;margin:12px 0 4px">6개월 전, 저희가 ${name}님께 드린 예측이 있어요</h1>
+  <p style="font-size:14px;margin:0 0 16px">사주 리포트의 시간 예측은 시간이 지나야만 검증할 수 있어요. 오롭미는 그 검증을 피하지 않기로 했습니다 — 그때의 리포트를 다시 열어, 직접 채점해주세요. 빗나갔다면 그것도 그대로 기록해요.</p>
+  <p style="margin:0 0 24px"><a href="${url}" style="display:inline-block;background:#7c68a6;color:#fff;font-weight:bold;padding:12px 22px;border-radius:12px;text-decoration:none">리포트 다시 열고 채점하기</a></p>
+  <hr style="border:none;border-top:1px solid #e4ded6;margin:24px 0">
+  <p style="color:#9a948c;font-size:12px;margin:0">
+    ${SITE.brandFull} · 사업자등록번호 ${SITE.bizNumber} · 문의 ${SITE.email}<br>
+    이 메일은 구매하신 리포트의 예측 검증 안내를 위해 1회 발송됐어요.
+  </p>
+</div>`,
+    });
+    if (error) {
+      console.error("[email] 리마인더 발송 실패:", error);
+      return false;
+    }
+    return true;
+  } catch (e) {
+    console.error("[email] 리마인더 예외:", e);
+    return false;
+  }
+}
+
 export interface ReportMailArgs {
   to: string;
   name: string;

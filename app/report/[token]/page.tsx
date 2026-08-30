@@ -3,6 +3,8 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { eq } from "drizzle-orm";
 import { ElementChart, PillarTable, StarProfile } from "@/components/SajuCards";
+import AskReport from "@/components/AskReport";
+import PredictionScore from "@/components/PredictionScore";
 import ReviewForm from "@/components/ReviewForm";
 import StreamingReport from "@/components/StreamingReport";
 import { getDb, reports } from "@/lib/db";
@@ -121,6 +123,32 @@ export default async function ReportPage({
           >
             📄 PDF로 저장하기
           </a>
+        )}
+
+        {report.status === "done" && (
+          <AskReport
+            token={token}
+            initialQa={
+              ((report.content as { qa?: { q: string; a: string; at: string }[] } | null)?.qa ??
+                [])[0] ?? null
+            }
+          />
+        )}
+
+        {report.status === "done" && (
+          <PredictionScore
+            token={token}
+            createdAtIso={(report.completedAt ?? report.createdAt).toISOString()}
+            initialGrade={
+              (report.content as {
+                predictionGrade?: {
+                  verdict: "hit" | "half" | "miss";
+                  note?: string;
+                  at: string;
+                };
+              } | null)?.predictionGrade ?? null
+            }
+          />
         )}
 
         <ReviewForm token={token} initial={existingReview} />
