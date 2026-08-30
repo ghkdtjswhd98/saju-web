@@ -20,6 +20,12 @@ import {
   arg, generate, getModel, loadEnvLocal, ttiYearRelation,
 } from "./content-gen-lib";
 
+// 폴더명용 상품 한글 약칭 — 사장님이 탐색기에서 바로 알아보게 (2026-08-30 요청)
+const PRODUCT_KO: Record<string, string> = {
+  year: "올해운세", reunion: "재회", marriage: "결혼운", dohwa: "도화살",
+  crush: "짝사랑썸", love: "궁합", career: "직업재물", lifetime: "평생사주", deep: "심층사주",
+};
+
 // 상품별 댓글 CTA 키워드 — DM 자동화가 붙으면 이 키워드가 트리거가 된다
 const CTA_KEYWORD: Record<string, string> = {
   year: "남은운", reunion: "재회", marriage: "결혼운", dohwa: "도화",
@@ -86,7 +92,7 @@ ${TONES[tone]}
 > 재업로드 체크: [ ] 인스타 릴스 [ ] 틱톡 [ ] 유튜브 쇼츠 [ ] 네이버 클립
 
 `;
-  writeFileSync(join(outDir, `${tti.key}.md`), header + text, "utf8");
+  writeFileSync(join(outDir, `${tti.name}.md`), header + text, "utf8");
   console.log(`✅ ${tti.name} (${(text.length / 1000).toFixed(1)}k자)`);
 }
 
@@ -107,7 +113,7 @@ async function main() {
 
   const outDir = join(
     process.cwd(), "marketing", "shorts",
-    `${new Date().toISOString().slice(0, 10)}-${productCode}`,
+    `${new Date().toISOString().slice(0, 10)}-${PRODUCT_KO[productCode] ?? productCode}`,
   );
   mkdirSync(outDir, { recursive: true });
   console.log(`출력: ${outDir} / 대상 ${targets.length}띠 / 상품 ${productCode} / 말투 ${tone}`);

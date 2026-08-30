@@ -71,7 +71,11 @@ ${fewshot}
 
   const outDir = join(process.cwd(), "marketing", "threads");
   mkdirSync(outDir, { recursive: true });
-  const file = join(outDir, `${new Date().toISOString().slice(0, 10)}-${theme}.md`);
+  // 파일명은 한글 테마명 — 탐색기에서 바로 알아보게
+  const THEME_KO: Record<string, string> = {
+    mix: "종합", year: "올해운세", reunion: "재회", marriage: "결혼운", dohwa: "도화살", crush: "짝사랑썸",
+  };
+  const file = join(outDir, `${new Date().toISOString().slice(0, 10)}-${THEME_KO[theme] ?? theme}.md`);
   const header = `# 쓰레드 발행 대기 — ${new Date().toISOString().slice(0, 10)} (테마: ${theme})
 > 사용법: 하루 2~4개씩 복붙 발행. 발행한 글은 체크 표시. 반응 좋은 패턴은 pattern-library.md에 기록.
 
