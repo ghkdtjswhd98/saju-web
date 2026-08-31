@@ -116,6 +116,122 @@ export async function buildReportPdf(input: PdfInput): Promise<Buffer> {
     { width: W, align: "center" },
   );
 
+  // ── 사주 데이터 페이지 (2026-08-31 추가) ─────────────────
+  // 표지에 압축돼 있던 결정론적 계산값을 제대로 된 페이지로 펼친다.
+  // 페이지 수(=무형 상품의 유일한 부피 시그널)를 AI 비용 0원으로 늘리면서,
+  // "계산은 만세력으로 정확하게"라는 브랜드 약속을 실물로 보여주는 장치.
+  const pageHeader = (label: string) => {
+    doc.addPage();
+    doc.fontSize(9).fillColor(ACCENT).text(input.productName, 56, 64, { width: W });
+    doc.moveDown(0.6);
+    doc.fontSize(19).fillColor(INK).text(label, 56, doc.y, { width: W });
+    doc.moveDown(0.3);
+    const hy = doc.y;
+    doc.moveTo(56, hy).lineTo(56 + W, hy).strokeColor(LINE).lineWidth(1).stroke();
+    doc.moveDown(1);
+  };
+
+  // [데이터 1] 사주팔자 표 — 크게, 지장간 포함
+  pageHeader("나의 사주팔자");
+  {
+    const cw2 = W / 4;
+    const top2 = doc.y + 6;
+    const colDefs = [
+      { label: "시주", pl: p.hour },
+      { label: "일주", pl: p.day },
+      { label: "월주", pl: p.month },
+      { label: "년주", pl: p.year },
+    ];
+    colDefs.forEach((c, i) => {
+      const x = 56 + cw2 * i;
+      doc.fontSize(10).fillColor(SOFT).text(c.label, x, top2, { width: cw2, align: "center" });
+      doc
+        .fontSize(24)
+        .fillColor(INK)
+        .text(c.pl ? c.pl.hangul : "미상", x, top2 + 20, { width: cw2, align: "center" });
+      doc
+        .fontSize(14)
+        .fillColor(SOFT)
+        .text(c.pl ? c.pl.hanja : "―", x, top2 + 52, { width: cw2, align: "center" });
+    });
+    doc.y = top2 + 92;
+    doc.x = 56;
+    doc
+      .fontSize(11)
+      .fillColor(INK)
+      .text(
+        `일간(나를 나타내는 글자): ${input.saju.dayMaster.char} — ${input.saju.dayMaster.yinyang}${input.saju.dayMaster.element}의 기운`,
+        56, doc.y, { width: W, lineGap: 6 },
+      );
+    doc.moveDown(1);
+    doc
+      .fontSize(10)
+      .fillColor(SOFT)
+      .text(
+        "이 여덟 글자는 만세력 데이터(1900~2050년, 절기·음력 변환 포함) 기반의 결정론적 알고리즘으로 계산됐어요. 같은 생년월일시라면 언제 다시 계산해도 같은 값이 나오고, 다른 만세력 서비스와 대조해도 일치합니다. AI는 이 계산에 관여하지 않아요 — 해석만 담당합니다.",
+        56, doc.y, { width: W, lineGap: 5 },
+      );
+  }
+
+  // [데이터 2] 오행 분포 막대 그래프
+  pageHeader("나의 오행 분포");
+  {
+    const maxCount = Math.max(...input.saju.elementDist.map((e) => e.count), 1);
+    const barMaxW = W - 130;
+    let by = doc.y + 4;
+    for (const e of input.saju.elementDist) {
+      doc.fontSize(11).fillColor(INK).text(`${e.name}`, 56, by + 2, { width: 60 });
+      const bw = Math.max((e.count / maxCount) * barMaxW, 3);
+      doc.rect(120, by, bw, 16).fillColor(ACCENT).fillOpacity(0.75).fill();
+      doc.fillOpacity(1);
+      doc.fontSize(10).fillColor(SOFT).text(e.count.toFixed(1), 126 + bw, by + 2, { lineBreak: false });
+      by += 30;
+    }
+    doc.x = 56;
+    doc.y = by + 10;
+    doc
+      .fontSize(10)
+      .fillColor(SOFT)
+      .text(
+        "가중치: 천간 1.0 · 지지 본기 1.0 · 지장간 중기 0.3 · 여기 0.2. 몰려 있는 기운은 그 사람의 엔진이 되고, 부족한 기운은 평생의 과제가 됩니다 — 본문 해석의 근거가 전부 이 분포에서 나와요.",
+        56, doc.y, { width: W, lineGap: 5 },
+      );
+  }
+
+  // [데이터 3] 십신·신살·대운 시간표
+  pageHeader("십신 구성과 시간표");
+  {
+    doc.fontSize(11).fillColor(INK).text("십신(각 글자가 나에게 갖는 역할)", 56, doc.y, { width: W });
+    doc.moveDown(0.5);
+    for (const s of input.saju.sipsin) {
+      doc
+        .fontSize(10)
+        .fillColor(SOFT)
+        .text(`${s.position}  ${s.char}  —  ${s.label}`, 64, doc.y, { width: W - 8, lineGap: 3 });
+    }
+    if (input.saju.sinsal.length) {
+      doc.moveDown(1);
+      doc.fontSize(11).fillColor(INK).text("신살", 56, doc.y, { width: W });
+      doc.moveDown(0.4);
+      doc.fontSize(10).fillColor(SOFT).text(input.saju.sinsal.join(" · "), 64, doc.y, { width: W - 8 });
+    }
+    if (input.saju.daewoon) {
+      doc.moveDown(1);
+      doc.fontSize(11).fillColor(INK).text("인생 국면(대운) 시간표 — 10년 단위", 56, doc.y, { width: W });
+      doc.moveDown(0.5);
+      for (const d of input.saju.daewoon.pillars) {
+        doc
+          .fontSize(10)
+          .fillColor(SOFT)
+          .text(`${String(d.startAge).padStart(2, " ")}세 ~ ${d.endAge}세   ${d.hangul} (${d.hanja})`, 64, doc.y, {
+            width: W - 8,
+            lineGap: 3,
+          });
+      }
+    }
+    doc.x = 56;
+  }
+
   // ── 목차 ────────────────────────────────────────────────
   // 무형 상품의 부피를 한 장으로 물성화하는 장치. 상위 업체 10곳 중 5곳이 갤러리에
   // 목차 이미지를 올려두고, 판매 문구의 항목 리스트와 실물을 대조시킨다.
@@ -163,10 +279,11 @@ export async function buildReportPdf(input: PdfInput): Promise<Buffer> {
     const y = doc.y;
     doc.moveTo(56, y).lineTo(56 + W, y).strokeColor(LINE).lineWidth(1).stroke();
     doc.moveDown(1);
+    // 11.5pt/행간 7 — 모바일 캡처 가독성을 올리면서 장문 섹션이 자연스럽게 2쪽에 걸치게 (2026-08-31)
     doc
-      .fontSize(11)
+      .fontSize(11.5)
       .fillColor(INK)
-      .text(body.trim(), 56, doc.y, { width: W, align: "left", lineGap: 6 });
+      .text(body.trim(), 56, doc.y, { width: W, align: "left", lineGap: 7 });
   }
 
   // ── 안내 ────────────────────────────────────────────────

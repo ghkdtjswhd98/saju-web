@@ -30,7 +30,7 @@ export const PRODUCTS: Record<ProductCode, Product> = {
   deep: {
     code: "deep",
     name: "정통 심층사주 (프리미엄)",
-    cardTitle: "철학원 안 가도 되는 이유 — 26페이지 심층사주",
+    cardTitle: "철학원 안 가도 되는 이유 — 30페이지 심층사주",
     tagline: "10년 단위 대운까지 한 장씩, 평생 한 번 제대로 보는 사주",
     openPrice: 19900,
     listPrice: 29900,
@@ -39,10 +39,9 @@ export const PRODUCTS: Record<ProductCode, Product> = {
       "먼저 맞혀볼게요", "인생 총평", "타고난 기질", "숨은 재능", "재물운", "직업운", "연애·결혼운",
       "건강운", "인간관계", "대운 10년별 흐름", "올해와 내년", "인생의 전환점", "실천 조언",
     ],
-    // 실측(2026-08-05, 4단 분할 생성본): 22,963자 / 파트당 106~196초.
-    // PDF는 목차 페이지 추가 후 실측 27쪽 — 광고에는 26으로 적는다(수치는 항상 실측 이하).
-    // ⚠️ "먼저 맞혀볼게요"(900자+) 추가분은 아직 미실측 — 재생성 후 갱신할 것.
-    pdfPages: 26,
+    // 실측(2026-08-31, 데이터 3페이지 추가 레이아웃): 22,963자 / PDF 32쪽 → 광고 30쪽/22,000자.
+    // ⚠️ 당근 sale-image의 DANGGEUN.pages는 아직 26 — 당근 게시물 교체 시 함께 올릴 것(실물 초과 제공 상태라 문제는 없음).
+    pdfPages: 30,
     charCount: "22,000자",
   },
   bundle: {
@@ -55,8 +54,8 @@ export const PRODUCTS: Record<ProductCode, Product> = {
     personCount: 1,
     sections: ["평생사주 종합 리포트", "올해 운세 리포트", "직업·재물운 리포트"],
     bundleCodes: ["lifetime", "year", "career"],
-    pdfPages: 26,
-    charCount: "16,000자",
+    pdfPages: 36,
+    charCount: "13,000자",
   },
   lifetime: {
     code: "lifetime",
@@ -67,7 +66,7 @@ export const PRODUCTS: Record<ProductCode, Product> = {
     listPrice: 9900,
     personCount: 1,
     sections: ["인생 총평", "타고난 기질", "재물운", "직업운", "연애운", "건강운", "인생 국면별 흐름", "실천 조언"],
-    pdfPages: 10,
+    pdfPages: 13,
     charCount: "6,000자",
   },
   love: {
@@ -79,8 +78,8 @@ export const PRODUCTS: Record<ProductCode, Product> = {
     listPrice: 12900,
     personCount: 2,
     sections: ["케미 총평", "나의 연애 스타일", "상대의 연애 스타일", "끌림 포인트", "갈등 포인트", "관계 조언"],
-    pdfPages: 8,
-    charCount: "4,000자",
+    pdfPages: 11,
+    charCount: "3,500자",
   },
   year: {
     code: "year",
@@ -91,8 +90,8 @@ export const PRODUCTS: Record<ProductCode, Product> = {
     listPrice: 9900,
     personCount: 1,
     sections: ["올해 총평", "커리어·재물", "관계·연애", "건강·컨디션", "월별 흐름", "올해의 전략"],
-    pdfPages: 8,
-    charCount: "4,000자",
+    pdfPages: 11,
+    charCount: "3,000자",
   },
   career: {
     code: "career",
@@ -103,12 +102,12 @@ export const PRODUCTS: Record<ProductCode, Product> = {
     listPrice: 9900,
     personCount: 1,
     sections: ["총평", "강점과 재능", "맞는 일과 환경", "재물의 그릇", "올해의 커리어 흐름", "실천 조언"],
-    pdfPages: 8,
+    pdfPages: 11,
     charCount: "3,700자",
   },
   // ── 2026-08-27 확장 4종 — 압구정연애박사 벤치마킹 (같은 엔진, 주제 특화 재포장) ──
-  // 실측(2026-08-30, Opus 1회씩): reunion 3,773자/9쪽, marriage 3,831자/9쪽,
-  // dohwa 3,441자/9쪽, crush 3,538자/9쪽. 표기는 실측 이하(단일 표본이라 여유 6%+).
+  // 자수 실측(2026-08-30): reunion 3,773 / marriage 3,831 / dohwa 3,441 / crush 3,538.
+  // 쪽수 실측(2026-08-31, 데이터 3페이지 레이아웃): 전부 12쪽 → 광고 11쪽. 표기는 항상 실측 이하.
   reunion: {
     code: "reunion",
     name: "재회운세 리포트",
@@ -121,7 +120,7 @@ export const PRODUCTS: Record<ProductCode, Product> = {
       "지금 두 사람의 기운", "상대의 지금 마음결", "재회 가능성의 구조",
       "다시 만난다면 달라져야 할 것", "움직인다면 언제", "마음을 위한 조언",
     ],
-    pdfPages: 8,
+    pdfPages: 11,
     charCount: "3,500자",
   },
   marriage: {
@@ -136,7 +135,7 @@ export const PRODUCTS: Record<ProductCode, Product> = {
       "결혼운 총평", "만나게 될 배우자의 결", "결혼운이 짙어지는 시기",
       "결혼 전 의식할 나의 패턴", "올해의 인연운", "실천 조언",
     ],
-    pdfPages: 8,
+    pdfPages: 11,
     charCount: "3,500자",
   },
   dohwa: {
@@ -151,7 +150,7 @@ export const PRODUCTS: Record<ProductCode, Product> = {
       "판정 결과", "나의 매력 구조", "매력이 빛나는 순간과 그늘",
       "연애에서의 도화", "올해의 이성운", "실천 조언",
     ],
-    pdfPages: 8,
+    pdfPages: 11,
     charCount: "3,000자",
   },
   crush: {
@@ -166,7 +165,7 @@ export const PRODUCTS: Record<ProductCode, Product> = {
       "지금 두 사람의 온도", "상대가 나를 보는 결", "끌림의 구조",
       "머뭇거리게 만드는 것", "다가간다면 어떻게, 언제", "마음을 위한 조언",
     ],
-    pdfPages: 8,
+    pdfPages: 11,
     charCount: "3,000자",
   },
 };
