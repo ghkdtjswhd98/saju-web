@@ -3,6 +3,7 @@
 // ⚠️ 카운터는 실제 결제 완료(orders.status='paid') 수만 사용한다 — 가짜 희소성 금지.
 import { count, eq } from "drizzle-orm";
 import { getDb, orders } from "./db";
+import { isLaunchActive } from "./launch";
 import { PRODUCTS, type Product, type ProductCode } from "./products";
 
 const STEP = 1000;
@@ -14,7 +15,9 @@ export interface PricingInfo {
   prices: Record<ProductCode, { current: number; list: number; atCap: boolean }>;
 }
 
-export function priceFor(product: Product, paidCount: number): number {
+export function priceFor(product: Product, paidCount: number, now: Date = new Date()): number {
+  // 오픈 특가 기간이 끝나면 정가 — 상세페이지 타임어택이 거짓말이 되지 않게 하는 실제 집행부
+  if (!isLaunchActive(now)) return product.listPrice;
   const raised = product.openPrice + Math.floor(paidCount / PER_STEP) * STEP;
   return Math.min(raised, product.listPrice);
 }

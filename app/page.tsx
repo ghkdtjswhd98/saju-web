@@ -28,7 +28,7 @@ function ProductPosterSection({
           return (
             <Link
               key={p.code}
-              href={`/products#${p.code}`}
+              href={`/products/${p.code}`}
               className="group overflow-hidden rounded-2xl border border-line bg-card transition hover:border-accent"
             >
               {/* eslint-disable-next-line @next/next/no-img-element -- 자체 생성 라우트라 최적화 불필요 */}

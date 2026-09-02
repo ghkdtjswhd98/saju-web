@@ -65,16 +65,18 @@ export default async function ProductsPage() {
                 isBundle ? "border-2 border-accent" : "border-line"
               }`}
             >
-              {/* 포스터 — 압구정연애박사 벤치마킹: 이미지가 카드의 얼굴 */}
-              {/* eslint-disable-next-line @next/next/no-img-element -- 자체 생성 라우트 */}
-              <img
-                src={`/brand/poster?product=${p.code}`}
-                alt={p.name}
-                width={900}
-                height={600}
-                loading="lazy"
-                className="aspect-[3/2] w-full object-cover"
-              />
+              {/* 포스터 — 클릭 시 전용 상세페이지로 (타임어택·섹션 티저) */}
+              <Link href={`/products/${p.code}`}>
+                {/* eslint-disable-next-line @next/next/no-img-element -- 자체 생성 라우트 */}
+                <img
+                  src={`/brand/poster?product=${p.code}`}
+                  alt={p.name}
+                  width={900}
+                  height={600}
+                  loading="lazy"
+                  className="aspect-[3/2] w-full object-cover transition hover:opacity-95"
+                />
+              </Link>
               <div className="p-5">
               <div className="flex items-start justify-between gap-3">
                 <div>
@@ -127,10 +129,10 @@ export default async function ProductsPage() {
                 ))}
               </ul>
               <Link
-                href={`/checkout/new?product=${p.code}`}
+                href={`/products/${p.code}`}
                 className="mt-4 block rounded-xl bg-accent-strong px-4 py-3 text-center text-[15px] font-bold text-white transition hover:opacity-90"
               >
-                {p.personCount === 2 ? "두 사람 정보 입력하기" : "내 정보 입력하기"}
+                자세히 보기 →
               </Link>
               </div>
             </section>
