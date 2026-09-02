@@ -1,5 +1,7 @@
 import PDFDocument from "pdfkit";
 import { SITE } from "@/lib/site";
+import { BRANCH_ELEMENT, STEM_ELEMENT } from "@/lib/saju/constants";
+import { yearlyFlow, type MonthFlow } from "@/lib/saju/flow-score";
 import type { PersonInput, SajuResult } from "@/lib/saju/types";
 
 // 한글 가변 폰트(Noto Sans KR) 런타임 로드 — 저장소에 10MB 폰트를 넣지 않기 위해 CDN에서 받아
@@ -20,9 +22,75 @@ const INK = "#3d3d3d";
 const SOFT = "#7a7a7a";
 const ACCENT = "#7c68a6";
 const LINE = "#e4ded6";
+// 프리미엄화 2차 (2026-09-02, docs/benchmark-wealth-pdf.md) — 딥퍼플+금박 프레임 팔레트
+const GOLD = "#c1a05f";
+const COVER_BG = "#2d2350";
+const COVER_SOFT = "#c3b8ea";
+
+// 오행별 글자색 — 흰 배경용 / 어두운 표지용 (화=적, 수=흑청, 목=녹, 금=회금, 토=황토)
+const ELEMENT_COLOR: Record<string, string> = {
+  화: "#c0453b", 수: "#33475e", 목: "#2f7d5d", 금: "#8a8f98", 토: "#b07d2e",
+};
+const ELEMENT_COLOR_DARK: Record<string, string> = {
+  화: "#ff9188", 수: "#9db8d8", 목: "#7fd4ae", 금: "#d7dce4", 토: "#ffd27f",
+};
+function stemColor(ch: string, dark = false): string {
+  const el = STEM_ELEMENT[ch];
+  return (dark ? ELEMENT_COLOR_DARK : ELEMENT_COLOR)[el] ?? (dark ? "#ffffff" : INK);
+}
+function branchColor(ch: string, dark = false): string {
+  const el = BRANCH_ELEMENT[ch];
+  return (dark ? ELEMENT_COLOR_DARK : ELEMENT_COLOR)[el] ?? (dark ? "#ffffff" : INK);
+}
+
+// 챕터 구성 — "제N장" 오프너마다 원국표를 다시 싣는다 (경쟁사 최고 장치의 우리 버전).
+// key는 FORMATS marker.key와 일치해야 한다. 미정의 상품은 오프너 없이 기존 흐름.
+interface Chapter { at: string; n: number; title: string; quote: string }
+const CHAPTERS: Record<string, Chapter[]> = {
+  deep: [
+    { at: "먼저 맞혀볼게요", n: 1, title: "나라는 사람", quote: "이 리포트의 모든 문장은 위 여덟 글자에서 나옵니다" },
+    { at: "재물운", n: 2, title: "돈 · 일 · 사랑", quote: "재물과 일의 그릇은 타고난 구조가 먼저 정합니다" },
+    { at: "건강운", n: 3, title: "몸 · 사람 · 시간", quote: "관계와 컨디션에도 타고난 리듬이 있습니다" },
+    { at: "올해와 내년", n: 4, title: "앞으로", quote: "시간표를 아는 사람은 서두르지 않습니다" },
+  ],
+  lifetime: [
+    { at: "총평", n: 1, title: "나라는 사람", quote: "이 리포트의 모든 문장은 위 여덟 글자에서 나옵니다" },
+    { at: "재물운", n: 2, title: "삶의 네 영역", quote: "돈·일·사랑·몸은 하나의 구조가 다르게 드러난 것입니다" },
+    { at: "인생흐름", n: 3, title: "시간과 실천", quote: "흐름을 알면 오늘 할 일이 선명해집니다" },
+  ],
+  year: [
+    { at: "올해총평", n: 1, title: "올해의 지형", quote: "올해의 기운이 내 구조와 만나 흐름이 됩니다" },
+    { at: "월별흐름", n: 2, title: "월별 시간표", quote: "타이밍은 준비된 사람의 것입니다" },
+  ],
+  career: [
+    { at: "총평", n: 1, title: "나의 일의 결", quote: "맞는 일은 재능이 아니라 구조가 알려줍니다" },
+    { at: "재물그릇", n: 2, title: "재물과 타이밍", quote: "그릇을 알면 조급함이 줄어듭니다" },
+  ],
+  love: [
+    { at: "케미총평", n: 1, title: "두 사람의 케미", quote: "끌림에는 두 사주가 만든 이유가 있습니다" },
+    { at: "끌림", n: 2, title: "가까워지는 법", quote: "다름을 아는 것이 케미의 시작입니다" },
+  ],
+  reunion: [
+    { at: "지금의기운", n: 1, title: "지금의 두 사람", quote: "듣고 싶은 답이 아니라, 있는 그대로의 흐름을 봅니다" },
+    { at: "달라져야할것", n: 2, title: "다시 시작한다면", quote: "재회는 반복이 아니라 다른 시작이어야 합니다" },
+  ],
+  marriage: [
+    { at: "결혼운총평", n: 1, title: "나의 결혼 지도", quote: "배우자의 결은 내 구조가 먼저 말해줍니다" },
+    { at: "나의패턴", n: 2, title: "준비하는 시간", quote: "시기를 아는 것보다 준비가 먼저입니다" },
+  ],
+  dohwa: [
+    { at: "판정결과", n: 1, title: "판정과 구조", quote: "매력은 미신이 아니라 구조입니다" },
+    { at: "연애도화", n: 2, title: "연애와 올해", quote: "빛나는 순간은 아는 사람에게 옵니다" },
+  ],
+  crush: [
+    { at: "지금의온도", n: 1, title: "지금의 온도", quote: "짐작 대신, 두 사주의 실제 교차를 봅니다" },
+    { at: "머뭇거림", n: 2, title: "다가가는 법", quote: "속도보다 결이 맞아야 닿습니다" },
+  ],
+};
 
 export interface PdfInput {
   productName: string;
+  productCode?: string; // 챕터 오프너·월별 차트 분기용 (없으면 기본 흐름)
   persons: PersonInput[];
   saju: SajuResult; // 궁합이면 첫 번째 사람 기준 표
   blocks: Record<string, string>;
@@ -52,39 +120,69 @@ export async function buildReportPdf(input: PdfInput): Promise<Buffer> {
   const finished = new Promise<void>((resolve) => doc.on("end", () => resolve()));
 
   const W = doc.page.width - 56 * 2;
+  const PW = doc.page.width;
+  const PH = doc.page.height;
 
-  // ── 표지 ────────────────────────────────────────────────
-  doc.moveDown(4);
-  doc.fontSize(11).fillColor(ACCENT).text(SITE.brandFull, { align: "center" });
-  doc.moveDown(1.5);
-  doc.fontSize(26).fillColor(INK).text(input.productName, { align: "center" });
+  // ── 금박 프레임 — 표지를 제외한 모든 페이지에 그린다 ─────
+  // (경쟁사는 일러스트 테두리로 프리미엄 체감을 만들었다 — 우리는 절제된 이중 룰 프레임)
+  let frameOn = false;
+  const paintFrame = () => {
+    if (!frameOn) return;
+    doc.save();
+    doc.rect(22, 22, PW - 44, PH - 44).lineWidth(1.4).strokeColor(GOLD).stroke();
+    doc.rect(27, 27, PW - 54, PH - 54).lineWidth(0.5).strokeColor(ACCENT).strokeOpacity(0.45).stroke();
+    doc.strokeOpacity(1);
+    // 모서리 금박 포인트
+    for (const [cx, cy] of [[22, 22], [PW - 22, 22], [22, PH - 22], [PW - 22, PH - 22]] as const) {
+      doc.circle(cx, cy, 2.2).fillColor(GOLD).fill();
+    }
+    doc.restore();
+  };
+  doc.on("pageAdded", paintFrame);
+
+  // ── 표지 — 딥퍼플 + 금박 프리미엄 ───────────────────────
+  doc.rect(0, 0, PW, PH).fillColor(COVER_BG).fill();
+  doc.rect(30, 30, PW - 60, PH - 60).lineWidth(1.2).strokeColor(GOLD).stroke();
+  doc.y = 128;
+  doc.fontSize(12).fillColor(GOLD).text(SITE.brandFull, 56, doc.y, { width: W, align: "center", characterSpacing: 6 });
+  doc.moveDown(1.8);
+  doc.fontSize(27).fillColor("#ffffff").text(input.productName, 56, doc.y, { width: W, align: "center" });
   doc.moveDown(0.8);
   const who =
     input.persons.length === 2
       ? `${input.persons[0].name} ♥ ${input.persons[1].name}`
       : `${input.persons[0].name}님`;
-  doc.fontSize(16).fillColor(SOFT).text(who, { align: "center" });
+  doc.fontSize(16).fillColor(COVER_SOFT).text(who, 56, doc.y, { width: W, align: "center" });
 
   doc.moveDown(3);
-  // 사주팔자 표 (년/월/일/시)
+  // 사주팔자 표 (년/월/일/시) — 오행별 색으로
   const p = input.saju.pillars;
   const cols = [
-    { label: "시주", v: p.hour ? `${p.hour.hangul}\n${p.hour.hanja}` : "미상\n―" },
-    { label: "일주", v: `${p.day.hangul}\n${p.day.hanja}` },
-    { label: "월주", v: `${p.month.hangul}\n${p.month.hanja}` },
-    { label: "년주", v: `${p.year.hangul}\n${p.year.hanja}` },
+    { label: "시주", pl: p.hour },
+    { label: "일주", pl: p.day },
+    { label: "월주", pl: p.month },
+    { label: "년주", pl: p.year },
   ];
   const cw = W / 4;
   const top = doc.y;
   cols.forEach((c, i) => {
     const x = 56 + cw * i;
-    doc.fontSize(9).fillColor(SOFT).text(c.label, x, top, { width: cw, align: "center" });
-    doc.fontSize(15).fillColor(INK).text(c.v, x, top + 16, { width: cw, align: "center" });
+    doc.fontSize(9).fillColor(COVER_SOFT).text(c.label, x, top, { width: cw, align: "center" });
+    if (c.pl) {
+      const stem = c.pl.hangul.charAt(0);
+      const branch = c.pl.hangul.charAt(1);
+      doc.fontSize(17).fillColor(stemColor(stem, true)).text(stem, x, top + 17, { width: cw / 2 - 3, align: "right", lineBreak: false });
+      doc.fontSize(17).fillColor(branchColor(branch, true)).text(branch, x + cw / 2 + 3, top + 17, { width: cw / 2 - 3, align: "left", lineBreak: false });
+      doc.fontSize(11).fillColor(COVER_SOFT).text(c.pl.hanja, x, top + 40, { width: cw, align: "center" });
+    } else {
+      doc.fontSize(17).fillColor(COVER_SOFT).text("미상", x, top + 17, { width: cw, align: "center" });
+    }
   });
-  doc.y = top + 62;
+  doc.y = top + 68;
+  doc.x = 56;
   doc
     .fontSize(9)
-    .fillColor(SOFT)
+    .fillColor(COVER_SOFT)
     .text(
       `일간(나) ${input.saju.dayMaster.char} · ${input.saju.dayMaster.yinyang}${input.saju.dayMaster.element} — 만세력 데이터로 계산된 값이에요`,
       56,
@@ -95,26 +193,28 @@ export async function buildReportPdf(input: PdfInput): Promise<Buffer> {
   // 오행 분포
   doc.moveDown(1.5);
   const dist = input.saju.elementDist.map((e) => `${e.name} ${e.count.toFixed(1)}`).join("   ");
-  doc.fontSize(11).fillColor(INK).text(dist, { width: W, align: "center" });
+  doc.fontSize(11).fillColor("#ffffff").text(dist, 56, doc.y, { width: W, align: "center" });
 
   // 대운 시간표 (있으면)
   if (input.saju.daewoon) {
     doc.moveDown(2);
-    doc.fontSize(9).fillColor(SOFT).text("인생 국면(대운) 시간표", { width: W, align: "center" });
+    doc.fontSize(9).fillColor(GOLD).text("인생 국면(대운) 시간표", 56, doc.y, { width: W, align: "center" });
     doc.moveDown(0.4);
     const dw = input.saju.daewoon.pillars
       .map((d) => `${d.startAge}~${d.endAge}세 ${d.hangul}`)
       .join("   ·   ");
-    doc.fontSize(9.5).fillColor(INK).text(dw, { width: W, align: "center" });
+    doc.fontSize(9.5).fillColor(COVER_SOFT).text(dw, 56, doc.y, { width: W, align: "center" });
   }
 
-  doc.fontSize(9).fillColor(SOFT);
+  doc.fontSize(9).fillColor(COVER_SOFT);
   doc.text(
     `${input.createdAt.getFullYear()}.${String(input.createdAt.getMonth() + 1).padStart(2, "0")}.${String(input.createdAt.getDate()).padStart(2, "0")} 발행`,
     56,
-    doc.page.height - 96,
+    PH - 96,
     { width: W, align: "center" },
   );
+  // 표지 이후 페이지부터 프레임 활성화
+  frameOn = true;
 
   // ── 사주 데이터 페이지 (2026-08-31 추가) ─────────────────
   // 표지에 압축돼 있던 결정론적 계산값을 제대로 된 페이지로 펼친다.
@@ -265,10 +365,118 @@ export async function buildReportPdf(input: PdfInput): Promise<Buffer> {
   doc.x = 56;
   const tocPageIndex = doc.bufferedPageRange().count - 1;
 
+  // ── 챕터 오프너 — 원국표를 장마다 다시 싣는다 ───────────
+  const renderPillarRow = (yBase: number) => {
+    const cw3 = W / 4;
+    cols.forEach((c, i) => {
+      const x = 56 + cw3 * i;
+      doc.fontSize(9).fillColor(SOFT).text(c.label, x, yBase, { width: cw3, align: "center" });
+      if (c.pl) {
+        const stem = c.pl.hangul.charAt(0);
+        const branch = c.pl.hangul.charAt(1);
+        doc.fontSize(20).fillColor(stemColor(stem)).text(stem, x, yBase + 16, { width: cw3 / 2 - 4, align: "right", lineBreak: false });
+        doc.fontSize(20).fillColor(branchColor(branch)).text(branch, x + cw3 / 2 + 4, yBase + 16, { width: cw3 / 2 - 4, align: "left", lineBreak: false });
+        doc.fontSize(11).fillColor(SOFT).text(c.pl.hanja, x, yBase + 44, { width: cw3, align: "center" });
+      } else {
+        doc.fontSize(20).fillColor(SOFT).text("미상", x, yBase + 16, { width: cw3, align: "center" });
+      }
+    });
+    doc.x = 56;
+    doc.y = yBase + 72;
+  };
+
+  const renderChapterOpener = (ch: Chapter) => {
+    doc.addPage();
+    doc.y = 150;
+    doc.fontSize(12).fillColor(GOLD).text(`제 ${ch.n} 장`, 56, doc.y, { width: W, align: "center", characterSpacing: 4 });
+    doc.moveDown(0.6);
+    doc.fontSize(24).fillColor(INK).text(ch.title, 56, doc.y, { width: W, align: "center" });
+    doc.moveDown(2.5);
+    renderPillarRow(doc.y);
+    doc.moveDown(0.8);
+    doc
+      .fontSize(9)
+      .fillColor(SOFT)
+      .text(
+        `${input.persons[0].name}님의 사주팔자 (만세력 계산값${input.persons.length === 2 ? " · 신청자 기준" : ""})`,
+        56, doc.y, { width: W, align: "center" },
+      );
+    // 하단 한 줄 명제 — 이 장의 읽기 렌즈
+    const qy = PH - 170;
+    doc.rect(56, qy, W, 40).fillColor("#f4f1ec").fill();
+    doc.fontSize(11).fillColor(ACCENT).text(`“${ch.quote}”`, 56, qy + 13, { width: W, align: "center" });
+  };
+
+  // ── 월별 흐름 지수 차트 — 결정론 값 (합·충·형 밀도) ─────
+  const renderFlowChart = (years: number[]) => {
+    doc.addPage();
+    doc.fontSize(9).fillColor(ACCENT).text(input.productName, 56, 64, { width: W });
+    doc.moveDown(0.6);
+    doc.fontSize(19).fillColor(INK).text(`월별 흐름 지수 (${years.join("·")})`, 56, doc.y, { width: W });
+    doc.moveDown(0.3);
+    const hy = doc.y;
+    doc.moveTo(56, hy).lineTo(56 + W, hy).strokeColor(LINE).lineWidth(1).stroke();
+
+    const flows: (MonthFlow & { year: number })[] = years.flatMap((y) =>
+      yearlyFlow(input.saju, y).map((m) => ({ ...m, year: y })),
+    );
+    const chartX = 70;
+    const chartW = W - 30;
+    const chartTop = hy + 34;
+    const chartH = 190;
+    const yOf = (score: number) => chartTop + chartH - ((score - 0) / 100) * chartH;
+    const xOf = (i: number) => chartX + (chartW / (flows.length - 1)) * i;
+
+    // 가이드 라인 (상승 60 / 주의 40)
+    for (const [v, label] of [[60, "상승"], [40, "주의"]] as const) {
+      const gy = yOf(v);
+      doc.moveTo(chartX, gy).lineTo(chartX + chartW, gy).dash(3, { space: 3 }).strokeColor(LINE).lineWidth(0.8).stroke().undash();
+      doc.fontSize(7.5).fillColor(SOFT).text(`${v} ${label}`, chartX - 14, gy - 4, { width: 40, lineBreak: false });
+    }
+    // 꺾은선 — 구간 색은 두 점의 평균 밴드
+    const bandColor = { up: "#2f7d5d", mid: "#b07d2e", watch: "#c0453b" } as const;
+    for (let i = 1; i < flows.length; i++) {
+      const avg = (flows[i - 1].score + flows[i].score) / 2;
+      const color = avg >= 60 ? bandColor.up : avg >= 40 ? bandColor.mid : bandColor.watch;
+      doc.moveTo(xOf(i - 1), yOf(flows[i - 1].score)).lineTo(xOf(i), yOf(flows[i].score))
+        .lineWidth(2).strokeColor(color).stroke();
+    }
+    flows.forEach((f, i) => {
+      doc.circle(xOf(i), yOf(f.score), 2.4).fillColor(bandColor[f.band]).fill();
+      const every = flows.length > 12 ? 3 : 1;
+      if (i % every === 0) {
+        doc.fontSize(7).fillColor(SOFT).text(
+          flows.length > 12 ? `${String(f.year).slice(2)}.${f.month}` : `${f.month}월`,
+          xOf(i) - 12, chartTop + chartH + 6, { width: 26, align: "center", lineBreak: false },
+        );
+      }
+    });
+
+    // TOP 3 — 지수 상위 달
+    const top3 = [...flows].sort((a, b) => b.score - a.score).slice(0, 3);
+    doc.x = 56;
+    doc.y = chartTop + chartH + 30;
+    doc.fontSize(12).fillColor(INK).text(
+      `기회의 달 TOP 3:  ${top3.map((t) => `${t.year}년 ${t.month}월 (${t.score})`).join("  ·  ")}`,
+      56, doc.y, { width: W },
+    );
+    doc.moveDown(1);
+    doc
+      .fontSize(9)
+      .fillColor(SOFT)
+      .text(
+        "이 지수는 각 달의 월건(月建) 지지가 내 사주 지지와 만드는 합(끌어주는 기운)·충(부딪히는 기운)·형의 밀도를 점수화한 결정론 값이에요. 같은 사주라면 언제 다시 계산해도 같은 곡선이 나옵니다. 높은 달은 판을 벌리기에, 낮은 달은 다지기에 유리한 경향으로 읽어주세요 — 확정 예언이 아니라 리듬의 지도입니다.",
+        56, doc.y, { width: W, lineGap: 5 },
+      );
+  };
+
   // ── 본문 ────────────────────────────────────────────────
+  const chapters = input.productCode ? (CHAPTERS[input.productCode] ?? []) : [];
   const sectionStartPage: Record<string, number> = {};
   for (const key of sections) {
     const body = input.blocks[key];
+    const ch = chapters.find((c) => c.at === key);
+    if (ch) renderChapterOpener(ch);
     doc.addPage();
     sectionStartPage[key] = doc.bufferedPageRange().count - 1;
     // x를 매번 명시한다 — doc.x에 기대면 앞선 정렬 텍스트에 밀려 단이 좁아진다
@@ -284,6 +492,13 @@ export async function buildReportPdf(input: PdfInput): Promise<Buffer> {
       .fontSize(11.5)
       .fillColor(INK)
       .text(body.trim(), 56, doc.y, { width: W, align: "left", lineGap: 7 });
+
+    // 월별 흐름 차트 — 시간을 다루는 섹션 뒤에 결정론 차트를 붙인다
+    if (input.productCode === "year" && key === "월별흐름") {
+      renderFlowChart([input.saju.currentYear]);
+    } else if (input.productCode === "deep" && key === "올해와 내년") {
+      renderFlowChart([input.saju.currentYear, input.saju.currentYear + 1]);
+    }
   }
 
   // ── 안내 ────────────────────────────────────────────────

@@ -50,6 +50,7 @@ export async function buildPdfForReport(
   const productName = getProduct(report.productCode)?.name ?? "사주 리포트";
   const pdf = await buildReportPdf({
     productName,
+    productCode: report.productCode,
     persons,
     saju,
     blocks,

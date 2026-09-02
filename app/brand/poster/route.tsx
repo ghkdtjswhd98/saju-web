@@ -91,7 +91,7 @@ const ARTS: Record<string, Art> = {
   deep: {
     bg: "linear-gradient(160deg, #1c1a17 0%, #2e2a24 55%, #453d31 100%)",
     fg: "#ecd9a0", sub: "#b3a88f",
-    badge: "30페이지 프리미엄",
+    badge: "35페이지 프리미엄",
     question: "철학원 안 가도 되는 이유",
     title: "정통 심층사주",
     emoji: "📜",
