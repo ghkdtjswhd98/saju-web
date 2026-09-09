@@ -38,12 +38,14 @@ export default function RootLayout({
       <body className="min-h-full flex flex-col">
         <header className="border-b border-line bg-card/70 backdrop-blur sticky top-0 z-10">
           <div className="mx-auto max-w-xl px-5 py-3 flex items-center justify-between">
+            {/* 로고는 원래 클래스 유지 — inline-flex로 바꾸면 '오롭미'와 '| All of Me' 사이 공백이 사라진다(권고 3 범위도 아님) */}
             <Link href="/" className="font-bold tracking-tight text-ink">
               오롭미 <span className="text-ink-soft font-normal text-sm">| All of Me</span>
             </Link>
+            {/* 히트 영역 44px(권고 3) — px/-mr로 우측 확장, -my-2.5로 헤더 높이(48px)는 그대로 */}
             <Link
               href="/products"
-              className="text-sm text-accent-strong font-medium hover:underline"
+              className="-my-2.5 -mr-3 inline-flex min-h-11 items-center px-3 text-sm text-accent-strong font-medium hover:underline"
             >
               심층 리포트
             </Link>

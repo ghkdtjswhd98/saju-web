@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { PriceCounter, PriceTag } from "@/components/PriceTag";
 import ReviewList from "@/components/ReviewList";
+import { POSTER_BG } from "@/lib/poster-art";
 import { getPricing } from "@/lib/pricing";
 import { PRODUCTS } from "@/lib/products";
 
@@ -67,13 +68,15 @@ export default async function ProductsPage() {
             >
               {/* 포스터 — 클릭 시 전용 상세페이지로 (타임어택·섹션 티저) */}
               <Link href={`/products/${p.code}`}>
+                {/* love119 모바일 벤치마킹(권고 1): 로딩 중 흰 빈칸 대신 상품 무드색 자리표시 */}
                 {/* eslint-disable-next-line @next/next/no-img-element -- 자체 생성 라우트 */}
                 <img
-                  src={`/brand/poster?product=${p.code}`}
+                  src={`/brand/poster/${p.code}`}
                   alt={p.name}
                   width={900}
                   height={600}
                   loading="lazy"
+                  style={{ backgroundColor: POSTER_BG[p.code] }}
                   className="aspect-[3/2] w-full object-cover transition hover:opacity-95"
                 />
               </Link>

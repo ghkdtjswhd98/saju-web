@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useImperativeHandle, useRef, useState, type Ref } from "react";
 import { HOUR_OPTIONS } from "@/lib/saju/constants";
 import { CONCERN_TOPIC, JOB_STATUS, LOVE_DURATION, LOVE_STATUS } from "@/lib/saju/types";
 
@@ -33,6 +33,15 @@ export const EMPTY_PERSON: PersonFormValue = {
   concernTopic: "",
   concern: "",
 };
+
+/** 부모(FreeForm)가 제출 버튼에서 호출하는 핸들 — 아직 안 열린 필수 질문을 열어주거나, 열려 있는 빈 질문으로 데려간다 */
+export interface PersonFieldsHandle {
+  /**
+   * 필수 질문(성별→생년월일) 중 첫 번째로 비어 있는 것을 찾아 열고(reveal advance) 스크롤+포커스한다.
+   * wasVisible=false면 방금 열린 것 — 에러 문구 없이 다음 질문 등장 자체가 안내가 된다.
+   */
+  focusFirstMissing: () => { missing: "gender" | "date" | null; wasVisible: boolean };
+}
 
 export function personToApiInput(v: PersonFormValue) {
   const [y, m, d] = v.date.split("-").map(Number);
@@ -68,11 +77,14 @@ const Q = {
 } as const;
 
 function Chip({
+  ref,
   selected,
   onClick,
   children,
   small = false,
 }: {
+  /** 포커스 이동용(focusFirstMissing) — 첫 성별 칩에만 붙는다 */
+  ref?: Ref<HTMLButtonElement>;
   selected: boolean;
   onClick: () => void;
   children: React.ReactNode;
@@ -80,9 +92,10 @@ function Chip({
 }) {
   return (
     <button
+      ref={ref}
       type="button"
       onClick={onClick}
-      className={`rounded-xl border transition ${small ? "px-3 py-2 text-[13px]" : "px-3 py-2.5 text-sm"} ${
+      className={`rounded-xl border transition ${small ? "min-h-10 px-3 py-2 text-[13px]" : "min-h-11 px-3 py-2.5 text-sm"} ${
         selected
           ? "border-accent bg-accent-soft font-medium text-accent-strong"
           : "border-line bg-white text-ink"
@@ -98,7 +111,9 @@ function SkipButton({ onClick }: { onClick: () => void }) {
     <button
       type="button"
       onClick={onClick}
-      className="mt-2 text-xs text-ink-soft underline underline-offset-2"
+      // 탭 영역 44px 확보 — 아래쪽으로만 확장(mt-2 위치·블록 높이는 그대로). 위로 늘리면 바로 위 칩 하단과 겹쳐
+      // 칩을 탭했는데 건너뛰기가 눌리는 문제가 있어 -mt를 쓰지 않는다. 아래 -mb-7은 space-y-5 여백을 쓰는 것.
+      className="mt-2 -mb-7 inline-flex min-h-11 items-start text-xs text-ink-soft underline underline-offset-2"
     >
       건너뛰기 — 답하지 않아도 리포트는 만들어져요
     </button>
@@ -122,13 +137,17 @@ function Reveal({ children, active }: { children: React.ReactNode; active: boole
 }
 
 export default function PersonFields({
+  ref,
   value,
   onChange,
-  namePlaceholder = "이름 (결과에 표시돼요)",
+  // 서버(lib/validate)가 빈 이름을 "고객"으로 받으므로 이름은 선택 — 버튼이 막다른 길이 되지 않게 문구로도 알린다
+  namePlaceholder = "이름 (선택 · 결과에 표시돼요)",
   flow = "steps",
   withExtras = false,
   withConcern = false,
 }: {
+  /** React 19 — ref를 일반 prop으로 받는다(forwardRef 불필요). 핸들 형태는 PersonFieldsHandle */
+  ref?: Ref<PersonFieldsHandle>;
   value: PersonFormValue;
   onChange: (v: PersonFormValue) => void;
   namePlaceholder?: string;
@@ -162,11 +181,37 @@ export default function PersonFields({
   // 상호작용 여부를 따로 기억한다. 프리필(date 존재)이면 그 흐름에서 이미 답한 것.
   const [hourTouched, setHourTouched] = useState(() => flow === "all" || Boolean(value.date));
 
+  // 제출 버튼이 "화면에 없는 질문"을 가리키는 에러를 내지 않게 — 부모가 이 핸들로 빈 필수 질문을 열거나 데려간다.
+  // 이름이 비어 있어도 성별을 연다(이름은 선택).
+  const genderChipRef = useRef<HTMLButtonElement>(null);
+  const dateInputRef = useRef<HTMLInputElement>(null);
+  // deps 없이 매 렌더 갱신 — value·reveal 최신값을 항상 보게 (호출은 제출 클릭 때뿐이라 비용 무시)
+  useImperativeHandle(ref, () => ({
+    focusFirstMissing() {
+      const missing = !value.gender ? "gender" : !value.date ? "date" : null;
+      if (!missing) return { missing, wasVisible: true };
+      const q = missing === "gender" ? Q.gender : Q.birth;
+      const wasVisible = show(q);
+      if (!wasVisible) advance(q);
+      // 방금 열린 경우엔 커밋 후에야 요소가 생기므로 태스크 큐 뒤로 미룬다(setTimeout 0) — rAF는 백그라운드 탭에서 멈춰 포커스가 누락된다. Reveal의 nearest 스크롤 뒤에 center로 덮는다
+      const go = () => {
+        const el = missing === "gender" ? genderChipRef.current : dateInputRef.current;
+        if (!el) return;
+        el.scrollIntoView({ behavior: "smooth", block: "center" });
+        el.focus({ preventScroll: true });
+      };
+      if (wasVisible) go();
+      else setTimeout(go, 0);
+      return { missing, wasVisible };
+    },
+  }));
+
   return (
     <div className="space-y-5">
       {/* 1. 이름 */}
       <div>
         <label className="block text-sm text-ink-soft mb-1">이름</label>
+        {/* 입력 글자 16px(text-base) — iOS Safari는 16px 미만 입력에 포커스하면 자동 확대한다(뷰포트 maximum-scale 우회 금지). 아래 date·select·textarea도 동일 */}
         <input
           type="text"
           value={value.name}
@@ -176,7 +221,7 @@ export default function PersonFields({
           }}
           placeholder={namePlaceholder}
           maxLength={20}
-          className="w-full rounded-lg border border-line bg-white px-3 py-2.5 text-[15px] focus:border-accent focus:outline-none"
+          className="w-full rounded-lg border border-line bg-white px-3 py-2.5 text-base focus:border-accent focus:outline-none"
         />
       </div>
 
@@ -185,9 +230,10 @@ export default function PersonFields({
         <Reveal active={reveal === Q.gender}>
           <label className="block text-sm text-ink-soft mb-1">성별</label>
           <div className="grid grid-cols-2 gap-2">
-            {(["여", "남"] as const).map((g) => (
+            {(["여", "남"] as const).map((g, i) => (
               <Chip
                 key={g}
+                ref={i === 0 ? genderChipRef : undefined}
                 selected={value.gender === g}
                 onClick={() => {
                   set({ gender: g });
@@ -215,6 +261,7 @@ export default function PersonFields({
             </div>
           </div>
           <input
+            ref={dateInputRef}
             type="date"
             value={value.date}
             min="1900-01-01"
@@ -223,7 +270,7 @@ export default function PersonFields({
               set({ date: e.target.value });
               if (e.target.value) advance(Q.hour);
             }}
-            className="w-full rounded-lg border border-line bg-white px-3 py-2.5 text-[15px] focus:border-accent focus:outline-none"
+            className="w-full rounded-lg border border-line bg-white px-3 py-2.5 text-base focus:border-accent focus:outline-none"
           />
           {value.calendar === "음력" && (
             <label className="mt-2 flex items-center gap-2 text-sm text-ink">
@@ -258,7 +305,7 @@ export default function PersonFields({
             <select
               value={value.hourValue}
               onChange={(e) => set({ hourValue: e.target.value })}
-              className="w-full rounded-lg border border-line bg-white px-3 py-2.5 text-[15px] focus:border-accent focus:outline-none"
+              className="w-full rounded-lg border border-line bg-white px-3 py-2.5 text-base focus:border-accent focus:outline-none"
             >
               {HOUR_OPTIONS.map((o) => (
                 <option key={o.value} value={o.value}>
@@ -399,7 +446,7 @@ export default function PersonFields({
             rows={3}
             maxLength={200}
             placeholder="예: 지금 회사를 계속 다녀야 할지 고민이에요"
-            className="w-full resize-y rounded-lg border border-line bg-white px-3 py-2.5 text-[15px] leading-6 focus:border-accent focus:outline-none"
+            className="w-full resize-y rounded-lg border border-line bg-white px-3 py-2.5 text-base leading-6 focus:border-accent focus:outline-none"
           />
           <p className="mt-1 text-right text-xs text-ink-soft">{value.concern.length}/200</p>
         </Reveal>

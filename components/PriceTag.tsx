@@ -1,4 +1,5 @@
-// 단계 가격 표시 — 정가 취소선 + 현재가 (+선택적 소형)
+// 단계 가격 표시 — 현재가(굵게, 앞) + 정가 취소선(작게, 뒤)
+// love119 벤치마킹(권고 6): 실가격이 먼저 크게 보여야 가격 위계가 잡힌다 — 취소선은 보조 정보.
 export function PriceTag({
   current,
   list,
@@ -9,15 +10,16 @@ export function PriceTag({
   size?: "sm" | "md" | "lg";
 }) {
   const discounted = current < list;
-  const cls = size === "lg" ? "text-lg" : size === "sm" ? "text-sm" : "text-[15px]";
+  const cls = size === "lg" ? "text-2xl" : size === "sm" ? "text-base" : "text-lg";
+  const listCls = size === "lg" ? "text-sm" : "text-xs";
   return (
-    <span className={`${cls} font-bold text-accent-strong`}>
+    <span className={`${cls} font-bold text-ink whitespace-nowrap`}>
+      {current.toLocaleString()}원
       {discounted && (
-        <span className="mr-1.5 font-normal text-ink-soft line-through">
+        <span className={`ml-1.5 ${listCls} font-normal text-ink-soft line-through`}>
           {list.toLocaleString()}원
         </span>
       )}
-      {current.toLocaleString()}원
     </span>
   );
 }

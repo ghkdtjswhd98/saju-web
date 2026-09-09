@@ -4,6 +4,7 @@ import LandingFaq from "@/components/LandingFaq";
 import Orobi from "@/components/Orobi";
 import ReviewList from "@/components/ReviewList";
 import { PriceTag } from "@/components/PriceTag";
+import { POSTER_BG } from "@/lib/poster-art";
 import { getPricing } from "@/lib/pricing";
 import { PRODUCTS } from "@/lib/products";
 
@@ -12,7 +13,7 @@ export const revalidate = 60;
 
 type Pricing = Awaited<ReturnType<typeof getPricing>>;
 
-// 포스터형 상품 섹션 — 이미지가 카드의 얼굴 (썸네일은 /brand/poster에서 자체 생성)
+// 포스터형 상품 섹션 — 이미지가 카드의 얼굴 (썸네일은 /brand/poster/<code>에서 빌드 시 자체 생성)
 function ProductPosterSection({
   title, subtitle, codes, pricing,
 }: {
@@ -31,18 +32,23 @@ function ProductPosterSection({
               href={`/products/${p.code}`}
               className="group overflow-hidden rounded-2xl border border-line bg-card transition hover:border-accent"
             >
+              {/* love119 모바일 벤치마킹(권고 1): 로딩 중 흰 빈칸 대신 상품 무드색을 깔고,
+                  첫 화면에 걸리는 BEST 첫 카드(deep)만 eager로 먼저 받는다 */}
               {/* eslint-disable-next-line @next/next/no-img-element -- 자체 생성 라우트라 최적화 불필요 */}
               <img
-                src={`/brand/poster?product=${p.code}`}
+                src={`/brand/poster/${p.code}`}
                 alt={p.name}
                 width={900}
                 height={600}
-                loading="lazy"
+                loading={p.code === "deep" ? "eager" : "lazy"}
+                fetchPriority={p.code === "deep" ? "high" : undefined}
+                style={{ backgroundColor: POSTER_BG[p.code] }}
                 className="aspect-[3/2] w-full object-cover transition group-hover:scale-[1.02]"
               />
               <div className="p-4">
-                <p className="text-[11px] font-semibold tracking-wide text-accent-strong">
-                  {p.name}
+                {/* love119 벤치마킹(권고 6): 카테고리는 짧은 이름을 본문색으로 — 제목(15px 볼드)보다 한 단계 아래 */}
+                <p className="text-[13px] font-medium tracking-wide text-ink-soft">
+                  {p.shortName}
                 </p>
                 <p className="mt-1 text-[15px] font-bold leading-tight">{p.cardTitle}</p>
                 <p className="mt-2">
@@ -107,7 +113,7 @@ export default async function Home() {
           [무드 이미지] + [카테고리] + [질문형 제목] + [가격]. 섹션은 BEST/연애 2분할. */}
       <ProductPosterSection
         title="오롭미 BEST 사주"
-        subtitle="방금 본 무료는 요약이에요 — 재물·직업·인생의 흐름은 따로 있어요"
+        subtitle="무료 사주는 요약이에요 — 재물·직업·인생의 흐름은 따로 있어요"
         codes={["deep", "bundle", "lifetime", "year", "career"]}
         pricing={pricing}
       />

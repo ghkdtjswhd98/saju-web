@@ -1,9 +1,14 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { trackPixel } from "@/components/MetaPixel";
-import PersonFields, { EMPTY_PERSON, personToApiInput, type PersonFormValue } from "./PersonFields";
+import PersonFields, {
+  EMPTY_PERSON,
+  personToApiInput,
+  type PersonFieldsHandle,
+  type PersonFormValue,
+} from "./PersonFields";
 
 type Mode = "single" | "couple";
 
@@ -14,6 +19,7 @@ export default function FreeForm() {
   // useSearchParams 대신 마운트 시 직접 읽는다 — 랜딩의 ISR 캐시(60초)를 깨지 않기 위해.
   useEffect(() => {
     try {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- 마운트 1회 URL 읽기(외부 시스템 동기화), 캐스케이드 없음
       if (new URLSearchParams(window.location.search).get("mode") === "couple") setMode("couple");
     } catch {
       /* ignore */
@@ -24,18 +30,28 @@ export default function FreeForm() {
   const [partner, setPartner] = useState<PersonFormValue>(EMPTY_PERSON);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const meRef = useRef<PersonFieldsHandle>(null);
+  const partnerRef = useRef<PersonFieldsHandle>(null);
 
   async function submit() {
     const persons = mode === "couple" ? [me, partner] : [me];
-    for (const p of persons) {
-      if (!p.gender) {
-        setError("성별을 선택해주세요.");
+    // 점진 노출 때문에 빈 필수 질문이 아직 화면에 없을 수 있다(이름 안 치고 버튼) —
+    // 존재하지 않는 필드를 가리키는 에러 대신, 그 질문을 열어 데려간다. 이미 열려 있는데 비어 있을 때만 에러.
+    for (const r of mode === "couple" ? [meRef, partnerRef] : [meRef]) {
+      const res = r.current?.focusFirstMissing();
+      if (!res?.missing) continue;
+      if (!res.wasVisible) {
+        setError(null);
         return;
       }
-      if (!p.date) {
-        setError(mode === "couple" ? "두 사람의 생년월일을 모두 입력해주세요." : "생년월일을 입력해주세요.");
-        return;
-      }
+      setError(
+        res.missing === "gender"
+          ? "성별을 선택해주세요."
+          : mode === "couple"
+            ? "두 사람의 생년월일을 모두 입력해주세요."
+            : "생년월일을 입력해주세요.",
+      );
+      return;
     }
     setError(null);
     setLoading(true);
@@ -91,21 +107,27 @@ export default function FreeForm() {
           {mode === "couple" && (
             <h3 className="mb-3 text-sm font-bold tracking-widest text-accent-strong">나</h3>
           )}
-          <PersonFields value={me} onChange={setMe} withExtras />
+          <PersonFields ref={meRef} value={me} onChange={setMe} withExtras />
         </div>
         {mode === "couple" && (
           <div className="border-t border-line pt-5">
             <h3 className="mb-3 text-sm font-bold tracking-widest text-accent-strong">상대</h3>
             <PersonFields
+              ref={partnerRef}
               value={partner}
               onChange={setPartner}
-              namePlaceholder="상대 이름 (또는 별칭)"
+              namePlaceholder="상대 이름 (선택 · 또는 별칭)"
             />
           </div>
         )}
       </div>
 
-      {error && <p className="mt-3 text-sm text-danger">{error}</p>}
+      {/* role=alert: 빈 질문으로 스크롤·포커스가 옮겨가면 이 문구가 뷰포트 밖일 수 있어 스크린리더에 즉시 알린다 */}
+      {error && (
+        <p role="alert" className="mt-3 text-sm text-danger">
+          {error}
+        </p>
+      )}
       <button
         type="button"
         onClick={submit}

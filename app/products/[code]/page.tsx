@@ -5,6 +5,7 @@ import ReviewList from "@/components/ReviewList";
 import StickyBuyBar from "@/components/StickyBuyBar";
 import { PriceTag } from "@/components/PriceTag";
 import { LAUNCH_END } from "@/lib/launch";
+import { POSTER_BG } from "@/lib/poster-art";
 import { getPricing } from "@/lib/pricing";
 import { getProduct } from "@/lib/products";
 import { TEASERS } from "@/lib/product-teasers";
@@ -25,7 +26,7 @@ export async function generateMetadata({
   return {
     title: product.cardTitle,
     description: `${product.name} — ${product.tagline}. PDF ${product.pdfPages}페이지 · ${product.charCount} 분량.`,
-    openGraph: { images: [`/brand/poster?product=${product.code}`] },
+    openGraph: { images: [`/brand/poster/${product.code}`] },
   };
 }
 
@@ -47,13 +48,14 @@ export default async function ProductDetailPage({
 
   return (
     <div className="mx-auto max-w-xl px-5 pb-32 pt-6">
-      {/* 포스터 히어로 */}
+      {/* 포스터 히어로 — love119 모바일 벤치마킹(권고 1): 로딩 중 흰 빈칸 대신 상품 무드색 자리표시 */}
       {/* eslint-disable-next-line @next/next/no-img-element -- 자체 생성 라우트 */}
       <img
-        src={`/brand/poster?product=${product.code}`}
+        src={`/brand/poster/${product.code}`}
         alt={product.name}
         width={900}
         height={600}
+        style={{ backgroundColor: POSTER_BG[product.code] }}
         className="aspect-[3/2] w-full rounded-2xl border border-line object-cover"
       />
 

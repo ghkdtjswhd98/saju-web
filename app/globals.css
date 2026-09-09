@@ -4,7 +4,7 @@
 :root {
   --bg: #faf7f2;
   --card: #ffffff;
-  --ink: #3d3d3d;
+  --ink: #221f2b; /* love119 벤치마킹(권고 6): 본문 대비 상향 — 웜톤 유지한 짙은 잉크 */
   --ink-soft: #7a7a7a;
   --accent: #8f7bb8;
   --accent-strong: #6f5b9a;

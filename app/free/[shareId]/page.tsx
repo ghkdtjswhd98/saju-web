@@ -235,6 +235,7 @@ export default async function FreeResultPage({
           <div className="text-center mt-8">
             <p className="text-sm text-ink-soft">여기까지는 맛보기예요 — 아래 주제들이 잠겨 있어요</p>
           </div>
+          {/* 1인 결과 전용 — 1인 상품 3개만 노출 (love119 권고 7). 2인 결과는 위 isLove 분기의 love 단일 CTA */}
           <UpsellTeaser fromShareId={shareId} />
         </>
       )}

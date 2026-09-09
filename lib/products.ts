@@ -8,6 +8,10 @@ export type ProductCode =
 export interface Product {
   code: ProductCode;
   name: string;
+  // 카드 카테고리 줄에 쓰는 짧은 이름 — app/brand/poster/[code]/route.tsx의 포스터 제목(ARTS)과 동일하게 유지한다.
+  // (포스터 생성기가 [code] 라우트로 옮겨져 경로를 맞춤 — 옛 route.tsx는 308 리다이렉트만 남았다)
+  // love119 벤치마킹(권고 6): 카테고리는 상품명 전체가 아니라 한눈에 읽히는 2~5자 라벨이어야 한다.
+  shortName: string;
   // 카드·목록에서만 쓰는 후킹 제목 (질문형). 결제창·PDF·주문 내역은 name을 유지한다 —
   // 압구정연애박사 벤치마킹(2026-08-27): 기능 설명형보다 감정·질문형 제목이 클릭을 만든다.
   cardTitle: string;
@@ -30,6 +34,7 @@ export const PRODUCTS: Record<ProductCode, Product> = {
   deep: {
     code: "deep",
     name: "정통 심층사주 (프리미엄)",
+    shortName: "정통 심층사주",
     cardTitle: "철학원 안 가도 되는 이유 — 35페이지 심층사주",
     tagline: "10년 단위 대운까지 한 장씩, 평생 한 번 제대로 보는 사주",
     openPrice: 19900,
@@ -47,6 +52,7 @@ export const PRODUCTS: Record<ProductCode, Product> = {
   bundle: {
     code: "bundle",
     name: "풀패키지 (종합+올해+직업 3종)",
+    shortName: "풀패키지",
     cardTitle: "고민하지 말고 전부 — 3종 풀패키지",
     tagline: "나의 전체 설계도부터 올해의 타이밍까지, 한 번에 전부",
     openPrice: 17900,
@@ -60,6 +66,7 @@ export const PRODUCTS: Record<ProductCode, Product> = {
   lifetime: {
     code: "lifetime",
     name: "평생사주 종합 리포트",
+    shortName: "평생사주",
     cardTitle: "타고난 내 팔자, 전부 펼쳐보기",
     tagline: "타고난 기질부터 재물·직업·연애·건강까지, 나의 전체 설계도",
     openPrice: 6900,
@@ -72,6 +79,7 @@ export const PRODUCTS: Record<ProductCode, Product> = {
   love: {
     code: "love",
     name: "연애·궁합 리포트",
+    shortName: "궁합운세",
     cardTitle: "우리 둘, 사주로 보면 몇 점일까?",
     tagline: "두 사람의 사주를 교차 분석한 케미 리포트",
     openPrice: 9900,
@@ -84,6 +92,7 @@ export const PRODUCTS: Record<ProductCode, Product> = {
   year: {
     code: "year",
     name: "올해 운세 리포트",
+    shortName: "올해운세",
     cardTitle: "2026 병오년, 나의 남은 운은?",
     tagline: "올해의 흐름과 월별 리듬, 지금 잡아야 할 타이밍",
     openPrice: 6900,
@@ -96,6 +105,7 @@ export const PRODUCTS: Record<ProductCode, Product> = {
   career: {
     code: "career",
     name: "직업·재물운 리포트",
+    shortName: "직업·재물운",
     cardTitle: "돈이 붙는 일은 따로 있다던데?",
     tagline: "나에게 맞는 일과 재물의 그릇, 커리어의 방향",
     openPrice: 6900,
@@ -111,6 +121,7 @@ export const PRODUCTS: Record<ProductCode, Product> = {
   reunion: {
     code: "reunion",
     name: "재회운세 리포트",
+    shortName: "재회운세",
     cardTitle: "헤어진 그 사람, 다시 만날 확률은?",
     tagline: "두 사람의 사주가 말하는 재회 가능성의 구조, 그리고 타이밍",
     openPrice: 12900,
@@ -126,6 +137,7 @@ export const PRODUCTS: Record<ProductCode, Product> = {
   marriage: {
     code: "marriage",
     name: "결혼운세 리포트",
+    shortName: "결혼운세",
     cardTitle: "나는 언제, 어떤 사람과 결혼할까?",
     tagline: "배우자의 결과 결혼운이 짙어지는 시기를 나이로 짚어주는 리포트",
     openPrice: 12900,
@@ -141,6 +153,7 @@ export const PRODUCTS: Record<ProductCode, Product> = {
   dohwa: {
     code: "dohwa",
     name: "도화살 리포트",
+    shortName: "도화살",
     cardTitle: "내 사주에 도화살, 정말 있을까?",
     tagline: "만세력이 판정한 나의 도화살 — 있으면 쓰는 법, 없으면 나만의 매력 구조",
     openPrice: 9900,
@@ -156,6 +169,7 @@ export const PRODUCTS: Record<ProductCode, Product> = {
   crush: {
     code: "crush",
     name: "짝사랑·썸 리포트",
+    shortName: "속마음운세",
     cardTitle: "그 사람도 나를 생각하고 있을까?",
     tagline: "두 사람의 기운 교차로 읽는 지금의 온도, 다가가는 타이밍",
     openPrice: 9900,

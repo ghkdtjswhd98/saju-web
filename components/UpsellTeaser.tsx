@@ -2,7 +2,7 @@
 import Link from "next/link";
 import { PriceCounter, PriceTag } from "@/components/PriceTag";
 import { getPricing } from "@/lib/pricing";
-import { PRODUCTS } from "@/lib/products";
+import { PRODUCTS, type ProductCode } from "@/lib/products";
 
 // 유료 리포트에서 실제로 다루는 주제를 "잠긴 상태"로 보여준다 (내용 과장 없이 목차 기반)
 const LOCKED_PREVIEWS = [
@@ -12,9 +12,15 @@ const LOCKED_PREVIEWS = [
   { title: "관계의 패턴", hint: "연애에서 반복되는 끌림과 갈등의 이유" },
 ];
 
+// love119 벤치마킹(권고 7): 10개 나열은 선택 마비 — 고정 3개만 보여주고 나머지는 /products 링크로.
+// 1인 결과엔 2인 입력 상품(love·reunion·crush)을 섞지 않는다 — 입력 정보가 그대로 이어지지 않기 때문.
+// 이 컴포넌트는 1인 무료 결과에서만 렌더된다(2인 궁합 결과는 page.tsx의 love 단일 CTA) — 2인 분기는 도달 불가라 제거.
+const PICKS: ProductCode[] = ["lifetime", "bundle", "year"];
+
 export default async function UpsellTeaser({ fromShareId }: { fromShareId: string }) {
   const pricing = await getPricing();
   const allAtCap = Object.values(pricing.prices).every((p) => p.atCap);
+  const picks = PICKS.map((code) => PRODUCTS[code]);
 
   return (
     <section className="mt-8">
@@ -52,9 +58,10 @@ export default async function UpsellTeaser({ fromShareId }: { fromShareId: strin
           />
         </div>
         <div className="mt-4 space-y-2">
-          {Object.values(PRODUCTS).map((p) => {
+          {picks.map((p) => {
             const price = pricing.prices[p.code];
             const isBundle = p.code === "bundle";
+            // '가장 많이 선택' 뱃지는 하단 고정 바와 같은 상품(lifetime)에만 단다
             const recommended = p.code === "lifetime";
             return (
               <Link
@@ -91,6 +98,10 @@ export default async function UpsellTeaser({ fromShareId }: { fromShareId: strin
             );
           })}
         </div>
+        {/* 나머지 상품은 목록 페이지로 — 3개만 보여주되 선택지를 숨기진 않는다 */}
+        <Link href="/products" className="mt-3 inline-block text-sm text-accent-strong underline">
+          직업·재물, 결혼, 도화살 등 다른 리포트 보기 →
+        </Link>
       </div>
     </section>
   );
