@@ -3,6 +3,7 @@ import { Analytics } from "@vercel/analytics/next";
 import { Noto_Sans_KR } from "next/font/google";
 import Link from "next/link";
 import MetaPixel from "@/components/MetaPixel";
+import SiteHeader from "@/components/SiteHeader";
 import { SITE } from "@/lib/site";
 import "./globals.css";
 
@@ -36,21 +37,8 @@ export default function RootLayout({
   return (
     <html lang="ko" className={`${notoKr.variable} h-full antialiased`}>
       <body className="min-h-full flex flex-col">
-        <header className="border-b border-line bg-card/70 backdrop-blur sticky top-0 z-10">
-          <div className="mx-auto max-w-xl px-5 py-3 flex items-center justify-between">
-            {/* 로고는 원래 클래스 유지 — inline-flex로 바꾸면 '오롭미'와 '| All of Me' 사이 공백이 사라진다(권고 3 범위도 아님) */}
-            <Link href="/" className="font-bold tracking-tight text-ink">
-              오롭미 <span className="text-ink-soft font-normal text-sm">| All of Me</span>
-            </Link>
-            {/* 히트 영역 44px(권고 3) — px/-mr로 우측 확장, -my-2.5로 헤더 높이(48px)는 그대로 */}
-            <Link
-              href="/products"
-              className="-my-2.5 -mr-3 inline-flex min-h-11 items-center px-3 text-sm text-accent-strong font-medium hover:underline"
-            >
-              심층 리포트
-            </Link>
-          </div>
-        </header>
+        {/* 홈에서만 다크로 바뀌는 헤더 — 경로 판단(usePathname)이 필요해 클라이언트 컴포넌트로 분리 */}
+        <SiteHeader />
         <main className="flex-1">{children}</main>
         <footer className="border-t border-line mt-16">
           <div className="mx-auto max-w-xl px-5 py-8 text-xs text-ink-soft space-y-3">

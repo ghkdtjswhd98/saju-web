@@ -3,169 +3,269 @@ import FreeForm from "@/components/FreeForm";
 import LandingFaq from "@/components/LandingFaq";
 import Orobi from "@/components/Orobi";
 import ReviewList from "@/components/ReviewList";
-import { PriceTag } from "@/components/PriceTag";
+import BottomTabs from "@/components/home/BottomTabs";
+import CategoryChips from "@/components/home/CategoryChips";
+import PosterCarousel, { type PosterCarouselItem } from "@/components/home/PosterCarousel";
+import ProductRail from "@/components/home/ProductRail";
+import { isLaunchActive, LAUNCH_END } from "@/lib/launch";
 import { POSTER_BG } from "@/lib/poster-art";
 import { getPricing } from "@/lib/pricing";
-import { PRODUCTS } from "@/lib/products";
+import { PRODUCTS, type ProductCode } from "@/lib/products";
 
 // 단계 가격 반영을 위해 60초 캐시
 export const revalidate = 60;
 
-type Pricing = Awaited<ReturnType<typeof getPricing>>;
+// 전면 캐러셀 5장 — 가격 사다리 상단부터 (스펙 고정 순서)
+const CAROUSEL_CODES: ProductCode[] = ["deep", "bundle", "reunion", "marriage", "year"];
 
-// 포스터형 상품 섹션 — 이미지가 카드의 얼굴 (썸네일은 /brand/poster/<code>에서 빌드 시 자체 생성)
-function ProductPosterSection({
-  title, subtitle, codes, pricing,
-}: {
-  title: string; subtitle: string; codes: (keyof typeof PRODUCTS)[]; pricing: Pricing;
-}) {
+// 오픈특가 뱃지 문구 — 마감일은 lib/launch.ts가 진실의 원천이라 KST 기준 월/일을 거기서 뽑는다
+function launchBadgeLabel(): string | undefined {
+  if (!isLaunchActive()) return undefined;
+  const kst = new Date(LAUNCH_END.getTime() + 9 * 60 * 60 * 1000);
+  return `오픈특가 · ${kst.getUTCMonth() + 1}/${kst.getUTCDate()}까지`;
+}
+
+function Chevron() {
   return (
-    <section className="mt-12">
-      <h2 className="text-lg font-bold">{title}</h2>
-      <p className="mt-1 text-sm text-ink-soft">{subtitle}</p>
-      <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
-        {codes.map((code) => {
-          const p = PRODUCTS[code];
-          return (
-            <Link
-              key={p.code}
-              href={`/products/${p.code}`}
-              className="group overflow-hidden rounded-2xl border border-line bg-card transition hover:border-accent"
-            >
-              {/* love119 모바일 벤치마킹(권고 1): 로딩 중 흰 빈칸 대신 상품 무드색을 깔고,
-                  첫 화면에 걸리는 BEST 첫 카드(deep)만 eager로 먼저 받는다 */}
-              {/* eslint-disable-next-line @next/next/no-img-element -- 자체 생성 라우트라 최적화 불필요 */}
-              <img
-                src={`/brand/poster/${p.code}`}
-                alt={p.name}
-                width={900}
-                height={600}
-                loading={p.code === "deep" ? "eager" : "lazy"}
-                fetchPriority={p.code === "deep" ? "high" : undefined}
-                style={{ backgroundColor: POSTER_BG[p.code] }}
-                className="aspect-[3/2] w-full object-cover transition group-hover:scale-[1.02]"
-              />
-              <div className="p-4">
-                {/* love119 벤치마킹(권고 6): 카테고리는 짧은 이름을 본문색으로 — 제목(15px 볼드)보다 한 단계 아래 */}
-                <p className="text-[13px] font-medium tracking-wide text-ink-soft">
-                  {p.shortName}
-                </p>
-                <p className="mt-1 text-[15px] font-bold leading-tight">{p.cardTitle}</p>
-                <p className="mt-2">
-                  <PriceTag
-                    current={pricing.prices[p.code].current}
-                    list={pricing.prices[p.code].list}
-                    size="sm"
-                  />
-                </p>
-              </div>
-            </Link>
-          );
-        })}
-      </div>
-    </section>
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#8F7BB8" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M9 6l6 6-6 6" />
+    </svg>
   );
+}
+
+// 무료 도구 카드 공통 껍데기 — 링크가 없는 "예정" 카드는 div로 그린다
+function ToolCard({
+  href,
+  icon,
+  title,
+  desc,
+  badge,
+}: {
+  href?: string;
+  icon: React.ReactNode;
+  title: string;
+  desc: string;
+  badge?: string;
+}) {
+  const cls = "flex items-center gap-3 rounded-[14px] border border-line bg-card p-3.5";
+  const body = (
+    <>
+      <span className="flex h-[42px] w-[42px] shrink-0 items-center justify-center rounded-xl bg-bg">{icon}</span>
+      <span className="flex min-w-0 flex-1 flex-col gap-[3px]">
+        <span className="flex items-center gap-1.5">
+          <span className="text-sm font-bold text-ink">{title}</span>
+          {badge && (
+            <span className="flex h-[18px] items-center rounded-full bg-accent-soft px-[7px] text-[10px] font-bold text-[#CFC8DD]">
+              {badge}
+            </span>
+          )}
+        </span>
+        <span className="text-xs leading-[17px] text-ink-soft">{desc}</span>
+      </span>
+      <Chevron />
+    </>
+  );
+  if (!href) return <div className={cls}>{body}</div>;
+  // FreeForm이 mode를 마운트 시 1회만 읽어서 /?mode=couple은 새 요청이어야 한다 — 그래서 Link 대신 a
+  if (href.startsWith("/?")) return <a href={href} className={cls}>{body}</a>;
+  return <Link href={href} className={cls}>{body}</Link>;
 }
 
 export default async function Home() {
   const pricing = await getPricing();
+  const launchBadge = launchBadgeLabel();
+  const carousel: PosterCarouselItem[] = CAROUSEL_CODES.map((code) => {
+    const p = PRODUCTS[code];
+    return {
+      code,
+      shortName: p.shortName,
+      cardTitle: p.cardTitle,
+      pdfPages: p.pdfPages,
+      current: pricing.prices[code].current,
+      list: pricing.prices[code].list,
+      bg: POSTER_BG[code],
+    };
+  });
+
   return (
-    <div className="mx-auto max-w-xl px-5 py-10">
-      <section className="text-center">
-        <div className="flex justify-center">
-          <Orobi size={104} />
-        </div>
-        <p className="mt-3 text-sm font-medium text-accent-strong">
-          회원가입 없이 30초 · 만세력 기반
-        </p>
-        <h1 className="mt-2 text-[26px] font-bold leading-snug tracking-tight">
-          계산은 만세력으로 정확하게,
-          <br />
-          해석은 AI로 깊이 있게
-        </h1>
-        <p className="mt-3 text-[15px] text-ink-soft">
-          AI 사주의 고질병인 팔자 계산 오류가 없어요.
-          <br />
-          팔자는 만세력 데이터로 계산하고, AI는 해석만 담당하니까요.
-        </p>
-      </section>
+    // 다크 바닥은 화면 전체, 콘텐츠는 앱 셸(430px) 폭 — 데스크톱에서도 같은 폭
+    // scroll-mt-16: "전체" 칩(#top)으로 돌아올 때 sticky 헤더에 칩 행이 가려지지 않게
+    <div id="top" className="theme-night scroll-mt-16 bg-bg text-ink">
+      <div className="mx-auto max-w-[430px] pb-10">
+        {/* 칩 앵커 자체가 44px(h-11)라 위 7px 여백을 이미 포함 — 별도 pt 없이 바로 배치 */}
+        <CategoryChips />
 
-      <section className="mt-8">
-        <FreeForm />
-      </section>
+        <PosterCarousel items={carousel} launchBadge={launchBadge} />
 
-      <section className="mt-5">
-        <Link
-          href="/test/ohaeng"
-          className="flex items-center justify-between rounded-2xl border border-line bg-card px-5 py-4 transition hover:border-accent"
-        >
-          <div>
-            <p className="text-[15px] font-bold">🌱🔥⛰️💎🌊 오행 캐릭터 테스트</p>
-            <p className="mt-0.5 text-xs text-ink-soft">
-              생년월일 몰라도 OK — 12문항 1분이면 내 기운이 나와요
+        {/* 훅 + 무료 폼 — 다크 위 헤드라인, 폼은 theme-day로 라이트 토큰을 복원해 크림 카드 유지 */}
+        <section className="px-4 pt-7">
+          <div className="flex flex-col items-center text-center">
+            <Orobi size={44} />
+            <h1 className="mt-3 text-[21px] font-bold leading-[1.4] tracking-[-0.3px] text-[#FAF7F2]">
+              헤어진 그 사람, 올해 내 운, 결혼 시기
+              <br />— 사주는 뭐라고 할까요?
+            </h1>
+            <p className="mt-2 text-[13px] leading-normal text-ink-soft">회원가입 없이 30초 · 만세력으로 정확하게</p>
+          </div>
+          <div
+            id="free"
+            className="theme-day mt-4 scroll-mt-16 rounded-2xl text-ink shadow-[0_12px_32px_rgba(0,0,0,0.35)]"
+            // 목업(2안)은 카드 크림 #FAF7F2 + 흰 입력창 — .theme-day는 --card가 흰색이라 이 래퍼에서만 덮어쓴다(inline이라 비레이어 CSS보다 우선)
+            style={{ "--card": "#FAF7F2", "--bg": "#EFE9E0" } as React.CSSProperties}
+          >
+            <FreeForm />
+          </div>
+        </section>
+
+        <ProductRail
+          id="rail-reco"
+          title="오롭미 추천"
+          subtitle="먼저 보면 좋은 3종"
+          codes={["deep", "bundle", "lifetime"]}
+          pricing={pricing}
+        />
+        <ProductRail
+          id="rail-love"
+          title="연애가 고민이라면"
+          subtitle="두 사람 사주로 봐요"
+          codes={["reunion", "crush", "love", "marriage", "dohwa"]}
+          pricing={pricing}
+        />
+        <ProductRail
+          id="rail-money"
+          title="일과 돈, 그리고 나"
+          subtitle="내 팔자 하나로 봐요"
+          codes={["career", "year", "lifetime"]}
+          pricing={pricing}
+        />
+
+        {/* 무료 도구 3카드 */}
+        <section className="px-5 pt-6">
+          <div className="flex items-baseline gap-2">
+            <h2 className="text-[17px] font-bold text-ink">무료로 먼저 써보세요</h2>
+            <p className="text-xs text-ink-soft">로그인 없이 바로</p>
+          </div>
+          <div className="mt-3 flex flex-col gap-2.5">
+            <ToolCard
+              // #free: 새 레이아웃은 폼이 첫 화면 아래라 리로드 후 폼까지 스크롤시킨다(location.search는 그대로 ?mode=couple)
+              href="/?mode=couple#free"
+              title="우리 궁합"
+              desc="두 사람 생년월일만 넣으면 오행 케미 점수가 나와요"
+              icon={
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#FFE9A8" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                  <circle cx="9" cy="12" r="5" />
+                  <circle cx="15" cy="12" r="5" />
+                </svg>
+              }
+            />
+            <ToolCard
+              href="/test/ohaeng"
+              title="오행 캐릭터 테스트"
+              desc="생년월일 몰라도 OK — 12문항 1분이면 내 기운이 나와요"
+              icon={
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#FFE9A8" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                  <circle cx="12" cy="12" r="9" />
+                  <path d="M15 9l-2 6-4 2 2-6z" />
+                </svg>
+              }
+            />
+            <ToolCard
+              title="만세력 원국 보기"
+              badge="예정"
+              desc="내 팔자 여덟 글자를 표로 — 리포트가 계산하는 그 원국 그대로"
+              icon={
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#FFE9A8" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                  <rect x="3" y="3" width="18" height="18" rx="2" />
+                  <path d="M3 9h18M3 15h18M9 3v18M15 3v18" />
+                </svg>
+              }
+            />
+          </div>
+        </section>
+
+        {/* 수다방 티저 — 아직 없는 기능이라 버튼 없이 예고만 */}
+        <section className="px-5 pt-3">
+          <div className="flex items-center gap-3 rounded-[14px] border border-line bg-card p-3.5">
+            <div className="shrink-0">
+              <Orobi size={52} />
+            </div>
+            <div className="flex min-w-0 flex-1 flex-col gap-1.5">
+              <div className="flex items-center gap-1.5">
+                <p className="text-sm font-bold text-ink">수다방</p>
+                <span className="flex h-[18px] items-center rounded-full bg-accent-soft px-[7px] text-[10px] font-bold text-[#CFC8DD]">
+                  준비 중
+                </span>
+              </div>
+              <p className="self-start rounded-[12px_12px_12px_3px] border border-line bg-bg px-[11px] py-2 text-xs leading-[17px] text-ink">
+                오늘 뭐가 제일 마음에 걸려요? 내 원국 보면서 같이 얘기해봐요.
+              </p>
+              <p className="text-[11px] leading-[15px] text-ink-soft">카톡하듯 사주 수다 · 하루 1번 무료</p>
+            </div>
+          </div>
+        </section>
+
+        {/* 신뢰 스트립 3칸 — 전부 실제로 지키는 약속만 */}
+        <section className="px-5 pt-6">
+          <div className="grid grid-cols-3 gap-2 rounded-2xl border border-line bg-card px-3 py-3.5">
+            <div className="flex flex-col items-center gap-2 text-center">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#FFE9A8" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <rect x="3" y="3" width="18" height="18" rx="2" />
+                <path d="M3 9h18M3 15h18M9 3v18M15 3v18" />
+              </svg>
+              <p className="text-xs font-bold leading-4 text-ink">만세력으로 계산</p>
+              <p className="text-[11px] leading-[15px] text-ink-soft">
+                팔자는 데이터로,
+                <br />
+                AI는 해석만
+              </p>
+            </div>
+            <div className="flex flex-col items-center gap-2 border-x border-line text-center">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#FFE9A8" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <path d="M20 12l-8 8-9-9V4h7z" />
+                <circle cx="7.5" cy="7.5" r="1.5" />
+              </svg>
+              <p className="text-xs font-bold leading-4 text-ink">실판매가만 표기</p>
+              <p className="text-[11px] leading-[15px] text-ink-soft">
+                부풀린 정가·
+                <br />
+                가짜 마감 없음
+              </p>
+            </div>
+            <div className="flex flex-col items-center gap-2 text-center">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#FFE9A8" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z" />
+                <path d="M9 12l2 2 4-4" />
+              </svg>
+              <p className="text-xs font-bold leading-4 text-ink">자동 환불</p>
+              <p className="text-[11px] leading-[15px] text-ink-soft">
+                생성 실패 시 환불,
+                <br />
+                PDF 미수신 재발송
+              </p>
+            </div>
+          </div>
+        </section>
+
+        {/* 어떻게 계산하나요 — 1문단 축약 */}
+        <section className="px-5 pt-6">
+          <div className="rounded-2xl border border-line bg-card p-5">
+            <h2 className="text-sm font-bold tracking-widest text-accent">어떻게 계산하나요</h2>
+            <p className="mt-3 text-sm leading-6 text-ink">
+              입력한 생년월일시를 만세력 데이터(1900~2050년, 절기·음력 변환 포함)와 대조해 사주팔자 여덟
+              글자를 확정하고, 일간을 기준으로 오행·십신·신살을 결정론적 알고리즘으로 계산해요. AI는 그
+              확정된 계산값만을 근거로 해석문을 지어서, 챗봇 사주에서 흔한 &quot;팔자 자체가 틀리는
+              문제&quot;가 구조적으로 불가능해요. 같은 생년월일시면 언제나 같은 결과가 나와요.
             </p>
           </div>
-          <span className="text-lg text-accent-strong">→</span>
-        </Link>
-      </section>
+        </section>
 
-      {/* 상품 포스터 그리드 — 압구정연애박사 벤치마킹(2026-08-30) 포스터 공식:
-          [무드 이미지] + [카테고리] + [질문형 제목] + [가격]. 섹션은 BEST/연애 2분할. */}
-      <ProductPosterSection
-        title="오롭미 BEST 사주"
-        subtitle="무료 사주는 요약이에요 — 재물·직업·인생의 흐름은 따로 있어요"
-        codes={["deep", "bundle", "lifetime", "year", "career"]}
-        pricing={pricing}
-      />
-      <ProductPosterSection
-        title="연애가 고민이라면"
-        subtitle="재회부터 결혼까지, 두 사람의 사주가 말해주는 것"
-        codes={["reunion", "crush", "love", "marriage", "dohwa"]}
-        pricing={pricing}
-      />
+        <div className="px-5">
+          <ReviewList limit={4} />
+          <LandingFaq />
+        </div>
+      </div>
 
-      <section className="mt-12 rounded-2xl border border-line bg-card p-5">
-        <h2 className="text-sm font-bold tracking-widest text-accent-strong">
-          챗봇 사주는 왜 팔자부터 틀릴까요
-        </h2>
-        <ul className="mt-3 space-y-2.5 text-sm leading-6">
-          <li>
-            <b>정확한 팔자.</b> AI에게 계산을 맡기면 사주팔자 자체가 틀리는 경우가 많아요. 오롭미는
-            만세력 데이터 기반 알고리즘으로 팔자·오행·십신을 확정한 뒤, AI는 해석만 해요.
-          </li>
-          <li>
-            <b>듣기 좋은 말만 하지 않아요.</b> 강점과 함께 의식하면 좋은 그늘까지, 균형 있게 짚어요.
-          </li>
-          <li>
-            <b>회원가입 없음.</b> 생년월일시만 있으면 30초. 결과는 링크로 저장돼요.
-          </li>
-        </ul>
-      </section>
-
-      <section className="mt-12 rounded-2xl border border-line bg-card p-5">
-        <h2 className="text-sm font-bold tracking-widest text-accent-strong">어떻게 계산하나요</h2>
-        <ol className="mt-3 space-y-2.5 text-sm leading-6">
-          <li>
-            <b>1. 만세력 대조.</b> 입력한 생년월일시를 만세력 데이터(1900~2050년, 절기·음력 변환 포함)와
-            대조해 사주팔자 여덟 글자를 확정해요.
-          </li>
-          <li>
-            <b>2. 명리 요소 계산.</b> 일간을 기준으로 오행 분포(지장간 가중치 반영), 십신, 신살을
-            결정론적 알고리즘으로 계산해요. 같은 생년월일시면 언제나 같은 결과가 나와요.
-          </li>
-          <li>
-            <b>3. AI 해석.</b> 확정된 계산값만을 근거로 AI가 해석문을 지어요. AI는 계산에 관여할 수
-            없어서, 챗봇 사주에서 흔한 &quot;팔자 자체가 틀리는 문제&quot;가 구조적으로 불가능해요.
-          </li>
-        </ol>
-        <p className="mt-3 text-xs text-ink-soft">
-          결과 페이지의 &quot;사주팔자&quot; 표를 다른 만세력 서비스와 대조해보셔도 좋아요 — 같은 값이 나와요.
-        </p>
-      </section>
-
-      <ReviewList limit={4} />
-
-      <LandingFaq />
+      <BottomTabs />
     </div>
   );
 }
