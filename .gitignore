@@ -51,3 +51,6 @@ next-env.d.ts
 marketing/cards/
 marketing/sale/
 reference/
+
+# 워크플로 격리 작업트리(로컬 전용)
+.claude/worktrees/
