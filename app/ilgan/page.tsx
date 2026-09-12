@@ -11,10 +11,10 @@ export const metadata: Metadata = {
 
 export default function IlganIndexPage() {
   return (
-    <div className="mx-auto max-w-xl px-5 py-10">
+    <div className="mx-auto max-w-[430px] px-5 py-10">
       <header className="text-center">
         <div className="flex justify-center">
-          <Orobi size={96} />
+          <Orobi size={96} halo="none" />
         </div>
         <h1 className="mt-3 text-2xl font-bold leading-snug">
           일간(日干) — 사주에서

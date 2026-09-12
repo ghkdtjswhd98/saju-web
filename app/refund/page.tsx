@@ -42,7 +42,7 @@ const SECTIONS: { h: string; p: string[] }[] = [
 
 export default function RefundPage() {
   return (
-    <div className="mx-auto max-w-xl px-5 py-10">
+    <div className="mx-auto max-w-[430px] px-5 py-10">
       <h1 className="text-xl font-bold">환불정책</h1>
       <div className="mt-6 space-y-6">
         {SECTIONS.map((s) => (
@@ -58,7 +58,8 @@ export default function RefundPage() {
           </section>
         ))}
       </div>
-      <div className="mt-8">
+      {/* 접수 폼은 종이 카드 */}
+      <div className="paper mt-8">
         <RefundRequestForm />
       </div>
     </div>

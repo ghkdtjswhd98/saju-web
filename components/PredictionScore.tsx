@@ -32,6 +32,7 @@ export default function PredictionScore({
   const [error, setError] = useState<string | null>(null);
 
   const madeAt = new Date(createdAtIso);
+  // eslint-disable-next-line react-hooks/purity -- 채점 개방일(30일) 판정용 현재 시각, 렌더마다 달라져도 무해
   const days = Math.floor((Date.now() - madeAt.getTime()) / 86400000);
   const opensIn = 30 - days;
   const dateLabel = `${madeAt.getFullYear()}년 ${madeAt.getMonth() + 1}월 ${madeAt.getDate()}일`;
@@ -69,10 +70,7 @@ export default function PredictionScore({
 
       {grade ? (
         <div className="mt-3 rounded-xl bg-bg px-4 py-3">
-          <p className="text-sm font-bold">
-            {grade.verdict === "hit" ? "🎯" : grade.verdict === "half" ? "➗" : "💨"}{" "}
-            {LABELS[grade.verdict]}
-          </p>
+          <p className="text-sm font-bold">{LABELS[grade.verdict]}</p>
           {grade.note && <p className="mt-1 text-xs text-ink-soft">“{grade.note}”</p>}
           <p className="mt-2 text-xs text-ink-soft">
             {grade.verdict === "miss"
@@ -82,7 +80,7 @@ export default function PredictionScore({
         </div>
       ) : days < 30 ? (
         <p className="mt-3 rounded-xl bg-bg px-4 py-3 text-xs text-ink-soft">
-          🗓 채점은 <b>{opensIn}일 뒤</b>에 열려요. 이 페이지를 저장해두고, 시간이 예측을 검증할
+          채점은 <b>{opensIn}일 뒤</b>에 열려요. 이 페이지를 저장해두고, 시간이 예측을 검증할
           때쯤 다시 와주세요.
         </p>
       ) : (
@@ -94,16 +92,16 @@ export default function PredictionScore({
             placeholder="어떤 부분이 맞았나요? (선택)"
             className="w-full rounded-xl border border-line bg-bg px-4 py-2.5 text-sm outline-none focus:border-accent"
           />
-          {error && <p className="mt-2 text-xs text-red-500">{error}</p>}
+          {error && <p className="mt-2 text-xs text-danger">{error}</p>}
           <div className="mt-2 grid grid-cols-3 gap-2">
             {(Object.keys(LABELS) as Grade["verdict"][]).map((v) => (
               <button
                 key={v}
                 onClick={() => submit(v)}
                 disabled={busy}
-                className="rounded-xl border border-line bg-bg px-2 py-2.5 text-sm font-bold transition hover:border-accent disabled:opacity-40"
+                className="min-h-11 rounded-xl border border-line bg-bg px-2 py-2.5 text-sm font-bold transition hover:border-accent disabled:opacity-40"
               >
-                {v === "hit" ? "🎯" : v === "half" ? "➗" : "💨"} {LABELS[v]}
+                {LABELS[v]}
               </button>
             ))}
           </div>

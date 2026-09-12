@@ -1,34 +1,9 @@
-"use client";
-
 import Link from "next/link";
-import { usePathname } from "next/navigation";
 
-// 공통 헤더 — 홈("/")에서만 딥네이비(theme-night). 다른 페이지는 기존 라이트 헤더 마크업 그대로 유지(회귀 방지).
+// 공통 헤더 — body가 theme-night라 모든 경로에서 같은 다크 마크업(경로 분기 없음)
 export default function SiteHeader() {
-  const isHome = usePathname() === "/";
-
-  if (!isHome) {
-    return (
-      <header className="border-b border-line bg-card/70 backdrop-blur sticky top-0 z-10">
-        <div className="mx-auto max-w-xl px-5 py-3 flex items-center justify-between">
-          {/* 로고는 원래 클래스 유지 — inline-flex로 바꾸면 '오롭미'와 '| All of Me' 사이 공백이 사라진다 */}
-          <Link href="/" className="font-bold tracking-tight text-ink">
-            오롭미 <span className="text-ink-soft font-normal text-sm">| All of Me</span>
-          </Link>
-          {/* 히트 영역 44px — px/-mr로 우측 확장, -my-2.5로 헤더 높이(48px)는 그대로 */}
-          <Link
-            href="/products"
-            className="-my-2.5 -mr-3 inline-flex min-h-11 items-center px-3 text-sm text-accent-strong font-medium hover:underline"
-          >
-            심층 리포트
-          </Link>
-        </div>
-      </header>
-    );
-  }
-
   return (
-    <header className="theme-night sticky top-0 z-10 border-b border-line bg-[#272132]/80 text-ink backdrop-blur">
+    <header className="sticky top-0 z-10 border-b border-line bg-[#272132]/80 text-ink backdrop-blur">
       <div className="mx-auto flex h-14 max-w-[430px] items-center justify-between px-5">
         <Link href="/" className="flex items-baseline gap-1.5">
           <span className="text-[19px] font-bold tracking-[-0.5px] text-[#F2EEF9]">오롭미</span>

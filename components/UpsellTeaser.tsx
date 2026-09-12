@@ -1,5 +1,6 @@
 // 무료 결과 하단 유료 전환 티저 — 잠긴 섹션 미리보기 + 상품 목록 (서버 컴포넌트)
 import Link from "next/link";
+import Icon from "@/components/icons";
 import { PriceCounter, PriceTag } from "@/components/PriceTag";
 import { getPricing } from "@/lib/pricing";
 import { PRODUCTS, type ProductCode } from "@/lib/products";
@@ -33,7 +34,7 @@ export default async function UpsellTeaser({ fromShareId }: { fromShareId: strin
           >
             <div className="flex items-center justify-between">
               <h3 className="text-sm font-bold tracking-widest text-ink-soft">{s.title}</h3>
-              <span aria-hidden className="text-ink-soft">🔒</span>
+              <Icon name="lock" size={16} className="text-ink-soft" />
             </div>
             <p className="mt-2 select-none text-[15px] leading-7 text-ink-soft blur-[5px]">
               {s.hint}. 그 답은 심층 리포트에서 확인할 수 있어요. 여기엔 당신의 사주에서만
@@ -79,12 +80,12 @@ export default async function UpsellTeaser({ fromShareId }: { fromShareId: strin
                   <span className="block text-[15px] font-bold">
                     {p.cardTitle}
                     {isBundle && (
-                      <span className="ml-1.5 rounded-full bg-accent-strong px-2 py-0.5 align-middle text-[10px] font-bold text-white">
+                      <span className="ml-1.5 rounded-full bg-[#FFE9A8] px-2 py-0.5 align-middle text-[10px] font-bold text-[#272132]">
                         가장 알뜰
                       </span>
                     )}
                     {recommended && (
-                      <span className="ml-1.5 rounded-full bg-ink-soft px-2 py-0.5 align-middle text-[10px] font-bold text-white">
+                      <span className="ml-1.5 rounded-full bg-accent-soft px-2 py-0.5 align-middle text-[10px] font-bold text-ink">
                         가장 많이 선택
                       </span>
                     )}

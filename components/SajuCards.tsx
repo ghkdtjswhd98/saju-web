@@ -71,7 +71,7 @@ export function StarProfile({ saju }: { saju: SajuResult }) {
             <span className="text-sm">{k}</span>
             <span className="text-sm tracking-wider" aria-label={`${saju.ratings.starsNum[k]}점`}>
               {"★".repeat(saju.ratings.starsNum[k])}
-              <span className="text-line">{"★".repeat(5 - saju.ratings.starsNum[k])}</span>
+              <span className="text-[#8A8398]">{"★".repeat(5 - saju.ratings.starsNum[k])}</span>
             </span>
           </div>
         ))}

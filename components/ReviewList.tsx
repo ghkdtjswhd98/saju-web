@@ -3,9 +3,9 @@ import { getReviewSummary } from "@/lib/reviews";
 
 function Stars({ n }: { n: number }) {
   return (
-    <span className="text-sm text-amber-400" aria-label={`별점 ${n}점`}>
+    <span className="text-sm text-[#FFE9A8]" aria-label={`별점 ${n}점`}>
       {"★".repeat(n)}
-      <span className="text-line">{"★".repeat(5 - n)}</span>
+      <span className="text-[#8A8398]">{"★".repeat(5 - n)}</span>
     </span>
   );
 }
@@ -21,7 +21,7 @@ export default async function ReviewList({ limit = 4 }: { limit?: number }) {
     <section className="mt-12">
       {/* 수치를 헤드라인 자리로 승격 — 상위 판매자는 전부 별점·후기수를 제목 옆 최상단에 둔다 */}
       <h2 className="text-center text-lg font-bold">
-        <span className="text-amber-400">★</span> {avg.toFixed(1)} · 후기{" "}
+        <span className="text-[#FFE9A8]">★</span> {avg.toFixed(1)} · 후기{" "}
         {count.toLocaleString()}건
       </h2>
       <p className="mt-1 text-center text-sm text-ink-soft">

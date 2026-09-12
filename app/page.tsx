@@ -3,7 +3,6 @@ import FreeForm from "@/components/FreeForm";
 import LandingFaq from "@/components/LandingFaq";
 import Orobi from "@/components/Orobi";
 import ReviewList from "@/components/ReviewList";
-import BottomTabs from "@/components/home/BottomTabs";
 import CategoryChips from "@/components/home/CategoryChips";
 import PosterCarousel, { type PosterCarouselItem } from "@/components/home/PosterCarousel";
 import ProductRail from "@/components/home/ProductRail";
@@ -27,7 +26,7 @@ function launchBadgeLabel(): string | undefined {
 
 function Chevron() {
   return (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#8F7BB8" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#B9A9DD" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
       <path d="M9 6l6 6-6 6" />
     </svg>
   );
@@ -105,16 +104,16 @@ export default async function Home() {
   });
 
   return (
-    // 다크 바닥은 화면 전체, 콘텐츠는 앱 셸(430px) 폭 — 데스크톱에서도 같은 폭
+    // 다크 바닥은 body(theme-night)가 깔고, 콘텐츠는 앱 셸(430px) 폭 — 데스크톱에서도 같은 폭
     // scroll-mt-16: "전체" 칩(#top)으로 돌아올 때 sticky 헤더에 칩 행이 가려지지 않게
-    <div id="top" className="theme-night scroll-mt-16 bg-bg text-ink">
+    <div id="top" className="scroll-mt-16">
       <div className="mx-auto max-w-[430px] pb-10">
         {/* 칩 앵커 자체가 44px(h-11)라 위 7px 여백을 이미 포함 — 별도 pt 없이 바로 배치 */}
         <CategoryChips />
 
         <PosterCarousel items={carousel} launchBadge={launchBadge} />
 
-        {/* 훅 + 무료 폼 — 다크 위 헤드라인, 폼은 theme-day로 라이트 토큰을 복원해 크림 카드 유지 */}
+        {/* 훅 + 무료 폼 — 다크 위 헤드라인, 폼은 paper 클래스로 라이트 토큰을 복원해 크림 카드 유지 */}
         <section className="px-4 pt-7">
           <div className="flex flex-col items-center text-center">
             <Orobi size={44} halo="none" />
@@ -126,9 +125,7 @@ export default async function Home() {
           </div>
           <div
             id="free"
-            className="theme-day mt-4 scroll-mt-16 rounded-2xl text-ink shadow-[0_12px_32px_rgba(0,0,0,0.35)]"
-            // 목업(2안)은 카드 크림 #FAF7F2 + 흰 입력창 — .theme-day는 --card가 흰색이라 이 래퍼에서만 덮어쓴다(inline이라 비레이어 CSS보다 우선)
-            style={{ "--card": "#FAF7F2", "--bg": "#EFE9E0" } as React.CSSProperties}
+            className="paper mt-4 scroll-mt-16 rounded-2xl shadow-[0_12px_32px_rgba(0,0,0,0.35)]"
           >
             <FreeForm />
           </div>
@@ -284,8 +281,6 @@ export default async function Home() {
           <LandingFaq />
         </div>
       </div>
-
-      <BottomTabs />
     </div>
   );
 }

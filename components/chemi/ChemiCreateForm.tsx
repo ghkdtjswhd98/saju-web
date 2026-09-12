@@ -90,7 +90,7 @@ export default function ChemiCreateForm() {
         type="button"
         onClick={submit}
         disabled={loading}
-        className="mt-5 min-h-12 w-full rounded-xl bg-accent-strong px-4 py-3.5 text-[15px] font-bold text-white transition hover:opacity-90 disabled:opacity-50"
+        className="mt-5 min-h-12 w-full rounded-xl bg-[#272132] px-4 py-3.5 text-[15px] font-bold text-[#FFE9A8] transition hover:opacity-90 disabled:opacity-50"
       >
         {loading ? "링크 만드는 중..." : "내 케미 링크 만들기"}
       </button>

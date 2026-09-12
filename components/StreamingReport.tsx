@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import Icon from "./icons";
 
 interface Props {
   /** 2단 생성 상품(정통 심층사주)은 5분가량 걸려 안내 문구가 달라진다 */
@@ -49,7 +50,7 @@ function SectionCard({ label, body }: Section) {
     return (
       <div className="rounded-2xl border border-line bg-card p-5">
         <h3 className="mb-2 text-sm font-bold tracking-widest text-accent-strong">
-          🌘 의식하면 좋은 것
+          <Icon name="moon" /> 의식하면 좋은 것
         </h3>
         <p className="whitespace-pre-wrap text-[15px] leading-7">{body}</p>
       </div>

@@ -34,6 +34,11 @@
   --color-el-water: #6a86b8;
 }
 
+/* 오버스크롤 영역까지 딥네이비 — body 밖(html)에는 테마 클래스가 없어 직접 지정 */
+html {
+  background-color: #272132;
+}
+
 body {
   background: var(--bg);
   color: var(--ink);
@@ -54,9 +59,9 @@ body {
   .reveal-in { animation: none; }
 }
 
-/* ── 홈 v2 딥네이비 앱 셸 ──
+/* ── 딥네이비 앱 셸(사이트 전체, body에 적용) ──
    토큰이 @theme inline으로 CSS 변수를 참조하므로, 래퍼 클래스에서 변수만 뒤집으면
-   bg-card·text-ink 같은 기존 유틸리티가 그대로 다크로 바뀐다(홈 외 페이지는 건드리지 않음). */
+   bg-card·text-ink 같은 기존 유틸리티가 그대로 다크로 바뀐다. admin만 .theme-day로 라이트 복원. */
 .theme-night {
   --bg: #272132;
   --card: #322a42;
@@ -66,10 +71,12 @@ body {
   --accent-strong: #ffe9a8; /* 흰 글자 버튼과 충돌하므로 홈 CTA는 bg-[#FFE9A8] text-[#272132]를 직접 지정 */
   --accent-soft: #443a58;
   --border: #443a58;
+  --danger: #e8a3a3; /* 어두운 카드 위 12px 오류 문구도 4.5:1 넘기려 밝힌 값 */
 }
 
-/* 다크 셸 안에서 라이트 토큰을 복원 — 기존 FreeForm을 수정 없이 크림 카드로 유지하기 위해 */
-.theme-day {
+/* 다크 셸 안에서 라이트 토큰을 복원 — admin(app/admin/layout.tsx) 래퍼용 */
+.theme-day,
+.paper {
   --bg: #faf7f2;
   --card: #ffffff;
   --ink: #221f2b;
@@ -80,6 +87,17 @@ body {
   --border: #ece6dd;
 }
 
+/* 종이(paper) 카드 — night 바닥 위 입력 폼·긴 본문 영역. theme-day에 크림 카드(#FAF7F2)·연한 바닥(#EFE9E0)을 얹은 것.
+   색을 여기서 직접 잡는 이유: 래퍼 밖(body)은 밝은 잉크라 상속만으로는 크림 위에 흰 글자가 된다 */
+.paper {
+  --card: #faf7f2;
+  --bg: #efe9e0;
+  /* 크림 바닥은 흰색보다 어두워 라이트 회색·연한 빨강이 4.5:1에 못 미친다 — paper 안에서만 진하게 */
+  --ink-soft: #665f70;
+  --danger: #a64444;
+  color: var(--ink);
+}
+
 /* 홈 폼 CTA — 목업(2안)은 네이비 바탕 + 금박 글자. FreeForm은 수정 금지라 홈 래퍼(#free) 한정으로 덮어쓴다.
    셀렉터가 FreeForm 마크업(type="button" + bg-accent-strong)에 의존하므로, FreeForm에 variant prop이 생기면 이 규칙을 제거할 것. */
 #free button[type="button"].bg-accent-strong {
@@ -87,8 +105,8 @@ body {
   color: #ffe9a8;
 }
 
-/* 하단 탭(fixed, 64px + safe-area)이 홈에서만 렌더되므로 그 id가 있을 때만 공통 푸터 하단에 탭 높이만큼 여백 —
-   layout.tsx를 건드리지 않고 푸터 마지막 줄이 탭에 가려지지 않게 한다 */
+/* 하단 탭(fixed, 64px + safe-area)은 layout에서 렌더되지만 경로에 따라 null이 되므로, 그 id가 있을 때만
+   공통 푸터 하단에 탭 높이만큼 여백 — 푸터 마지막 줄이 탭에 가려지지 않게 한다 */
 body:has(#home-bottom-tabs) > footer {
   padding-bottom: calc(64px + env(safe-area-inset-bottom));
 }

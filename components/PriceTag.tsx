@@ -19,7 +19,7 @@ export function PriceTag({
     <span className={`${cls} font-bold ${toneCls} whitespace-nowrap`}>
       {current.toLocaleString()}원
       {discounted && (
-        <span className={`ml-1.5 ${listCls} font-normal text-ink-soft line-through`}>
+        <span className={`ml-1.5 ${listCls} font-normal text-[#8A8398] line-through`}>
           {list.toLocaleString()}원
         </span>
       )}

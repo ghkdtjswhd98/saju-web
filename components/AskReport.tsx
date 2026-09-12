@@ -81,11 +81,11 @@ export default function AskReport({ token, initialQa }: { token: string; initial
             placeholder="예: 리포트에 나온 전환점이 이직에도 해당되나요?"
             className="mt-3 w-full rounded-xl border border-line bg-bg px-4 py-3 text-sm outline-none focus:border-accent"
           />
-          {error && <p className="mt-2 text-xs text-red-500">{error}</p>}
+          {error && <p className="mt-2 text-xs text-danger">{error}</p>}
           <button
             onClick={submit}
             disabled={busy || question.trim().length < 5}
-            className="mt-2 w-full rounded-xl bg-accent-strong px-4 py-3 text-sm font-bold text-white transition hover:opacity-90 disabled:opacity-40"
+            className="mt-2 w-full rounded-xl bg-[#272132] px-4 py-3 text-sm font-bold text-[#FFE9A8] transition hover:opacity-90 disabled:opacity-40"
           >
             {busy ? "답을 쓰는 중이에요… (30초~1분)" : "무료로 물어보기"}
           </button>

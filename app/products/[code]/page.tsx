@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import Icon from "@/components/icons";
 import ReviewList from "@/components/ReviewList";
 import StickyBuyBar from "@/components/StickyBuyBar";
 import { PriceTag } from "@/components/PriceTag";
@@ -47,7 +48,7 @@ export default async function ProductDetailPage({
     product.sections.map((s) => ({ key: s, title: s, desc: "" }));
 
   return (
-    <div className="mx-auto max-w-xl px-5 pb-32 pt-6">
+    <div className="mx-auto max-w-[430px] px-5 pb-32 pt-6">
       {/* 포스터 히어로 — love119 모바일 벤치마킹(권고 1): 로딩 중 흰 빈칸 대신 상품 무드색 자리표시 */}
       {/* eslint-disable-next-line @next/next/no-img-element -- 자체 생성 라우트 */}
       <img
@@ -68,16 +69,16 @@ export default async function ProductDetailPage({
         </p>
         <div className="mt-3 flex flex-wrap gap-1.5 text-xs">
           <span className="rounded-full bg-accent-soft/60 px-2.5 py-1 font-medium text-accent-strong">
-            📄 PDF {product.pdfPages}페이지
+            <Icon name="doc" /> PDF {product.pdfPages}페이지
           </span>
           <span className="rounded-full bg-accent-soft/60 px-2.5 py-1 font-medium text-accent-strong">
-            ✍️ {product.charCount} 분량
+            <Icon name="pen" /> {product.charCount} 분량
           </span>
           <span className="rounded-full bg-accent-soft/60 px-2.5 py-1 font-medium text-accent-strong">
-            ⚡ {product.code === "deep" ? "15분 내 발급" : "1~2분 즉시 발급"}
+            <Icon name="bolt" /> {product.code === "deep" ? "15분 내 발급" : "1~2분 즉시 발급"}
           </span>
           <span className="rounded-full bg-accent-soft/60 px-2.5 py-1 font-medium text-accent-strong">
-            📧 PDF 이메일 자동 발송
+            <Icon name="mail" /> PDF 이메일 자동 발송
           </span>
         </div>
       </header>
@@ -120,14 +121,14 @@ export default async function ProductDetailPage({
           href="/sample"
           className="mt-4 block rounded-xl border border-line bg-bg px-4 py-3 text-center text-sm font-bold transition hover:border-accent"
         >
-          🔍 결제 전에 샘플 리포트 전문 먼저 보기
+          <Icon name="search" /> 결제 전에 샘플 리포트 전문 먼저 보기
         </Link>
       </section>
 
       <ReviewList limit={3} />
 
       <p className="mt-6 text-center text-xs text-ink-soft">
-        <Link href="/products" className="underline">
+        <Link href="/products" className="text-accent-strong underline">
           ← 다른 리포트 전체 보기
         </Link>
       </p>

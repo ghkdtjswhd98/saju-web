@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import Icon from "@/components/icons";
 import Orobi from "@/components/Orobi";
 import { ILGAN_LIST, ILGAN_MAP } from "@/lib/ilgan-content";
 
@@ -39,7 +40,7 @@ export default async function IlganPage({
   if (!c) notFound();
 
   return (
-    <div className="mx-auto max-w-xl px-5 py-8">
+    <div className="mx-auto max-w-[430px] px-5 py-8">
       <header className="text-center">
         <p className="text-xs tracking-widest text-ink-soft">일간으로 보는 나</p>
         <p className="mt-3 text-5xl">{c.emoji}</p>
@@ -72,26 +73,34 @@ export default async function IlganPage({
 
       <section className="mt-4 grid gap-4">
         <div className="rounded-2xl border border-line bg-card p-5 text-sm leading-7">
-          <h2 className="font-bold">💪 이 일간의 무기</h2>
+          <h2 className="font-bold">
+            <Icon name="bolt" size={15} className="text-accent" /> 이 일간의 무기
+          </h2>
           <p className="mt-1.5">{c.strengths}</p>
         </div>
         <div className="rounded-2xl border border-line bg-card p-5 text-sm leading-7">
-          <h2 className="font-bold">🌘 의식하면 좋은 그늘</h2>
+          <h2 className="font-bold">
+            <Icon name="moon" size={15} className="text-accent" /> 의식하면 좋은 그늘
+          </h2>
           <p className="mt-1.5">{c.shadow}</p>
         </div>
         <div className="rounded-2xl border border-line bg-card p-5 text-sm leading-7">
-          <h2 className="font-bold">💼 어울리는 일</h2>
+          <h2 className="font-bold">
+            <Icon name="briefcase" size={15} className="text-accent" /> 어울리는 일
+          </h2>
           <p className="mt-1.5">{c.work}</p>
         </div>
         <div className="rounded-2xl border border-line bg-card p-5 text-sm leading-7">
-          <h2 className="font-bold">💕 연애 스타일</h2>
+          <h2 className="font-bold">
+            <Icon name="heart" size={15} className="text-accent" /> 연애 스타일
+          </h2>
           <p className="mt-1.5">{c.love}</p>
         </div>
       </section>
 
       <section className="mt-8 rounded-2xl border-2 border-accent bg-card p-5 text-center">
         <div className="flex justify-center">
-          <Orobi size={72} />
+          <Orobi size={72} halo="none" />
         </div>
         <p className="mt-2 text-sm text-ink-soft">여기까지는 일간 하나로 본 이야기예요</p>
         <h2 className="mt-1 text-lg font-bold leading-snug">
@@ -106,7 +115,7 @@ export default async function IlganPage({
         </p>
         <Link
           href="/"
-          className="mt-4 block rounded-xl bg-accent-strong px-4 py-3.5 text-[15px] font-bold text-white transition hover:opacity-90"
+          className="mt-4 block rounded-xl bg-[#FFE9A8] px-4 py-3.5 text-[15px] font-bold text-[#272132] transition hover:opacity-90"
         >
           내 사주팔자 무료로 확인하기 →
         </Link>

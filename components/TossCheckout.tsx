@@ -106,7 +106,7 @@ export default function TossCheckout({ clientKey, orderId, orderName, amount }: 
         type="button"
         onClick={pay}
         disabled={!ready}
-        className="mt-4 w-full rounded-xl bg-accent-strong px-4 py-3.5 text-[15px] font-bold text-white transition hover:opacity-90 disabled:opacity-50"
+        className="mt-4 w-full rounded-xl bg-[#272132] px-4 py-3.5 text-[15px] font-bold text-[#FFE9A8] transition hover:opacity-90 disabled:opacity-50"
       >
         {amount.toLocaleString()}원 결제하기
       </button>

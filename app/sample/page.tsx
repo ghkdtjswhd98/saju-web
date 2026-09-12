@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { eq } from "drizzle-orm";
+import Icon from "@/components/icons";
 import { ElementChart, PillarTable, StarProfile } from "@/components/SajuCards";
 import { getDb, reports } from "@/lib/db";
 import { getPricing } from "@/lib/pricing";
@@ -35,7 +36,7 @@ export default async function SamplePage() {
   const productName = getProduct(report?.productCode ?? "lifetime")?.name ?? "평생사주 종합 리포트";
 
   return (
-    <div className="mx-auto max-w-xl px-5 py-8">
+    <div className="mx-auto max-w-[430px] px-5 py-8">
       <header className="text-center">
         <p className="text-xs tracking-widest text-accent-strong">리포트 샘플</p>
         <h1 className="mt-2 text-2xl font-bold leading-snug">
@@ -79,7 +80,8 @@ export default async function SamplePage() {
             )}
           </div>
 
-          <div className="mt-4 space-y-4">
+          {/* 해석 본문만 종이 시트 — 팔자표·대운표·CTA는 night 카드 */}
+          <div className="paper mt-4 space-y-4 rounded-2xl bg-bg p-3">
             {order.map((key) => {
               const body = blocks[key];
               if (!body?.trim()) return null;
@@ -98,7 +100,7 @@ export default async function SamplePage() {
               href={`/report/${SAMPLE_TOKEN}/pdf`}
               className="mt-3 inline-block rounded-xl border border-line px-4 py-2.5 text-sm font-bold transition hover:border-accent"
             >
-              📄 샘플 PDF 열어보기
+              <Icon name="doc" size={15} /> 샘플 PDF 열어보기
             </a>
           </div>
         </>
@@ -121,7 +123,7 @@ export default async function SamplePage() {
         </p>
         <Link
           href="/checkout/new?product=lifetime"
-          className="mt-4 block rounded-xl bg-accent-strong px-4 py-3.5 text-[15px] font-bold text-white transition hover:opacity-90"
+          className="mt-4 block rounded-xl bg-[#FFE9A8] px-4 py-3.5 text-[15px] font-bold text-[#272132] transition hover:opacity-90"
         >
           내 리포트 받기 — {price.current.toLocaleString()}원
         </Link>

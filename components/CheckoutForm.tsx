@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import type { Product } from "@/lib/products";
+import Icon from "./icons";
 import PersonFields, { EMPTY_PERSON, personToApiInput, type PersonFormValue } from "./PersonFields";
 
 interface Props {
@@ -25,6 +26,7 @@ export default function CheckoutForm({ product, prefill }: Props) {
   useEffect(() => {
     try {
       const saved = localStorage.getItem("orobmi_email");
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- 마운트 1회 localStorage 읽기(외부 시스템 동기화), 캐스케이드 없음
       if (saved) setEmail(saved);
     } catch {
       /* private 모드 등 */
@@ -36,6 +38,7 @@ export default function CheckoutForm({ product, prefill }: Props) {
   useEffect(() => {
     if (prefill?.length) return;
     try {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- 마운트 1회 localStorage 읽기(외부 시스템 동기화), 캐스케이드 없음
       setLastFreeId(localStorage.getItem("orobmi_last_free"));
     } catch {
       /* private 모드 등 */
@@ -96,7 +99,7 @@ export default function CheckoutForm({ product, prefill }: Props) {
           href={`/checkout/new?product=${product.code}&from=${lastFreeId}`}
           className="block rounded-xl border border-accent bg-accent-soft/40 px-4 py-3 text-center text-sm font-medium text-accent-strong transition hover:bg-accent-soft/70"
         >
-          ⚡ 무료 사주에서 입력한 내 정보 그대로 불러오기
+          <Icon name="bolt" /> 무료 사주에서 입력한 내 정보 그대로 불러오기
         </a>
       )}
       {persons.map((p, i) => (
@@ -141,12 +144,12 @@ export default function CheckoutForm({ product, prefill }: Props) {
         type="button"
         onClick={submit}
         disabled={loading}
-        className="w-full rounded-xl bg-accent-strong px-4 py-3.5 text-[15px] font-bold text-white transition hover:opacity-90 disabled:opacity-50"
+        className="w-full rounded-xl bg-[#272132] px-4 py-3.5 text-[15px] font-bold text-[#FFE9A8] transition hover:opacity-90 disabled:opacity-50"
       >
         {loading ? "주문 준비 중..." : "결제 단계로"}
       </button>
       <p className="text-center text-xs text-ink-soft">
-        🔒 결제는 토스페이먼츠 안전결제로 진행돼요. 카드 정보는 저희에게 저장되지 않아요.
+        <Icon name="lock" size={12} /> 결제는 토스페이먼츠 안전결제로 진행돼요. 카드 정보는 저희에게 저장되지 않아요.
       </p>
     </div>
   );

@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import Icon from "@/components/icons";
 import { PriceCounter, PriceTag } from "@/components/PriceTag";
 import ReviewList from "@/components/ReviewList";
 import { POSTER_BG } from "@/lib/poster-art";
@@ -19,7 +20,7 @@ export default async function ProductsPage() {
   const allAtCap = Object.values(pricing.prices).every((p) => p.atCap);
 
   return (
-    <div className="mx-auto max-w-xl px-5 py-10">
+    <div className="mx-auto max-w-[430px] px-5 py-10">
       <header className="text-center">
         <h1 className="text-2xl font-bold">심층 리포트</h1>
         <p className="mt-2 text-sm text-ink-soft">
@@ -36,7 +37,7 @@ export default async function ProductsPage() {
         >
           <div>
             <p className="text-sm font-bold text-accent-strong">
-              📄 결제 전에 샘플 먼저 보기
+              <Icon name="doc" /> 결제 전에 샘플 먼저 보기
             </p>
             <p className="mt-0.5 text-xs text-ink-soft">
               리포트 전문을 통째로 공개해요 — 결제 전에 다 읽어보고 결정하세요
@@ -86,7 +87,7 @@ export default async function ProductsPage() {
                   <h2 className="text-lg font-bold">
                     {p.cardTitle}
                     {isBundle && (
-                      <span className="ml-1.5 rounded-full bg-accent-strong px-2 py-0.5 align-middle text-[10px] font-bold text-white">
+                      <span className="ml-1.5 rounded-full bg-[#FFE9A8] px-2 py-0.5 align-middle text-[10px] font-bold text-[#272132]">
                         가장 알뜰
                       </span>
                     )}
@@ -114,14 +115,14 @@ export default async function ProductsPage() {
               {/* 비대면 상품은 분량·납기가 유일한 품질 시그널 — 실측값을 전면에 */}
               <div className="mt-3 flex flex-wrap gap-1.5 text-xs">
                 <span className="rounded-full bg-accent-soft/60 px-2.5 py-1 font-medium text-accent-strong">
-                  📄 PDF {p.pdfPages}페이지
+                  <Icon name="doc" /> PDF {p.pdfPages}페이지
                 </span>
                 <span className="rounded-full bg-accent-soft/60 px-2.5 py-1 font-medium text-accent-strong">
-                  ✍️ {p.charCount} 분량
+                  <Icon name="pen" /> {p.charCount} 분량
                 </span>
                 <span className="rounded-full bg-accent-soft/60 px-2.5 py-1 font-medium text-accent-strong">
                   {/* 프리미엄은 4단계로 나눠 써서 더 걸린다 — 실측 12~13분, 표기는 여유 있게 15분 */}
-                  ⚡ {p.code === "deep" ? "15분 내 발급" : "1~2분 즉시 발급"}
+                  <Icon name="bolt" /> {p.code === "deep" ? "15분 내 발급" : "1~2분 즉시 발급"}
                 </span>
               </div>
               <ul className="mt-2.5 flex flex-wrap gap-1.5">
@@ -133,7 +134,7 @@ export default async function ProductsPage() {
               </ul>
               <Link
                 href={`/products/${p.code}`}
-                className="mt-4 block rounded-xl bg-accent-strong px-4 py-3 text-center text-[15px] font-bold text-white transition hover:opacity-90"
+                className="mt-4 block rounded-xl bg-[#FFE9A8] px-4 py-3 text-center text-[15px] font-bold text-[#272132] transition hover:opacity-90"
               >
                 자세히 보기 →
               </Link>
@@ -147,7 +148,9 @@ export default async function ProductsPage() {
 
       {/* 환불 조건을 각주가 아니라 신뢰 장치로 — 왜 제한되는지 이유까지 붙인다 */}
       <div className="mt-8 rounded-2xl border border-line bg-card p-5 text-center text-xs leading-6 text-ink-soft">
-        <p className="text-sm font-bold text-ink">🛡️ 읽어보시고 별로면 환불해드려요</p>
+        <p className="text-sm font-bold text-ink">
+          <Icon name="shield" size={15} /> 읽어보시고 별로면 환불해드려요
+        </p>
         <p className="mt-1.5">
           결제 전에{" "}
           <Link href="/sample" className="text-accent-strong underline">
@@ -157,7 +160,7 @@ export default async function ProductsPage() {
           <br />
           다 받아보신 뒤에도 만족스럽지 않으면 <b>어떤 점이 부족했는지 알려주시면 환불</b>해드려요.
           법으로는 안 해도 되지만, 그 얘기를 들어야 다음 리포트를 고칠 수 있거든요.{" "}
-          <Link href="/refund" className="underline">
+          <Link href="/refund" className="text-accent-strong underline">
             환불정책
           </Link>
         </p>

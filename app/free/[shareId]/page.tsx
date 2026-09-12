@@ -7,6 +7,7 @@ import { ElementChart, PillarTable, StarProfile } from "@/components/SajuCards";
 import RememberFreeResult from "@/components/RememberFreeResult";
 import ShareBar from "@/components/ShareBar";
 import ChemiInviteButton from "@/components/chemi/ChemiInviteButton";
+import Icon from "@/components/icons";
 import StreamingReport from "@/components/StreamingReport";
 import UpsellTeaser from "@/components/UpsellTeaser";
 import { computeChemistry } from "@/lib/saju/chemistry";
@@ -96,7 +97,7 @@ export default async function FreeResultPage({
   );
 
   return (
-    <div className="mx-auto max-w-xl px-5 py-8">
+    <div className="mx-auto max-w-[430px] px-5 py-8">
       <RememberFreeResult shareId={shareId} />
       <header className="text-center">
         <p className="text-xs tracking-widest text-ink-soft">
@@ -180,11 +181,14 @@ export default async function FreeResultPage({
           })()
         )}
 
-        <StreamingReport
-          token={shareId}
-          initialStatus={report.status}
-          initialRawText={content?.rawText ?? null}
-        />
+        {/* 해석 본문은 종이 시트 — 긴 글은 크림 바탕에서 읽게 한다(팔자표·오행·업셀은 night 유지) */}
+        <div className="paper rounded-2xl bg-bg p-3">
+          <StreamingReport
+            token={shareId}
+            initialStatus={report.status}
+            initialRawText={content?.rawText ?? null}
+          />
+        </div>
       </div>
 
       {/* 결과 카드 이미지 저장 — 캡처가 곧 광고 (워터마크 포함 한 장 카드) */}
@@ -194,7 +198,7 @@ export default async function FreeResultPage({
           download={`오롭미_${persons[0].name}_사주카드.png`}
           className="mt-4 block rounded-xl border border-line bg-card px-4 py-3 text-center text-sm font-bold transition hover:border-accent"
         >
-          📸 결과 카드 이미지로 저장하기
+          <Icon name="camera" size={15} /> 결과 카드 이미지로 저장하기
         </a>
       )}
 
@@ -229,7 +233,7 @@ export default async function FreeResultPage({
           </h2>
           <Link
             href={`/checkout/new?product=love&from=${shareId}`}
-            className="mt-4 block rounded-xl bg-accent-strong px-4 py-3.5 text-[15px] font-bold text-white transition hover:opacity-90"
+            className="mt-4 block rounded-xl bg-[#FFE9A8] px-4 py-3.5 text-[15px] font-bold text-[#272132] transition hover:opacity-90"
           >
             심층 궁합 리포트 열기 — {lovePrice.toLocaleString()}원
           </Link>
@@ -252,8 +256,8 @@ export default async function FreeResultPage({
       </div>
 
       {/* 모바일 하단 고정 CTA */}
-      <div className="fixed inset-x-0 bottom-0 z-20 border-t border-line bg-card/95 backdrop-blur">
-        <div className="mx-auto flex max-w-xl items-center justify-between gap-3 px-5 py-3">
+      <div className="fixed inset-x-0 bottom-0 z-20 border-t border-line bg-[#17131F]/90 backdrop-blur">
+        <div className="mx-auto flex max-w-[430px] items-center justify-between gap-3 px-5 py-3">
           <div className="min-w-0">
             <p className="truncate text-xs text-ink-soft">
               {isLove ? "두 사람 정보 그대로 이어서" : `${persons[0].name}님 사주로 이어서`}
@@ -266,7 +270,7 @@ export default async function FreeResultPage({
           </div>
           <Link
             href={`/checkout/new?product=${isLove ? "love" : "lifetime"}&from=${shareId}`}
-            className="shrink-0 rounded-xl bg-accent-strong px-4 py-2.5 text-sm font-bold text-white transition hover:opacity-90"
+            className="inline-flex min-h-11 shrink-0 items-center rounded-xl bg-[#FFE9A8] px-4 py-2.5 text-sm font-bold text-[#272132] transition hover:opacity-90"
           >
             전부 열어보기
           </Link>

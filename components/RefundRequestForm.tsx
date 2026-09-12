@@ -88,7 +88,7 @@ export default function RefundRequestForm() {
           type="button"
           onClick={submit}
           disabled={busy}
-          className="w-full rounded-xl bg-accent-strong px-4 py-3 text-sm font-bold text-white transition hover:opacity-90 disabled:opacity-50"
+          className="w-full rounded-xl bg-[#272132] px-4 py-3 text-sm font-bold text-[#FFE9A8] transition hover:opacity-90 disabled:opacity-50"
         >
           {busy ? "접수 중…" : "접수하기"}
         </button>

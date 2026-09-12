@@ -3,10 +3,16 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
-// 하단 5탭 — 홈에서만 렌더(page.tsx 안). 활성 탭 1개만 금박, 나머지는 보라빛 회색.
+// 하단 5탭 — layout에서 렌더하되 탐색용 경로에서만 보인다. 활성 탭 1개만 금박, 나머지는 보라빛 회색.
 // 수다방은 아직 없으므로 링크 없이 "준비 중" 뱃지 + aria-disabled.
 const ACTIVE = "#FFE9A8";
 const IDLE = "#B9A9DD";
+
+// 결제·리포트·법률 페이지는 탭을 숨긴다(상품 상세는 StickyBuyBar와 겹쳐서 제외)
+function showTabs(pathname: string): boolean {
+  if (pathname === "/" || pathname === "/products") return true;
+  return ["/chemi", "/test/ohaeng", "/ilgan"].some((p) => pathname === p || pathname.startsWith(`${p}/`));
+}
 
 function HomeIcon({ color }: { color: string }) {
   return (
@@ -50,8 +56,13 @@ function ChatIcon({ color }: { color: string }) {
 export default function BottomTabs() {
   const pathname = usePathname();
   const homeActive = pathname === "/";
+  const productsActive = pathname === "/products";
   const itemCls = "flex min-h-16 flex-col items-center justify-center gap-1";
   const labelCls = "text-[10px] leading-none";
+  const activeLabel = "font-bold text-[#FFE9A8]";
+  const idleLabel = "font-medium text-ink-soft";
+
+  if (!showTabs(pathname)) return null;
 
   return (
     // id는 globals.css가 "홈 = 하단 탭이 있는 페이지"를 판별해 공통 푸터에 탭 높이만큼 여백을 주는 데 쓴다
@@ -66,16 +77,16 @@ export default function BottomTabs() {
       >
         <Link href="/" className={itemCls} aria-current={homeActive ? "page" : undefined}>
           <HomeIcon color={homeActive ? ACTIVE : IDLE} />
-          <span className={`${labelCls} ${homeActive ? "font-bold text-[#FFE9A8]" : "font-medium text-ink-soft"}`}>홈</span>
+          <span className={`${labelCls} ${homeActive ? activeLabel : idleLabel}`}>홈</span>
         </Link>
-        {/* 같은 페이지 앵커라 Link 대신 a — 스크롤만 하면 된다 */}
-        <a href="#free" className={itemCls}>
+        {/* 홈에서는 같은 페이지 앵커(스크롤만), 다른 페이지에서는 홈의 폼으로 이동 — 둘 다 a로 충분하다 */}
+        <a href={homeActive ? "#free" : "/#free"} className={itemCls}>
           <StarIcon color={IDLE} />
-          <span className={`${labelCls} font-medium text-ink-soft`}>무료사주</span>
+          <span className={`${labelCls} ${idleLabel}`}>무료사주</span>
         </a>
-        <Link href="/products" className={itemCls}>
-          <ReportIcon color={IDLE} />
-          <span className={`${labelCls} font-medium text-ink-soft`}>리포트</span>
+        <Link href="/products" className={itemCls} aria-current={productsActive ? "page" : undefined}>
+          <ReportIcon color={productsActive ? ACTIVE : IDLE} />
+          <span className={`${labelCls} ${productsActive ? activeLabel : idleLabel}`}>리포트</span>
         </Link>
         {/* FreeForm이 mode를 마운트 시 1회만 읽어서, Link(소프트 내비게이션)로는 궁합 모드가 안 켜진다 — 새 요청으로 보내고 #free로 폼까지 스크롤 */}
         {/* eslint-disable-next-line @next/next/no-html-link-for-pages -- 위 이유로 의도된 전체 이동 */}

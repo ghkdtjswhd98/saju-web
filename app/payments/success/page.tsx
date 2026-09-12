@@ -11,14 +11,14 @@ export default async function PaymentSuccessPage({
 
   if (!paymentKey || !orderId || !amount) {
     return (
-      <div className="mx-auto max-w-xl px-5 py-24 text-center text-sm text-ink-soft">
+      <div className="mx-auto max-w-[430px] px-5 py-24 text-center text-sm text-ink-soft">
         결제 정보가 올바르지 않아요.
       </div>
     );
   }
 
   return (
-    <div className="mx-auto max-w-xl px-5 py-24">
+    <div className="mx-auto max-w-[430px] px-5 py-24">
       <ConfirmPayment paymentKey={paymentKey} orderId={orderId} amount={amount} />
     </div>
   );

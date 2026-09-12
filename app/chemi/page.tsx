@@ -15,7 +15,7 @@ const STEPS = [
 
 export default function ChemiPage() {
   return (
-    <div className="mx-auto max-w-xl px-5 py-10">
+    <div className="mx-auto max-w-[430px] px-5 py-10">
       <header className="text-center">
         <p className="text-sm font-medium text-accent-strong">친구 케미 순위</p>
         <h1 className="mt-2 text-2xl font-bold leading-snug">
@@ -28,7 +28,8 @@ export default function ChemiPage() {
         </p>
       </header>
 
-      <div className="mt-7">
+      {/* 입력 폼은 종이 카드 — PersonFields의 흰 입력창이 남색 카드 위에 뜨지 않게 */}
+      <div className="paper mt-7">
         <ChemiCreateForm />
       </div>
 

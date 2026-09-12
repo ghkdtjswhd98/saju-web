@@ -32,7 +32,7 @@ export default async function ChemiLinkPage({ params }: { params: Promise<{ code
   const ranking = await listChemiRanking(code);
 
   return (
-    <div className="mx-auto max-w-xl px-5 py-10">
+    <div className="mx-auto max-w-[430px] px-5 py-10">
       <ChemiLanding
         code={code}
         nickname={link.nickname}

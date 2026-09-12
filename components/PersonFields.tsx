@@ -2,6 +2,7 @@
 
 import { useEffect, useImperativeHandle, useRef, useState, type Ref } from "react";
 import { HOUR_OPTIONS } from "@/lib/saju/constants";
+import Icon from "./icons";
 import { CONCERN_TOPIC, JOB_STATUS, LOVE_DURATION, LOVE_STATUS } from "@/lib/saju/types";
 
 export interface PersonFormValue {
@@ -302,7 +303,7 @@ export default function PersonFields({
             const dst = (y >= 1948 && y <= 1951) || (y >= 1955 && y <= 1960) || y === 1987 || y === 1988;
             return dst ? (
               <p className="mb-2 rounded-lg bg-accent-soft/40 px-3 py-2 text-xs leading-5 text-accent-strong">
-                ⏰ {y}년에는 서머타임이 있었어요. 5~10월 사이에 태어나셨다면, 출생 시각에서{" "}
+                <Icon name="clock" size={12} /> {y}년에는 서머타임이 있었어요. 5~10월 사이에 태어나셨다면, 출생 시각에서{" "}
                 <b>1시간을 뺀 시간대</b>를 골라주세요. (예: 오후 2시 출생 → 오후 1시 = 미시가 아닌 오시)
               </p>
             ) : null;

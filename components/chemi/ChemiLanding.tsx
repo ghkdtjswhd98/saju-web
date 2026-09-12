@@ -243,7 +243,7 @@ export default function ChemiLanding({ code, nickname, initialRows, initialTotal
             type="button"
             onClick={makeMine}
             disabled={regenLoading}
-            className="mt-4 min-h-12 w-full rounded-xl bg-accent-strong px-4 py-3.5 text-[15px] font-bold text-white transition hover:opacity-90 disabled:opacity-50"
+            className="mt-4 min-h-12 w-full rounded-xl bg-[#FFE9A8] px-4 py-3.5 text-[15px] font-bold text-[#272132] transition hover:opacity-90 disabled:opacity-50"
           >
             {regenLoading ? "링크 만드는 중..." : "나도 내 링크 만들기"}
           </button>
@@ -276,7 +276,8 @@ export default function ChemiLanding({ code, nickname, initialRows, initialTotal
         <p className="mt-2 text-sm text-ink-soft">별명이랑 생일만 넣으면 바로 나와요 · 로그인 없음</p>
       </header>
 
-      <div className="rounded-2xl border border-line bg-card p-5 shadow-sm">
+      {/* 친구 입력 카드만 종이(paper) — 순위판·결과 카드는 night 카드 그대로 */}
+      <div className="paper rounded-2xl border border-line bg-card p-5 shadow-sm">
         <PersonFields
           ref={fieldsRef}
           value={person}
@@ -294,7 +295,7 @@ export default function ChemiLanding({ code, nickname, initialRows, initialTotal
           type="button"
           onClick={submit}
           disabled={loading}
-          className="mt-5 min-h-12 w-full rounded-xl bg-accent-strong px-4 py-3.5 text-[15px] font-bold text-white transition hover:opacity-90 disabled:opacity-50"
+          className="mt-5 min-h-12 w-full rounded-xl bg-[#272132] px-4 py-3.5 text-[15px] font-bold text-[#FFE9A8] transition hover:opacity-90 disabled:opacity-50"
         >
           {loading ? "계산 중..." : `${nickname}님과 내 케미 보기`}
         </button>

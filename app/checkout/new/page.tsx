@@ -60,7 +60,7 @@ export default async function CheckoutNewPage({
   const price = pricing.prices[product.code];
 
   return (
-    <div className="mx-auto max-w-xl px-5 py-8">
+    <div className="mx-auto max-w-[430px] px-5 py-8">
       <header className="text-center">
         <p className="text-xs tracking-widest text-ink-soft">STEP 1 / 2 — 정보 입력</p>
         <h1 className="mt-1 text-xl font-bold">{product.name}</h1>
@@ -68,7 +68,8 @@ export default async function CheckoutNewPage({
           {product.tagline} · <PriceTag current={price.current} list={price.list} size="sm" />
         </p>
       </header>
-      <div className="mt-6">
+      {/* 입력 폼 전체를 종이 시트로 — 카드 밖 안내문·에러까지 크림 바탕 위에 놓여야 읽힌다 */}
+      <div className="paper mt-6 rounded-2xl bg-bg p-4">
         <CheckoutForm product={product} prefill={prefill} />
       </div>
     </div>

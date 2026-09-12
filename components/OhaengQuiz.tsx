@@ -5,6 +5,9 @@ import { useState } from "react";
 import Orobi from "@/components/Orobi";
 import { QUESTIONS, scoreAnswers, type ElementKey } from "@/lib/ohaeng-test";
 
+// 오행 5색 점 — 이모지 대신 쓰는 장식(오행색은 라벨·차트에만 허용)
+const ELEMENT_DOTS = ["#6a9f6a", "#d07b6a", "#c2a05e", "#9aa3ad", "#6a86b8"];
+
 export default function OhaengQuiz() {
   const router = useRouter();
   const [started, setStarted] = useState(false);
@@ -26,9 +29,13 @@ export default function OhaengQuiz() {
     return (
       <div className="rounded-2xl border border-line bg-card p-6 text-center">
         <div className="flex justify-center">
-          <Orobi size={96} />
+          <Orobi size={96} halo="none" />
         </div>
-        <p className="mt-2 text-3xl">🌱🔥⛰️💎🌊</p>
+        <svg width="112" height="20" viewBox="0 0 112 20" className="mx-auto mt-2" aria-hidden="true">
+          {ELEMENT_DOTS.map((c, i) => (
+            <circle key={c} cx={10 + i * 23} cy="10" r="7" fill={c} />
+          ))}
+        </svg>
         <h2 className="mt-3 text-lg font-bold leading-snug">
           12개 질문이면 나의 기운이 보여요
         </h2>
@@ -40,7 +47,7 @@ export default function OhaengQuiz() {
         <button
           type="button"
           onClick={() => setStarted(true)}
-          className="mt-5 w-full rounded-xl bg-accent-strong px-4 py-3.5 text-[15px] font-bold text-white transition hover:opacity-90"
+          className="mt-5 w-full rounded-xl bg-[#FFE9A8] px-4 py-3.5 text-[15px] font-bold text-[#272132] transition hover:opacity-90"
         >
           1분 테스트 시작하기
         </button>

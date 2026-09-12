@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import Icon from "@/components/icons";
 import ShareBar from "@/components/ShareBar";
 import { OHAENG_TYPES, TYPE_ORDER, isElementKey } from "@/lib/ohaeng-test";
 
@@ -36,7 +37,7 @@ export default async function OhaengResultPage({
   const match = OHAENG_TYPES[t.matchKey];
 
   return (
-    <div className="mx-auto max-w-xl px-5 py-8">
+    <div className="mx-auto max-w-[430px] px-5 py-8">
       <header className="text-center">
         <p className="text-xs tracking-widest text-ink-soft">오행 캐릭터 테스트</p>
       </header>
@@ -66,9 +67,14 @@ export default async function OhaengResultPage({
           {t.strengths.map((s) => (
             <li
               key={s}
-              className="rounded-full px-3 py-1 text-xs font-medium text-white"
-              style={{ background: t.color }}
+              className="inline-flex items-center gap-1.5 rounded-full border border-line bg-bg px-3 py-1 text-xs font-medium text-ink"
             >
+              {/* 수(水) 배경 위 글자가 4.5:1에 못 미쳐 오행색은 점으로만 표시 */}
+              <span
+                aria-hidden="true"
+                className="h-2 w-2 shrink-0 rounded-full"
+                style={{ background: t.color }}
+              />
               {s}
             </li>
           ))}
@@ -77,7 +83,9 @@ export default async function OhaengResultPage({
 
       <div className="mt-4 rounded-2xl border border-line bg-card p-5 text-sm leading-6">
         <p>
-          <b>🔎 의식하면 좋은 것</b>
+          <b>
+            <Icon name="search" className="text-accent" /> 의식하면 좋은 것
+          </b>
           <br />
           {t.watchout}
         </p>
@@ -105,7 +113,7 @@ export default async function OhaengResultPage({
           download={`ohaeng-${t.key}.png`}
           className="block rounded-xl border border-line bg-card px-4 py-3 text-center text-sm font-bold transition hover:border-accent"
         >
-          📱 스토리용 이미지 저장 (9:16)
+          <Icon name="phone" size={15} /> 스토리용 이미지 저장 (9:16)
         </a>
       </div>
 
@@ -142,7 +150,7 @@ export default async function OhaengResultPage({
         </p>
         <Link
           href="/"
-          className="mt-4 block rounded-xl bg-accent-strong px-4 py-3.5 text-[15px] font-bold text-white transition hover:opacity-90"
+          className="mt-4 block rounded-xl bg-[#FFE9A8] px-4 py-3.5 text-[15px] font-bold text-[#272132] transition hover:opacity-90"
         >
           내 진짜 오행 무료로 확인하기 →
         </Link>

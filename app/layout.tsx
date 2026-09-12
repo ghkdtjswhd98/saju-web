@@ -4,6 +4,7 @@ import { Noto_Sans_KR } from "next/font/google";
 import Link from "next/link";
 import MetaPixel from "@/components/MetaPixel";
 import SiteHeader from "@/components/SiteHeader";
+import BottomTabs from "@/components/home/BottomTabs";
 import { SITE } from "@/lib/site";
 import "./globals.css";
 
@@ -36,16 +37,16 @@ export default function RootLayout({
 }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="ko" className={`${notoKr.variable} h-full antialiased`}>
-      <body className="min-h-full flex flex-col">
-        {/* 홈에서만 다크로 바뀌는 헤더 — 경로 판단(usePathname)이 필요해 클라이언트 컴포넌트로 분리 */}
+      {/* 사이트 전체가 딥네이비 셸 — admin만 app/admin/layout.tsx에서 theme-day로 되돌린다 */}
+      <body className="theme-night min-h-full flex flex-col bg-bg text-ink">
         <SiteHeader />
         <main className="flex-1">{children}</main>
         <footer className="border-t border-line mt-16">
-          <div className="mx-auto max-w-xl px-5 py-8 text-xs text-ink-soft space-y-3">
+          <div className="mx-auto max-w-[430px] px-5 py-8 text-xs text-ink-soft space-y-3">
             <nav className="flex gap-4">
-              <Link href="/terms" className="hover:underline">이용약관</Link>
-              <Link href="/privacy" className="font-medium hover:underline">개인정보처리방침</Link>
-              <Link href="/refund" className="hover:underline">환불정책</Link>
+              <Link href="/terms" className="text-accent-strong hover:underline">이용약관</Link>
+              <Link href="/privacy" className="text-accent-strong font-medium hover:underline">개인정보처리방침</Link>
+              <Link href="/refund" className="text-accent-strong hover:underline">환불정책</Link>
             </nav>
             <div className="space-y-0.5">
               <p>
@@ -63,6 +64,8 @@ export default function RootLayout({
             </div>
           </div>
         </footer>
+        {/* 하단 5탭 — 경로 규칙(홈·리포트·케미·테스트·일간에서만)은 컴포넌트 안에서 판단, 그 외 경로는 null */}
+        <BottomTabs />
         {/* 방문→무료→체크아웃→리포트 퍼널은 페이지뷰 경로로 측정 (Vercel 배포 시 활성화) */}
         <Analytics />
         {/* NEXT_PUBLIC_META_PIXEL_ID 설정 시에만 활성화 — 광고 집행 단계에서 등록 */}

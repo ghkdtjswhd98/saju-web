@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { eq } from "drizzle-orm";
 import { ElementChart, PillarTable, StarProfile } from "@/components/SajuCards";
 import AskReport from "@/components/AskReport";
+import Icon from "@/components/icons";
 import PredictionScore from "@/components/PredictionScore";
 import ReviewForm from "@/components/ReviewForm";
 import StreamingReport from "@/components/StreamingReport";
@@ -68,7 +69,7 @@ export default async function ReportPage({
     : [{ person: persons[0], saju: report.sajuData as SajuResult }];
 
   return (
-    <div className="mx-auto max-w-xl px-5 py-8">
+    <div className="mx-auto max-w-[430px] px-5 py-8">
       <header className="text-center">
         <p className="text-xs tracking-widest text-ink-soft">{product?.name}</p>
         <h1 className="mt-1 text-xl font-bold">
@@ -109,49 +110,55 @@ export default async function ReportPage({
           </details>
         ))}
 
-        <StreamingReport
-          token={token}
-          initialStatus={report.status}
-          initialRawText={content?.rawText ?? null}
-          longForm={report.productCode === "deep"}
-        />
+        {/* 해석 본문은 종이 시트 — 긴 글은 크림 바탕에서 읽게 한다(팔자표는 night 카드) */}
+        <div className="paper rounded-2xl bg-bg p-3">
+          <StreamingReport
+            token={token}
+            initialStatus={report.status}
+            initialRawText={content?.rawText ?? null}
+            longForm={report.productCode === "deep"}
+          />
+        </div>
 
         {report.status === "done" && (
           <a
             href={`/report/${token}/pdf`}
             className="block rounded-xl border border-line bg-card px-4 py-3.5 text-center text-sm font-bold transition hover:border-accent"
           >
-            📄 PDF로 저장하기
+            <Icon name="doc" size={15} /> PDF로 저장하기
           </a>
         )}
 
-        {report.status === "done" && (
-          <AskReport
-            token={token}
-            initialQa={
-              ((report.content as { qa?: { q: string; a: string; at: string }[] } | null)?.qa ??
-                [])[0] ?? null
-            }
-          />
-        )}
+        {/* 질문·채점·후기는 전부 입력 폼이라 종이 카드로 묶는다 */}
+        <div className="paper space-y-4">
+          {report.status === "done" && (
+            <AskReport
+              token={token}
+              initialQa={
+                ((report.content as { qa?: { q: string; a: string; at: string }[] } | null)?.qa ??
+                  [])[0] ?? null
+              }
+            />
+          )}
 
-        {report.status === "done" && (
-          <PredictionScore
-            token={token}
-            createdAtIso={(report.completedAt ?? report.createdAt).toISOString()}
-            initialGrade={
-              (report.content as {
-                predictionGrade?: {
-                  verdict: "hit" | "half" | "miss";
-                  note?: string;
-                  at: string;
-                };
-              } | null)?.predictionGrade ?? null
-            }
-          />
-        )}
+          {report.status === "done" && (
+            <PredictionScore
+              token={token}
+              createdAtIso={(report.completedAt ?? report.createdAt).toISOString()}
+              initialGrade={
+                (report.content as {
+                  predictionGrade?: {
+                    verdict: "hit" | "half" | "miss";
+                    note?: string;
+                    at: string;
+                  };
+                } | null)?.predictionGrade ?? null
+              }
+            />
+          )}
 
-        <ReviewForm token={token} initial={existingReview} />
+          <ReviewForm token={token} initial={existingReview} />
+        </div>
       </div>
     </div>
   );

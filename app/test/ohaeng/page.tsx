@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import OhaengQuiz from "@/components/OhaengQuiz";
 
 export const metadata: Metadata = {
@@ -9,7 +10,7 @@ export const metadata: Metadata = {
 
 export default function OhaengTestPage() {
   return (
-    <div className="mx-auto max-w-xl px-5 py-10">
+    <div className="mx-auto max-w-[430px] px-5 py-10">
       <header className="text-center">
         <p className="text-sm font-medium text-accent-strong">무료 1분 테스트</p>
         <h1 className="mt-2 text-2xl font-bold leading-snug">
@@ -25,9 +26,9 @@ export default function OhaengTestPage() {
         이 테스트는 성향 기반 재미 콘텐츠예요.
         <br />
         태어난 순간이 정한 진짜 오행 비율은{" "}
-        <a href="/" className="text-accent-strong underline">
+        <Link href="/" className="text-accent-strong underline">
           무료 사주
-        </a>
+        </Link>
         에서 30초면 나와요.
       </p>
     </div>
