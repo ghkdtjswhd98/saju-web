@@ -11,8 +11,9 @@ export const runtime = "nodejs";
 // 하루 IP당 응답 상한 — 단톡방 한 명이 여러 친구 생일을 대신 넣는 경우도 감안해 넉넉히
 const DAILY_REPLY_LIMIT = 30;
 
-// 친구 응답: { person, nickname } → 링크 주인과의 케미 계산 → 저장 → { score, label, rank, total, nickname }
+// 친구 응답: { person, nickname, isPrivate? } → 링크 주인과의 케미 계산 → 저장 → { score, label, rank, total, nickname, isPrivate }
 // nickname은 정제(공백 접기·12자)된 저장값 — 클라이언트가 순위판에서 본인 줄을 찾을 때 이 값을 쓴다.
+// isPrivate(기본 false): 켜면 다른 친구 순위판엔 "비공개 n명"으로만 반영되고 링크 주인에게만 이름·점수가 보인다.
 // 친구의 생년월일·파생값은 저장하지 않는다 — 점수와 라벨만 남는다.
 export async function POST(req: Request, { params }: { params: Promise<{ code: string }> }) {
   try {
@@ -27,13 +28,14 @@ async function handle(req: Request, code: string) {
   const link = await getChemiLink(code);
   if (!link) return NextResponse.json({ error: "링크를 찾을 수 없어요." }, { status: 404 });
 
-  let body: { person?: unknown; nickname?: unknown };
+  let body: { person?: unknown; nickname?: unknown; isPrivate?: unknown };
   try {
     body = await req.json();
   } catch {
     return NextResponse.json({ error: "잘못된 요청이에요." }, { status: 400 });
   }
   const nickname = parseNickname(body.nickname);
+  const isPrivate = body.isPrivate === true; // 명시적 true만 비공개 — 누락·오타는 공개(기본)
   if (!nickname) return NextResponse.json({ error: "별명을 입력해주세요." }, { status: 400 });
   // 케미는 지지·오행만 쓰므로 성별을 받지 않는다(대운 불필요)
   const p = parsePersonInput(body.person, { genderOptional: true });
@@ -57,10 +59,12 @@ async function handle(req: Request, code: string) {
     );
   }
   const label = chemiLabel(score);
-  await addChemiReply(code, nickname, score, label);
+  await addChemiReply(code, nickname, score, label, isPrivate);
 
-  // 방금 저장한 건을 포함한 순위 — 동점은 같은 등수
+  // 방금 저장한 건을 포함한 순위 — 동점은 같은 등수. 비공개 응답도 포함한 전체 기준(본인은 자기 순위를 그대로 본다)
   const ranking = await listChemiRanking(code);
   const rank = rankOf(ranking.map((r) => r.score), score);
-  return NextResponse.json({ score, label, rank, total: ranking.length, nickname, ownerNickname: link.nickname });
+  return NextResponse.json({
+    score, label, rank, total: ranking.length, nickname, isPrivate, ownerNickname: link.nickname,
+  });
 }

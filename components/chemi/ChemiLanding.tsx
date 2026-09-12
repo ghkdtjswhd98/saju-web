@@ -10,15 +10,19 @@ import PersonFields, {
   type PersonFormValue,
 } from "@/components/PersonFields";
 import ShareBar from "@/components/ShareBar";
-import { CHEMI_NICKNAME_MAX, CHEMI_UTM, type ChemiRankRow } from "@/lib/saju/chemi-link";
+import {
+  CHEMI_NICKNAME_MAX, CHEMI_UTM, type ChemiBoardView, type ChemiRankRow,
+} from "@/lib/saju/chemi-link";
+import BoardVisibilityToggle from "./BoardVisibilityToggle";
+import LockIcon from "./LockIcon";
 import RankingBoard from "./RankingBoard";
 import { getOwnerKey, saveOwnerKey, trackChemi } from "./chemi-client";
 
 interface Props {
   code: string;
   nickname: string;
-  initialRows: ChemiRankRow[]; // 공개 상위 5
-  initialTotal: number;
+  /** 서버가 친구 기준으로 만든 순위판(비공개 제외·잠금 반영) */
+  initialBoard: ChemiBoardView;
 }
 
 interface ReplyResult {
@@ -27,21 +31,44 @@ interface ReplyResult {
   rank: number;
   total: number;
   nickname: string; // 서버가 정제해 저장한 별명 — 순위판 본인 줄 강조는 이 값으로 맞춘다
+  isPrivate: boolean; // 비공개로 올렸으면 결과 화면에 안내
+}
+
+/** 주인 화면 상태 — 전체 순위(비공개 포함) + 공개 토글 */
+interface OwnerBoard {
+  rows: ChemiRankRow[];
+  total: number;
+  boardPublic: boolean;
+}
+
+/** 친구 순위판(ChemiBoardView)을 RankingBoard props로 */
+function boardProps(b: ChemiBoardView) {
+  return b.locked
+    ? { rows: [], total: b.total, locked: true, privateCount: 0 }
+    : { rows: b.replies, total: b.total, locked: false, privateCount: b.privateCount };
 }
 
 // /chemi/[code] — 같은 URL이 두 얼굴을 가진다.
-//   주인(이 브라우저에 ownerKey가 있음): 공유 버튼 + 전체 순위판
-//   친구: "{nickname}님과 너의 케미는?" → 별명+생일 → 점수·라벨·순위 → "나도 내 링크 만들기"
+//   주인(이 브라우저에 ownerKey가 있음): 공유 버튼 + 공개 토글 + 전체 순위판
+//   친구: "{nickname}님과 너의 케미는?" → 별명+생일(+비공개 체크) → 점수·라벨·순위 → "나도 내 링크 만들기"
 // 성별은 묻지 않는다 — 케미는 지지·오행만 쓰고, 안내 문구("생일만")와 실제 입력이 같아야 한다
-export default function ChemiLanding({ code, nickname, initialRows, initialTotal }: Props) {
+export default function ChemiLanding({ code, nickname, initialBoard }: Props) {
   const router = useRouter();
   // 링크를 막 만든 주인은 ?me=1로 들어온다 — 첫 프레임부터 순위판을 그려 친구 폼이 깜빡이지 않게.
   // 진짜 주인인지는 아래 useEffect에서 localStorage 키 + 서버 확인으로 다시 가리고, 아니면 친구 화면으로 바꾼다.
   const isMe = useSearchParams().get("me") === "1";
   const [mode, setMode] = useState<"owner" | "friend">(isMe ? "owner" : "friend");
-  const [rows, setRows] = useState(initialRows);
-  const [total, setTotal] = useState(initialTotal);
+  const [board, setBoard] = useState<ChemiBoardView>(initialBoard);
+  // 주인 전체 순위는 서버 확인 뒤에 온다 — 그전엔 친구용 순위판을 임시로 보여준다
+  const [owner, setOwner] = useState<OwnerBoard>(() => ({
+    rows: initialBoard.locked ? [] : initialBoard.replies,
+    total: initialBoard.total,
+    boardPublic: !initialBoard.locked,
+  }));
+  const [toggling, setToggling] = useState(false);
+  const [toggleError, setToggleError] = useState<string | null>(null);
   const [person, setPerson] = useState<PersonFormValue>(EMPTY_PERSON);
+  const [isPrivate, setIsPrivate] = useState(false);
   const fieldsRef = useRef<PersonFieldsHandle>(null);
   const [result, setResult] = useState<ReplyResult | null>(null);
   const [loading, setLoading] = useState(false);
@@ -60,15 +87,18 @@ export default function ChemiLanding({ code, nickname, initialRows, initialTotal
     let cancelled = false;
     fetch(`/api/chemi/links/${code}`, { headers: { "x-owner-key": key } })
       .then((r) => (r.ok ? r.json() : null))
-      .then((d: { isOwner?: boolean; replies?: ChemiRankRow[]; total?: number } | null) => {
-        if (cancelled) return;
-        if (d?.isOwner && d.replies) {
-          setRows(d.replies);
-          setTotal(d.total ?? d.replies.length);
-        } else {
-          setMode("friend");
-        }
-      })
+      .then(
+        (
+          d: { isOwner?: boolean; replies?: ChemiRankRow[]; total?: number; boardPublic?: boolean } | null,
+        ) => {
+          if (cancelled) return;
+          if (d?.isOwner && d.replies) {
+            setOwner({ rows: d.replies, total: d.total ?? d.replies.length, boardPublic: d.boardPublic !== false });
+          } else {
+            setMode("friend");
+          }
+        },
+      )
       .catch(() => {});
     return () => {
       cancelled = true;
@@ -79,11 +109,34 @@ export default function ChemiLanding({ code, nickname, initialRows, initialTotal
     try {
       const r = await fetch(`/api/chemi/links/${code}`);
       if (!r.ok) return;
-      const d = (await r.json()) as { replies: ChemiRankRow[]; total: number };
-      setRows(d.replies);
-      setTotal(d.total);
+      const d = (await r.json()) as ChemiBoardView;
+      setBoard(d);
     } catch {
       /* 순위판 갱신 실패는 결과 표시에 영향 없음 */
+    }
+  }
+
+  // 주인 토글 — 화면은 즉시 바꾸고 PATCH가 실패하면 되돌린다
+  async function changeBoardPublic(next: boolean) {
+    const key = getOwnerKey(code);
+    if (!key || toggling) return;
+    const prev = owner.boardPublic;
+    setOwner((o) => ({ ...o, boardPublic: next }));
+    setToggleError(null);
+    setToggling(true);
+    try {
+      const r = await fetch(`/api/chemi/links/${code}`, {
+        method: "PATCH",
+        headers: { "content-type": "application/json", "x-owner-key": key },
+        body: JSON.stringify({ boardPublic: next }),
+      });
+      if (!r.ok) throw new Error(String(r.status));
+      trackChemi("chemi_board_toggle", { public: next });
+    } catch {
+      setOwner((o) => ({ ...o, boardPublic: prev }));
+      setToggleError("저장이 안 됐어요. 잠시 후 다시 눌러주세요.");
+    } finally {
+      setToggling(false);
     }
   }
 
@@ -108,15 +161,15 @@ export default function ChemiLanding({ code, nickname, initialRows, initialTotal
       const r = await fetch(`/api/chemi/links/${code}/replies`, {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ person: personToApiInput(person), nickname: person.name.trim() }),
+        body: JSON.stringify({ person: personToApiInput(person), nickname: person.name.trim(), isPrivate }),
       });
       const data = await r.json();
       if (!r.ok) {
         setError(data.error ?? "잠시 후 다시 시도해주세요.");
         return;
       }
-      setResult(data as ReplyResult);
-      trackChemi("chemi_reply");
+      setResult({ ...(data as ReplyResult), isPrivate: data.isPrivate === true });
+      trackChemi("chemi_reply", { private: isPrivate });
       window.scrollTo({ top: 0, behavior: "smooth" });
       await refreshPublicRanking();
     } catch {
@@ -154,6 +207,7 @@ export default function ChemiLanding({ code, nickname, initialRows, initialTotal
   const sharePath = `/chemi/${code}?${CHEMI_UTM}`;
 
   if (mode === "owner") {
+    const privateCount = owner.rows.filter((r) => r.isPrivate).length;
     return (
       <div className="space-y-5">
         <header className="text-center">
@@ -181,16 +235,31 @@ export default function ChemiLanding({ code, nickname, initialRows, initialTotal
           <p className="mt-2 text-center text-xs text-ink-soft">단톡방·인스타 스토리에 한 번만 올려도 돼요</p>
         </div>
 
+        <div>
+          <BoardVisibilityToggle isPublic={owner.boardPublic} disabled={toggling} onChange={changeBoardPublic} />
+          {toggleError && (
+            <p role="alert" className="mt-1.5 text-center text-xs text-danger">
+              {toggleError}
+            </p>
+          )}
+        </div>
+
         <section>
           <div className="mb-2 flex items-baseline justify-between px-1">
             <h2 className="text-sm font-bold text-ink">케미 순위</h2>
-            {total > 0 && <p className="text-xs text-ink-soft">{total}명 참여</p>}
+            {owner.total > 0 && (
+              <p className="text-xs text-ink-soft">
+                {owner.total}명 참여{privateCount > 0 && ` · 비공개 ${privateCount}명`}
+              </p>
+            )}
           </div>
-          <RankingBoard rows={rows} total={total} />
+          <RankingBoard rows={owner.rows} total={owner.total} />
         </section>
 
-        <p className="text-center text-xs text-ink-soft">
-          이 순위판은 이 브라우저에서만 전체가 보여요 · 친구에게는 상위 5명까지 보여요
+        <p className="text-center text-xs leading-5 text-ink-soft">
+          이 순위판은 이 브라우저에서만 전체가 보여요
+          <br />
+          {owner.boardPublic ? "친구에게는 상위 5명까지 보여요" : "지금은 친구에게 순위판이 보이지 않아요 · 초대와 검사는 그대로 돼요"}
         </p>
         <div className="text-center">
           <Link
@@ -218,6 +287,12 @@ export default function ChemiLanding({ code, nickname, initialRows, initialTotal
             현재 {result.rank}위
             <span className="font-normal text-ink-soft">/ 총 {result.total}명</span>
           </p>
+          {result.isPrivate && (
+            <p className="mt-3 inline-flex items-center gap-1.5 rounded-full border border-line px-3 py-1 text-xs text-ink-soft">
+              <LockIcon size={12} className="text-accent-strong" />
+              조용히 올렸어요 — 링크 주인에게만 보여요
+            </p>
+          )}
           <p className="mt-3 text-[11px] leading-4 text-ink-soft">
             두 사주의 지지 관계(합·충)와 오행 보완도로 계산한 결정론적 점수예요
           </p>
@@ -225,7 +300,7 @@ export default function ChemiLanding({ code, nickname, initialRows, initialTotal
 
         <section>
           <h2 className="mb-2 px-1 text-sm font-bold text-ink">{nickname}님의 케미 순위</h2>
-          <RankingBoard rows={rows} total={total} highlight={myNick} />
+          <RankingBoard {...boardProps(board)} highlight={myNick} />
         </section>
 
         <section className="rounded-2xl border border-line bg-card p-5 text-center">
@@ -286,6 +361,20 @@ export default function ChemiLanding({ code, nickname, initialRows, initialTotal
           nameMaxLength={CHEMI_NICKNAME_MAX}
           withGender={false}
         />
+        <label className="mt-4 flex min-h-11 cursor-pointer items-start gap-3 rounded-xl border border-line px-3 py-2.5">
+          <input
+            type="checkbox"
+            checked={isPrivate}
+            onChange={(e) => setIsPrivate(e.target.checked)}
+            className="mt-0.5 h-5 w-5 shrink-0 accent-[var(--accent-strong)]"
+          />
+          <span className="min-w-0">
+            <span className="block text-sm font-medium text-ink">내 결과는 링크 주인에게만 보여주기</span>
+            <span className="mt-0.5 block text-xs leading-5 text-ink-soft">
+              체크하면 다른 친구들 순위판엔 &apos;비공개 1명&apos;으로만 보여요
+            </span>
+          </span>
+        </label>
         {error && (
           <p role="alert" className="mt-3 text-sm text-danger">
             {error}
@@ -305,9 +394,9 @@ export default function ChemiLanding({ code, nickname, initialRows, initialTotal
       <section>
         <div className="mb-2 flex items-baseline justify-between px-1">
           <h2 className="text-sm font-bold text-ink">지금까지의 순위</h2>
-          {total > 0 && <p className="text-xs text-ink-soft">{total}명 참여</p>}
+          {board.total > 0 && <p className="text-xs text-ink-soft">{board.total}명 참여</p>}
         </div>
-        <RankingBoard rows={rows} total={total} emptyText="아직 아무도 답하지 않았어요 — 첫 번째가 되어보세요" />
+        <RankingBoard {...boardProps(board)} emptyText="아직 아무도 답하지 않았어요 — 첫 번째가 되어보세요" />
       </section>
     </div>
   );

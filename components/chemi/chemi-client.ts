@@ -3,7 +3,8 @@ import { track } from "@vercel/analytics";
 import { trackCustomPixel } from "@/components/MetaPixel";
 
 // 스펙 계측 4종: 링크 생성 / 유입 / 입력 완료 / 재생성(친구가 자기 링크 만듦)
-export type ChemiEvent = "chemi_create" | "chemi_visit" | "chemi_reply" | "chemi_regen";
+// + chemi_board_toggle: 주인이 순위판 공개/나만 보기 전환 (비공개 옵션이 얼마나 쓰이는지)
+export type ChemiEvent = "chemi_create" | "chemi_visit" | "chemi_reply" | "chemi_regen" | "chemi_board_toggle";
 
 export function trackChemi(event: ChemiEvent, data?: Record<string, string | number | boolean>) {
   try {
