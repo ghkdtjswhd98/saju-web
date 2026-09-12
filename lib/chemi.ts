@@ -27,6 +27,8 @@ export interface ChemiLink {
   nickname: string;
   sajuSubset: ChemiSubset;
   ownerKey: string;
+  /** 순위판 친구 공개 여부 — false면 친구에게는 잠금 안내만 (기본 true) */
+  boardPublic: boolean;
 }
 
 export async function getChemiLink(code: string): Promise<ChemiLink | null> {
@@ -39,6 +41,7 @@ export async function getChemiLink(code: string): Promise<ChemiLink | null> {
     nickname: r.nickname,
     sajuSubset: r.sajuSubset as ChemiSubset,
     ownerKey: r.ownerKey,
+    boardPublic: r.boardPublic,
   };
 }
 
@@ -48,9 +51,15 @@ export async function createChemiLink(nickname: string, subset: ChemiSubset): Pr
     nickname,
     sajuSubset: subset,
     ownerKey: nanoid(CHEMI_OWNER_KEY_LEN),
+    boardPublic: true,
   };
   await getDb().insert(chemiLinks).values(link);
   return link;
+}
+
+/** 주인 토글 "순위판 친구에게 공개 / 나만 보기" — 호출 전에 ownerKey 확인은 라우트가 한다 */
+export async function setChemiBoardPublic(code: string, boardPublic: boolean): Promise<void> {
+  await getDb().update(chemiLinks).set({ boardPublic }).where(eq(chemiLinks.code, code));
 }
 
 export async function addChemiReply(
@@ -58,21 +67,30 @@ export async function addChemiReply(
   nickname: string,
   score: number,
   label: string,
+  isPrivate = false,
 ): Promise<void> {
-  await getDb().insert(chemiReplies).values({ id: `cr_${nanoid(16)}`, linkCode, nickname, score, label });
+  await getDb()
+    .insert(chemiReplies)
+    .values({ id: `cr_${nanoid(16)}`, linkCode, nickname, score, label, isPrivate });
 }
 
-/** 순위판 전체(점수 내림차순, 동점은 먼저 답한 순) */
+/**
+ * 순위판 전체(점수 내림차순, 동점은 먼저 답한 순) — 비공개 응답 포함, 각 행에 isPrivate.
+ * 친구에게 줄 때는 lib/saju/chemi-link.ts의 publicBoardView로 걸러서 준다.
+ */
 export async function listChemiRanking(linkCode: string): Promise<ChemiRankRow[]> {
   const rows = await getDb()
     .select({
       nickname: chemiReplies.nickname,
       score: chemiReplies.score,
       label: chemiReplies.label,
+      isPrivate: chemiReplies.isPrivate,
       createdAt: chemiReplies.createdAt,
     })
     .from(chemiReplies)
     .where(eq(chemiReplies.linkCode, linkCode))
     .orderBy(chemiReplies.createdAt);
-  return rankReplies(rows).map(({ nickname, score, label, rank }) => ({ nickname, score, label, rank }));
+  return rankReplies(rows).map(({ nickname, score, label, rank, isPrivate }) => ({
+    nickname, score, label, rank, isPrivate,
+  }));
 }

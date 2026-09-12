@@ -2,11 +2,10 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import ChemiLanding from "@/components/chemi/ChemiLanding";
 import { getChemiLink, listChemiRanking } from "@/lib/chemi";
+import { publicBoardView } from "@/lib/saju/chemi-link";
 
 // 순위는 답이 올 때마다 바뀐다 — 캐시 없이 매 요청 조회
 export const dynamic = "force-dynamic";
-
-const PUBLIC_TOP = 5;
 
 export async function generateMetadata({
   params,
@@ -29,16 +28,12 @@ export default async function ChemiLinkPage({ params }: { params: Promise<{ code
   const link = await getChemiLink(code);
   if (!link) notFound();
 
-  const ranking = await listChemiRanking(code);
+  // 서버 렌더는 항상 친구 기준(비공개 제외·잠금 반영) — 주인 전체 순위는 클라이언트가 ownerKey로 다시 받는다
+  const board = publicBoardView(await listChemiRanking(code), link.boardPublic);
 
   return (
     <div className="mx-auto max-w-xl px-5 py-10">
-      <ChemiLanding
-        code={code}
-        nickname={link.nickname}
-        initialRows={ranking.slice(0, PUBLIC_TOP)}
-        initialTotal={ranking.length}
-      />
+      <ChemiLanding code={code} nickname={link.nickname} initialBoard={board} />
     </div>
   );
 }

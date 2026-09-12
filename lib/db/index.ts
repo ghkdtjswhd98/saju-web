@@ -70,6 +70,7 @@ create table if not exists chemi_links (
   nickname text not null,
   saju_subset jsonb not null,
   owner_key text not null,
+  board_public boolean not null default true,
   created_at timestamptz not null default now()
 );
 create table if not exists chemi_replies (
@@ -78,9 +79,13 @@ create table if not exists chemi_replies (
   nickname text not null,
   score integer not null,
   label text not null,
+  is_private boolean not null default false,
   created_at timestamptz not null default now()
 );
 create index if not exists chemi_replies_link_code_idx on chemi_replies (link_code);
+-- 2026-09-13 비공개 옵션 — 이미 만들어진 로컬 DB에도 열을 붙인다 (drizzle/2026-09-13-chemi-privacy.sql과 동일)
+alter table chemi_replies add column if not exists is_private boolean not null default false;
+alter table chemi_links add column if not exists board_public boolean not null default true;
 `;
 
 // USE_PGLITE=1 이면 로컬 파일 DB 사용 (Supabase 장애/미설정 시 개발용 폴백).

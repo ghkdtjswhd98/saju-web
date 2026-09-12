@@ -1,4 +1,4 @@
-import { index, integer, jsonb, pgTable, text, timestamp } from "drizzle-orm/pg-core";
+import { boolean, index, integer, jsonb, pgTable, text, timestamp } from "drizzle-orm/pg-core";
 
 // 주문 — 결제 검증의 진실의 원천. amount는 서버 카탈로그에서 확정한 값만 저장.
 export const orders = pgTable("orders", {
@@ -95,6 +95,8 @@ export const chemiLinks = pgTable("chemi_links", {
   nickname: text("nickname").notNull(), // 링크 주인 별명 (친구 랜딩 "{nickname}님과 너의 케미는?")
   sajuSubset: jsonb("saju_subset").notNull(), // ChemiSubset { branches, elements }
   ownerKey: text("owner_key").notNull(), // 32자 무작위 — 주인만 순위 전체 열람 (localStorage 보관)
+  // 순위판 공개 여부(스펙 2026-09-12 비공개 옵션) — false면 친구 화면엔 자기 결과 + 잠금 안내만. 초대·검사는 계속 가능.
+  boardPublic: boolean("board_public").notNull().default(true),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
 
@@ -107,6 +109,8 @@ export const chemiReplies = pgTable(
     nickname: text("nickname").notNull(),
     score: integer("score").notNull(), // 58~96
     label: text("label").notNull(), // 점수 구간별 긍정 한 줄 (저장 시점 문구 고정)
+    // 친구가 "링크 주인에게만 보여주기"를 켠 응답 — 다른 친구 화면엔 "비공개 n명"으로 인원만 반영. 순위 계산엔 포함.
+    isPrivate: boolean("is_private").notNull().default(false),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   },
   (t) => [index("chemi_replies_link_code_idx").on(t.linkCode)],
