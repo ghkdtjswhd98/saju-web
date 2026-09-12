@@ -1,10 +1,10 @@
 import Link from "next/link";
 import { PriceTag } from "@/components/PriceTag";
-import { POSTER_BG } from "@/lib/poster-art";
+import { POSTER_PORTRAIT_BG } from "@/lib/poster-art";
 import type { PricingInfo } from "@/lib/pricing";
 import { PRODUCTS, type ProductCode } from "@/lib/products";
 
-// 가로 스크롤 상품 레일 — 카드 200px, 3:2 포스터 + 캡션(제목 2줄·가격). 2인 상품은 "2인" 뱃지.
+// 가로 스크롤 상품 레일 — 카드 150px, 4:5 세로 포스터 + 캡션(제목 2줄·잉크색 가격 — 1안 목업은 캐러셀만 금색). 2인 상품은 "2인" 뱃지(포스터는 표시 안 함).
 export default function ProductRail({
   id,
   title,
@@ -47,17 +47,17 @@ export default function ProductRail({
           const p = PRODUCTS[code];
           const price = pricing.prices[code];
           return (
-            <Link key={code} href={`/products/${code}`} className="flex w-[200px] shrink-0 flex-col gap-2">
+            <Link key={code} href={`/products/${code}`} className="flex w-[150px] shrink-0 flex-col gap-2">
               <div className="relative overflow-hidden rounded-xl bg-card">
                 {/* eslint-disable-next-line @next/next/no-img-element -- 자체 생성 라우트라 최적화 불필요 */}
                 <img
-                  src={`/brand/poster/${code}`}
+                  src={`/brand/poster-portrait/${code}`}
                   alt="" // 캡션(제목·가격)이 링크 이름을 이미 구성하므로 장식 이미지로 두어 중복 낭독을 막는다
-                  width={900}
-                  height={600}
+                  width={600}
+                  height={750}
                   loading="lazy"
-                  style={{ backgroundColor: POSTER_BG[code] }}
-                  className="aspect-[3/2] w-full object-cover"
+                  style={{ backgroundColor: POSTER_PORTRAIT_BG[code] }}
+                  className="aspect-[4/5] w-full object-cover"
                 />
                 {p.personCount === 2 && (
                   <span className="absolute left-2 top-2 flex h-5 items-center rounded-full bg-[#FFE9A8]/90 px-[7px] text-[10px] font-bold text-[#272132]">

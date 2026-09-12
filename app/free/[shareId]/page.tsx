@@ -6,6 +6,7 @@ import { getDb, reports } from "@/lib/db";
 import { ElementChart, PillarTable, StarProfile } from "@/components/SajuCards";
 import RememberFreeResult from "@/components/RememberFreeResult";
 import ShareBar from "@/components/ShareBar";
+import ChemiInviteButton from "@/components/chemi/ChemiInviteButton";
 import StreamingReport from "@/components/StreamingReport";
 import UpsellTeaser from "@/components/UpsellTeaser";
 import { computeChemistry } from "@/lib/saju/chemistry";
@@ -211,6 +212,10 @@ export default async function FreeResultPage({
               : "회원가입 없이 30초, 만세력 기반 무료 AI 사주 — 오롭미"
           }
         />
+        {/* 케미 초대 링크 — 이 결과의 사주 스냅샷으로 링크를 만든다(2인 결과면 첫 사람 기준). 바이럴 루프 진입점 */}
+        <div className="mt-3">
+          <ChemiInviteButton shareId={shareId} />
+        </div>
       </div>
 
       {/* 업셀 */}

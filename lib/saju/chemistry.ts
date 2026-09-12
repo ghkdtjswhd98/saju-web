@@ -20,17 +20,25 @@ export interface Chemistry {
   complement: number; // 오행 보완 축 수
 }
 
-export function computeChemistry(a: SajuResult, b: SajuResult): Chemistry {
-  const brA = branchesOf(a);
-  const brB = branchesOf(b);
+/** 케미 계산에 필요한 최소 파생값 — 케미 초대 링크는 생년월일 대신 이것만 저장한다(개인정보 원칙) */
+export interface ChemiSubset {
+  branches: string[]; // 년·월·일(·시) 지지 3~4글자
+  elements: number[]; // 목·화·토·금·수 순 오행 분포(지장간 가중 소수)
+}
 
+export function toChemiSubset(r: SajuResult): ChemiSubset {
+  return { branches: branchesOf(r), elements: r.elementDist.map((e) => e.count) };
+}
+
+// 지지·오행 분포만으로 계산 — SajuResult 전체가 없어도(저장된 서브셋) 같은 점수가 나온다
+export function computeChemistryFromSubsets(a: ChemiSubset, b: ChemiSubset): Chemistry {
   let hap = 0;
   let banhap = 0;
   let chung = 0;
   let hyung = 0;
   // A의 지지 × B의 지지 교차 쌍만 평가 (각자 내부 관계는 제외)
-  for (const x of brA) {
-    for (const y of brB) {
+  for (const x of a.branches) {
+    for (const y of b.branches) {
       if (isPairIn(JIJI_HAP, x, y)) hap++;
       if (isPairIn(JIJI_BANHAP, x, y)) banhap++;
       if (isPairIn(JIJI_CHUNG, x, y)) chung++;
@@ -41,8 +49,8 @@ export function computeChemistry(a: SajuResult, b: SajuResult): Chemistry {
   // 오행 보완: 한쪽이 강하고(≥2.5) 다른 쪽이 부족한(≤0.8) 오행 축의 수
   let complement = 0;
   for (let i = 0; i < 5; i++) {
-    const ca = a.elementDist[i].count;
-    const cb = b.elementDist[i].count;
+    const ca = a.elements[i] ?? 0;
+    const cb = b.elements[i] ?? 0;
     if ((ca >= 2.5 && cb <= 0.8) || (cb >= 2.5 && ca <= 0.8)) complement++;
   }
 
@@ -50,4 +58,8 @@ export function computeChemistry(a: SajuResult, b: SajuResult): Chemistry {
   const score = Math.max(58, Math.min(96, raw));
 
   return { score, crossHap: hap + banhap, crossChung: chung, complement };
+}
+
+export function computeChemistry(a: SajuResult, b: SajuResult): Chemistry {
+  return computeChemistryFromSubsets(toChemiSubset(a), toChemiSubset(b));
 }

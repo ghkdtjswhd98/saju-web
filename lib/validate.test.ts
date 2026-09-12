@@ -32,6 +32,16 @@ describe("parsePersonInput", () => {
 
   it("성별·시간이 없으면 거부한다", () => {
     expect(parsePersonInput({ gender: "여", year: 1995, month: 3, day: 15 })).toBeNull();
+    expect(parsePersonInput({ year: 1995, month: 3, day: 15, hourValue: "unknown" })).toBeNull();
+  });
+
+  it("genderOptional이면 성별 없이 통과하고 gender 키를 만들지 않는다 (케미 최소 수집)", () => {
+    const p = parsePersonInput({ year: 1995, month: 3, day: 15, hourValue: "unknown" }, { genderOptional: true });
+    expect(p).not.toBeNull();
+    expect("gender" in p!).toBe(false);
+    // 성별을 보내면 그대로 받는다 (시간은 여전히 필수)
+    expect(parsePersonInput({ gender: "남", year: 1995, month: 3, day: 15, hourValue: "unknown" }, { genderOptional: true })?.gender).toBe("남");
+    expect(parsePersonInput({ year: 1995, month: 3, day: 15 }, { genderOptional: true })).toBeNull();
   });
 
   const BASE = {

@@ -19,12 +19,18 @@ declare global {
 const KAKAO_SDK_URL = "https://t1.kakaocdn.net/kakao_js_sdk/2.7.4/kakao.min.js";
 
 interface Props {
-  path: string; // 공유할 경로 (예: /free/abc)
+  path: string; // 공유할 경로 (예: /free/abc) — 쿼리(utm)가 붙어도 된다
   title: string;
   description: string;
+  /** OG 이미지 경로. 기본은 `${path}/opengraph-image` — path에 쿼리가 있으면 반드시 넘긴다 */
+  imagePath?: string;
+  /** 카카오 카드 버튼 문구 (기본 "결과 보러가기") */
+  buttonLabel?: string;
 }
 
-export default function ShareBar({ path, title, description }: Props) {
+export default function ShareBar({
+  path, title, description, imagePath, buttonLabel = "결과 보러가기",
+}: Props) {
   const [copied, setCopied] = useState(false);
   const [kakaoReady, setKakaoReady] = useState(false);
   const jsKey = process.env.NEXT_PUBLIC_KAKAO_JS_KEY;
@@ -65,12 +71,12 @@ export default function ShareBar({ path, title, description }: Props) {
       content: {
         title,
         description,
-        imageUrl: `${window.location.origin}${path}/opengraph-image`,
+        imageUrl: `${window.location.origin}${imagePath ?? `${path}/opengraph-image`}`,
         link: { mobileWebUrl: fullUrl(), webUrl: fullUrl() },
       },
       buttons: [
         {
-          title: "결과 보러가기",
+          title: buttonLabel,
           link: { mobileWebUrl: fullUrl(), webUrl: fullUrl() },
         },
       ],

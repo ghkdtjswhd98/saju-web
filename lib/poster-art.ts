@@ -16,3 +16,18 @@ export const POSTER_BG: Record<ProductCode, string> = {
   deep: "#2e2a24",
   bundle: "#6b2fa0",
 };
+
+// 세로 포스터(app/brand/poster-portrait/[code]) 자리표시 색 — 홈 캐러셀·레일 전용.
+// 세로판은 밤하늘 톤이라 가로판 값(핑크·하늘색)을 깔면 로드 전 색이 튄다. 값은 세로 ARTS.bg의 55% 지점.
+export const POSTER_PORTRAIT_BG: Record<ProductCode, string> = {
+  reunion: "#1a2148",
+  marriage: "#274a70",
+  love: "#48244a",
+  dohwa: "#3d0d1c",
+  year: "#1b467c",
+  career: "#14483a",
+  lifetime: "#443a75",
+  crush: "#4f2e4e",
+  deep: "#2b2340",
+  bundle: "#58268a",
+};

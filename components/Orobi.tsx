@@ -1,6 +1,7 @@
 // 오롭이 — 오롭미의 도사 캐릭터 (인라인 SVG, 외부 에셋 없음)
 // 콘텐츠·랜딩·결과 페이지의 화자. 보름달 후광 + 갓 + 여의주 구슬.
-export default function Orobi({ size = 120 }: { size?: number }) {
+// halo="none": 다크 홈(훅·수다방 티저)처럼 연보라 후광 원판이 바닥과 충돌하는 자리에서 캐릭터만 그린다
+export default function Orobi({ size = 120, halo = "moon" }: { size?: number; halo?: "moon" | "none" }) {
   return (
     <svg
       width={size}
@@ -9,14 +10,18 @@ export default function Orobi({ size = 120 }: { size?: number }) {
       role="img"
       aria-label="오롭미 캐릭터 오롭이"
     >
-      {/* 달 후광 */}
-      <circle cx="100" cy="100" r="88" fill="#efe9f7" />
-      <circle cx="100" cy="100" r="88" fill="none" stroke="#e0d6ef" strokeWidth="2" />
-      {/* 별 장식 */}
-      <circle cx="40" cy="48" r="3" fill="#c9bce0" />
-      <circle cx="164" cy="72" r="2.5" fill="#c9bce0" />
-      <circle cx="150" cy="28" r="2" fill="#c9bce0" />
-      <circle cx="30" cy="110" r="2" fill="#c9bce0" />
+      {halo === "moon" && (
+        <>
+          {/* 달 후광 */}
+          <circle cx="100" cy="100" r="88" fill="#efe9f7" />
+          <circle cx="100" cy="100" r="88" fill="none" stroke="#e0d6ef" strokeWidth="2" />
+          {/* 별 장식 */}
+          <circle cx="40" cy="48" r="3" fill="#c9bce0" />
+          <circle cx="164" cy="72" r="2.5" fill="#c9bce0" />
+          <circle cx="150" cy="28" r="2" fill="#c9bce0" />
+          <circle cx="30" cy="110" r="2" fill="#c9bce0" />
+        </>
+      )}
       {/* 몸통 (로브) */}
       <path d="M100 80 C 60 80 48 120 44 164 L 156 164 C 152 120 140 80 100 80 Z" fill="#8f7bb8" />
       <path d="M100 88 C 93 112 91 138 93 162 L 107 162 C 109 138 107 112 100 88 Z" fill="#7c68a6" />

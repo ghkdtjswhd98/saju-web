@@ -19,6 +19,11 @@ export function trackPixel(event: string, data?: Record<string, unknown>) {
   if (typeof window !== "undefined" && window.fbq) window.fbq("track", event, data);
 }
 
+// 표준 이벤트가 아닌 우리만의 퍼널 이벤트(케미 링크 생성 등) — Meta는 trackCustom으로 받는다
+export function trackCustomPixel(event: string, data?: Record<string, unknown>) {
+  if (typeof window !== "undefined" && window.fbq) window.fbq("trackCustom", event, data);
+}
+
 export default function MetaPixel() {
   const pathname = usePathname();
   const loaded = useRef(false);

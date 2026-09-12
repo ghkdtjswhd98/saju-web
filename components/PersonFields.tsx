@@ -142,7 +142,9 @@ export default function PersonFields({
   onChange,
   // 서버(lib/validate)가 빈 이름을 "고객"으로 받으므로 이름은 선택 — 버튼이 막다른 길이 되지 않게 문구로도 알린다
   namePlaceholder = "이름 (선택 · 결과에 표시돼요)",
+  nameMaxLength = 20,
   flow = "steps",
+  withGender = true,
   withExtras = false,
   withConcern = false,
 }: {
@@ -151,8 +153,12 @@ export default function PersonFields({
   value: PersonFormValue;
   onChange: (v: PersonFormValue) => void;
   namePlaceholder?: string;
+  /** 이름 칸 글자 수 상한 — 서버 상한(validate 20자, 케미 별명 12자)과 입력 단계에서 맞춘다 */
+  nameMaxLength?: number;
   /** steps=토스식 점진 노출(고객용) / all=전부 한 번에(운영자 콘솔) */
   flow?: "steps" | "all";
+  /** 성별 질문 노출 — 케미처럼 대운(성별 필요)을 안 쓰는 흐름은 false로 건너뛴다(최소 수집) */
+  withGender?: boolean;
   /** 연애·직업 상황 질문 노출 */
   withExtras?: boolean;
   /** 고민 주제·자유서술 노출 (유료 전용) */
@@ -169,13 +175,13 @@ export default function PersonFields({
     if (value.loveStatus) return Q.job;
     if (value.date) return Q.love; // 필수 구간을 이미 채워서 온 사람
     if (value.gender) return Q.birth;
-    if (value.name) return Q.gender;
+    if (value.name) return withGender ? Q.gender : Q.birth;
     return Q.name;
   });
   const advance = (to: number) => setReveal((r) => Math.max(r, to));
 
   const lastQuestion = withConcern ? Q.concern : withExtras ? Q.job : Q.hour;
-  const show = (q: number) => q <= Math.min(reveal, lastQuestion);
+  const show = (q: number) => q <= Math.min(reveal, lastQuestion) && (withGender || q !== Q.gender);
 
   // 시간 질문은 기본값("모름")이 유효한 답이라 값 변화만으로는 "답했는지" 알 수 없다 —
   // 상호작용 여부를 따로 기억한다. 프리필(date 존재)이면 그 흐름에서 이미 답한 것.
@@ -188,7 +194,7 @@ export default function PersonFields({
   // deps 없이 매 렌더 갱신 — value·reveal 최신값을 항상 보게 (호출은 제출 클릭 때뿐이라 비용 무시)
   useImperativeHandle(ref, () => ({
     focusFirstMissing() {
-      const missing = !value.gender ? "gender" : !value.date ? "date" : null;
+      const missing = withGender && !value.gender ? "gender" : !value.date ? "date" : null;
       if (!missing) return { missing, wasVisible: true };
       const q = missing === "gender" ? Q.gender : Q.birth;
       const wasVisible = show(q);
@@ -217,10 +223,10 @@ export default function PersonFields({
           value={value.name}
           onChange={(e) => {
             set({ name: e.target.value });
-            if (e.target.value.trim()) advance(Q.gender);
+            if (e.target.value.trim()) advance(withGender ? Q.gender : Q.birth);
           }}
           placeholder={namePlaceholder}
-          maxLength={20}
+          maxLength={nameMaxLength}
           className="w-full rounded-lg border border-line bg-white px-3 py-2.5 text-base focus:border-accent focus:outline-none"
         />
       </div>

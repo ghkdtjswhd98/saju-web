@@ -15,19 +15,33 @@ function pickEnum<T extends readonly string[]>(list: T, v: unknown): T[number] |
     : undefined;
 }
 
+/** 이름이 비었을 때 저장되는 기본값 — 별명 등 '사람이 적은 이름'이 필요한 곳에서는 이 값을 이름으로 취급하지 말 것 */
+export const DEFAULT_PERSON_NAME = "고객";
+
+/** 성별 없이 통과시킨 입력 — 케미처럼 대운(성별 필요)을 쓰지 않는 계산 전용 */
+export type PersonInputGenderOptional = Omit<PersonInput, "gender"> & { gender?: PersonInput["gender"] };
+
 // 신뢰할 수 없는 클라이언트 입력 → PersonInput 검증. 실패 시 null.
-export function parsePersonInput(raw: unknown): PersonInput | null {
+export function parsePersonInput(raw: unknown): PersonInput | null;
+export function parsePersonInput(raw: unknown, opts: { genderOptional: true }): PersonInputGenderOptional | null;
+export function parsePersonInput(
+  raw: unknown,
+  opts?: { genderOptional?: boolean },
+): PersonInputGenderOptional | null {
   if (typeof raw !== "object" || raw === null) return null;
   const o = raw as Record<string, unknown>;
 
-  const name = typeof o.name === "string" && o.name.trim() ? o.name.trim().slice(0, 20) : "고객";
+  const name =
+    typeof o.name === "string" && o.name.trim() ? o.name.trim().slice(0, 20) : DEFAULT_PERSON_NAME;
   const gender = o.gender === "남" || o.gender === "여" ? o.gender : null;
   const year = Number(o.year);
   const month = Number(o.month);
   const day = Number(o.day);
   const hourValue = typeof o.hourValue === "string" && VALID_HOURS.has(o.hourValue) ? o.hourValue : null;
 
-  if (!gender || !hourValue) return null;
+  // 성별은 대운 방향에만 쓰인다 — 케미(genderOptional)는 지지·오행만 보므로 굳이 받지 않는다(최소 수집)
+  if (!gender && !opts?.genderOptional) return null;
+  if (!hourValue) return null;
   if (!Number.isInteger(year) || year < 1900 || year > 2050) return null;
   if (!Number.isInteger(month) || month < 1 || month > 12) return null;
   if (!Number.isInteger(day) || day < 1 || day > 31) return null;
@@ -37,11 +51,12 @@ export function parsePersonInput(raw: unknown): PersonInput | null {
       ? o.concern.trim().slice(0, CONCERN_MAX)
       : undefined;
 
-  const p: PersonInput = {
-    name, gender, year, month, day, hourValue,
+  const p: PersonInputGenderOptional = {
+    name, year, month, day, hourValue,
     isLunar: o.isLunar === true,
     isLeap: o.isLeap === true,
   };
+  if (gender) p.gender = gender;
   // undefined 키를 아예 만들지 않는다 — inputData JSON과 hashPersonInput의 안정성을 위해
   const loveStatus = pickEnum(LOVE_STATUS, o.loveStatus);
   const loveDuration = pickEnum(LOVE_DURATION, o.loveDuration);
@@ -96,7 +111,8 @@ export function parseEmail(raw: unknown): string | null {
 }
 
 export function hashPersonInput(p: PersonInput): string {
-  // Node 전용 (서버에서만 호출)
+  // Node 전용 (서버에서만 호출) — 정적 import로 바꾸면 클라이언트 번들이 node:crypto를 끌어와 깨진다
+  // eslint-disable-next-line @typescript-eslint/no-require-imports -- 서버에서만 지연 로드
   const { createHash } = require("node:crypto") as typeof import("node:crypto");
   // 상황 필드도 해시에 넣는다 — 무료 프롬프트에 실리는 값이라, 빼면 24시간 안에
   // 답변을 바꿔 재신청해도 옛 리포트가 재사용되어 "더 정확해져요" 약속이 거짓이 된다.

@@ -11,13 +11,13 @@ export interface PosterCarouselItem {
   pdfPages: number;
   current: number;
   list: number;
-  bg: string; // 포스터 로딩 전 자리표시 색(POSTER_BG)
+  bg: string; // 포스터 로딩 전 자리표시 색(POSTER_PORTRAIT_BG — 세로판 전용)
 }
 
 // 카드 사이 간격(px) — 아래 gap-3과 반드시 같아야 인디케이터 계산이 맞는다
 const GAP = 12;
 
-// 전면 포스터 캐러셀 — 카드 폭 87% + 다음 카드 살짝 노출, 스크롤 스냅, "n / N" 인디케이터
+// 전면 포스터 캐러셀 — 세로 포스터(4:5) 카드 폭 87% + 다음 카드 살짝 노출, 스크롤 스냅, "n / N" 인디케이터. 가격은 1안 목업대로 금색
 export default function PosterCarousel({
   items,
   launchBadge,
@@ -58,14 +58,14 @@ export default function PosterCarousel({
             <div className="relative overflow-hidden rounded-[18px] bg-card">
               {/* eslint-disable-next-line @next/next/no-img-element -- 자체 생성 라우트라 최적화 불필요 */}
               <img
-                src={`/brand/poster/${it.code}`}
+                src={`/brand/poster-portrait/${it.code}`}
                 alt="" // 캡션(shortName·제목·가격)이 링크 이름을 이미 구성하므로 장식 이미지로 두어 중복 낭독을 막는다
-                width={900}
-                height={600}
+                width={600}
+                height={750}
                 loading={it.code === items[0]?.code ? "eager" : "lazy"}
                 fetchPriority={it.code === items[0]?.code ? "high" : undefined}
                 style={{ backgroundColor: it.bg }}
-                className="aspect-[3/2] w-full object-cover"
+                className="aspect-[4/5] w-full object-cover"
               />
               {launchBadge && (
                 <span className="absolute left-3 top-3 flex h-6 items-center rounded-full bg-[#FFE9A8]/90 px-2.5 text-[11px] font-bold text-[#272132]">
@@ -79,7 +79,7 @@ export default function PosterCarousel({
               </p>
               <p className="truncate text-[15px] font-bold leading-[22px] text-ink">{it.cardTitle}</p>
               <p className="leading-6">
-                <PriceTag current={it.current} list={it.list} size="sm" />
+                <PriceTag current={it.current} list={it.list} size="sm" tone="gold" />
               </p>
             </div>
           </Link>

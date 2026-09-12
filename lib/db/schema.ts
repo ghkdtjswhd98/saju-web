@@ -87,3 +87,27 @@ export const couponCodes = pgTable("coupon_codes", {
   usedNote: text("used_note"),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
+
+// 케미 초대 링크 — "친구 중 누가 나랑 제일 잘 맞을까?" 바이럴 루프(스펙 2026-08-17 1단계).
+// sajuSubset에는 케미 계산에 필요한 파생값(지지·오행 분포)만 담는다 — 생년월일 원본은 URL에도 서버에도 없다.
+export const chemiLinks = pgTable("chemi_links", {
+  code: text("code").primaryKey(), // 8자 무작위 — 공유 URL 조각(/chemi/{code})
+  nickname: text("nickname").notNull(), // 링크 주인 별명 (친구 랜딩 "{nickname}님과 너의 케미는?")
+  sajuSubset: jsonb("saju_subset").notNull(), // ChemiSubset { branches, elements }
+  ownerKey: text("owner_key").notNull(), // 32자 무작위 — 주인만 순위 전체 열람 (localStorage 보관)
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+// 친구 응답 — 링크당 여러 건이 쌓여 케미 순위판이 된다. 친구의 파생값도 저장하지 않는다(점수·라벨만).
+export const chemiReplies = pgTable(
+  "chemi_replies",
+  {
+    id: text("id").primaryKey(), // "cr_" + nanoid
+    linkCode: text("link_code").notNull().references(() => chemiLinks.code),
+    nickname: text("nickname").notNull(),
+    score: integer("score").notNull(), // 58~96
+    label: text("label").notNull(), // 점수 구간별 긍정 한 줄 (저장 시점 문구 고정)
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [index("chemi_replies_link_code_idx").on(t.linkCode)],
+);

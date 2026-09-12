@@ -8,7 +8,7 @@ import CategoryChips from "@/components/home/CategoryChips";
 import PosterCarousel, { type PosterCarouselItem } from "@/components/home/PosterCarousel";
 import ProductRail from "@/components/home/ProductRail";
 import { isLaunchActive, LAUNCH_END } from "@/lib/launch";
-import { POSTER_BG } from "@/lib/poster-art";
+import { POSTER_PORTRAIT_BG } from "@/lib/poster-art";
 import { getPricing } from "@/lib/pricing";
 import { PRODUCTS, type ProductCode } from "@/lib/products";
 
@@ -33,42 +33,59 @@ function Chevron() {
   );
 }
 
-// 무료 도구 카드 공통 껍데기 — 링크가 없는 "예정" 카드는 div로 그린다
+// 친구 섹션 카드 공통 껍데기 — 탭 영역은 아이콘 42px + 패딩으로 56px(모바일 44px 이상)
 function ToolCard({
   href,
   icon,
   title,
   desc,
-  badge,
 }: {
-  href?: string;
+  href: string;
   icon: React.ReactNode;
   title: string;
   desc: string;
-  badge?: string;
 }) {
-  const cls = "flex items-center gap-3 rounded-[14px] border border-line bg-card p-3.5";
+  const cls = "flex min-h-11 items-center gap-3 rounded-[14px] border border-line bg-card p-3.5";
   const body = (
     <>
       <span className="flex h-[42px] w-[42px] shrink-0 items-center justify-center rounded-xl bg-bg">{icon}</span>
       <span className="flex min-w-0 flex-1 flex-col gap-[3px]">
-        <span className="flex items-center gap-1.5">
-          <span className="text-sm font-bold text-ink">{title}</span>
-          {badge && (
-            <span className="flex h-[18px] items-center rounded-full bg-accent-soft px-[7px] text-[10px] font-bold text-[#CFC8DD]">
-              {badge}
-            </span>
-          )}
-        </span>
+        <span className="text-sm font-bold text-ink">{title}</span>
         <span className="text-xs leading-[17px] text-ink-soft">{desc}</span>
       </span>
       <Chevron />
     </>
   );
-  if (!href) return <div className={cls}>{body}</div>;
   // FreeForm이 mode를 마운트 시 1회만 읽어서 /?mode=couple은 새 요청이어야 한다 — 그래서 Link 대신 a
   if (href.startsWith("/?")) return <a href={href} className={cls}>{body}</a>;
   return <Link href={href} className={cls}>{body}</Link>;
+}
+
+// 카카오톡 채널 카드 — 채널 URL(NEXT_PUBLIC_KAKAO_CHANNEL_URL)이 있을 때만 그린다. 없으면 0바이트.
+function KakaoChannelCard() {
+  const url = process.env.NEXT_PUBLIC_KAKAO_CHANNEL_URL;
+  if (!url) return null;
+  return (
+    <div className="flex items-center gap-3 rounded-[14px] border border-line bg-card p-3.5">
+      <span className="flex h-[42px] w-[42px] shrink-0 items-center justify-center rounded-xl bg-[#FEE500]">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="#191919" aria-hidden="true">
+          <path d="M12 3C6.5 3 2 6.6 2 11c0 2.8 1.8 5.2 4.6 6.6L5.5 21l4.4-2.6c.7.1 1.4.2 2.1.2 5.5 0 10-3.6 10-8S17.5 3 12 3z" />
+        </svg>
+      </span>
+      <span className="flex min-w-0 flex-1 flex-col gap-1.5">
+        <span className="text-sm font-bold text-ink">카카오톡 채널 추가</span>
+        <span className="text-xs leading-[17px] text-ink-soft">새 리포트·쿠폰 소식을 카톡으로</span>
+        <a
+          href={`${url.replace(/\/+$/, "")}/friend`}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="mt-0.5 inline-flex min-h-11 items-center justify-center self-start rounded-xl bg-[#FEE500] px-4 text-[13px] font-bold text-[#191919] transition hover:opacity-90"
+        >
+          채널 추가하고 소식 받기
+        </a>
+      </span>
+    </div>
+  );
 }
 
 export default async function Home() {
@@ -83,7 +100,7 @@ export default async function Home() {
       pdfPages: p.pdfPages,
       current: pricing.prices[code].current,
       list: pricing.prices[code].list,
-      bg: POSTER_BG[code],
+      bg: POSTER_PORTRAIT_BG[code],
     };
   });
 
@@ -100,7 +117,7 @@ export default async function Home() {
         {/* 훅 + 무료 폼 — 다크 위 헤드라인, 폼은 theme-day로 라이트 토큰을 복원해 크림 카드 유지 */}
         <section className="px-4 pt-7">
           <div className="flex flex-col items-center text-center">
-            <Orobi size={44} />
+            <Orobi size={44} halo="none" />
             <h1 className="mt-3 text-[21px] font-bold leading-[1.4] tracking-[-0.3px] text-[#FAF7F2]">
               헤어진 그 사람, 올해 내 운, 결혼 시기
               <br />— 사주는 뭐라고 할까요?
@@ -139,13 +156,24 @@ export default async function Home() {
           pricing={pricing}
         />
 
-        {/* 무료 도구 3카드 */}
+        {/* 친구 섹션 — 바이럴 루프 진입점 3카드 (케미 순위 → 궁합 → 오행 테스트) + 카카오 채널 */}
         <section className="px-5 pt-6">
           <div className="flex items-baseline gap-2">
-            <h2 className="text-[17px] font-bold text-ink">무료로 먼저 써보세요</h2>
+            <h2 className="text-[17px] font-bold text-ink">친구랑 같이 해보세요</h2>
             <p className="text-xs text-ink-soft">로그인 없이 바로</p>
           </div>
           <div className="mt-3 flex flex-col gap-2.5">
+            <ToolCard
+              href="/chemi"
+              title="친구 케미 순위"
+              desc="내 링크 보내면 친구가 생일만 넣어요 — 누가 나랑 제일 잘 맞는지 순위가 쌓여요"
+              icon={
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#FFE9A8" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                  <path d="M4 20V10M12 20V4M20 20v-7" />
+                  <path d="M2 20h20" />
+                </svg>
+              }
+            />
             <ToolCard
               // #free: 새 레이아웃은 폼이 첫 화면 아래라 리로드 후 폼까지 스크롤시킨다(location.search는 그대로 ?mode=couple)
               href="/?mode=couple#free"
@@ -169,17 +197,9 @@ export default async function Home() {
                 </svg>
               }
             />
-            <ToolCard
-              title="만세력 원국 보기"
-              badge="예정"
-              desc="내 팔자 여덟 글자를 표로 — 리포트가 계산하는 그 원국 그대로"
-              icon={
-                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#FFE9A8" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                  <rect x="3" y="3" width="18" height="18" rx="2" />
-                  <path d="M3 9h18M3 15h18M9 3v18M15 3v18" />
-                </svg>
-              }
-            />
+          </div>
+          <div className="mt-2.5">
+            <KakaoChannelCard />
           </div>
         </section>
 
@@ -187,7 +207,7 @@ export default async function Home() {
         <section className="px-5 pt-3">
           <div className="flex items-center gap-3 rounded-[14px] border border-line bg-card p-3.5">
             <div className="shrink-0">
-              <Orobi size={52} />
+              <Orobi size={52} halo="none" />
             </div>
             <div className="flex min-w-0 flex-1 flex-col gap-1.5">
               <div className="flex items-center gap-1.5">

@@ -65,13 +65,29 @@ create table if not exists refund_requests (
   resolved integer not null default 0,
   created_at timestamptz not null default now()
 );
+create table if not exists chemi_links (
+  code text primary key,
+  nickname text not null,
+  saju_subset jsonb not null,
+  owner_key text not null,
+  created_at timestamptz not null default now()
+);
+create table if not exists chemi_replies (
+  id text primary key,
+  link_code text not null references chemi_links(code),
+  nickname text not null,
+  score integer not null,
+  label text not null,
+  created_at timestamptz not null default now()
+);
+create index if not exists chemi_replies_link_code_idx on chemi_replies (link_code);
 `;
 
 // USE_PGLITE=1 이면 로컬 파일 DB 사용 (Supabase 장애/미설정 시 개발용 폴백).
 // ⚠️ PGlite는 단일 프로세스 전용 — dev 서버 외 다른 프로세스에서 같은 데이터 디렉토리를 열지 말 것.
 function createDb() {
   if (process.env.USE_PGLITE === "1") {
-    // 동적 require: 프로덕션 번들에서 불필요한 wasm 로드를 피한다
+    // eslint-disable-next-line @typescript-eslint/no-require-imports -- PGlite wasm을 프로덕션 번들에서 제외하려는 동적 로드
     const { PGlite } = require("@electric-sql/pglite") as typeof import("@electric-sql/pglite");
     const client = new PGlite("./.pglite-data");
     // PGlite는 쿼리를 순차 실행하므로 DDL을 먼저 큐에 넣어두면 이후 쿼리가 대기한다
@@ -101,4 +117,6 @@ export function getDb() {
   return globalForDb.__db;
 }
 
-export { orders, reports, rateLimits, reviews, refundRequests, couponCodes } from "./schema";
+export {
+  orders, reports, rateLimits, reviews, refundRequests, couponCodes, chemiLinks, chemiReplies,
+} from "./schema";

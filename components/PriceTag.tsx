@@ -4,16 +4,19 @@ export function PriceTag({
   current,
   list,
   size = "md",
+  tone = "ink",
 }: {
   current: number;
   list: number;
   size?: "sm" | "md" | "lg";
+  tone?: "ink" | "gold"; // gold: 홈 1안 목업의 금색 현재가 — 홈 캐러셀에서만 쓴다(레일은 목업대로 잉크색)
 }) {
   const discounted = current < list;
   const cls = size === "lg" ? "text-2xl" : size === "sm" ? "text-base" : "text-lg";
   const listCls = size === "lg" ? "text-sm" : "text-xs";
+  const toneCls = tone === "gold" ? "text-[#FFE9A8]" : "text-ink";
   return (
-    <span className={`${cls} font-bold text-ink whitespace-nowrap`}>
+    <span className={`${cls} font-bold ${toneCls} whitespace-nowrap`}>
       {current.toLocaleString()}원
       {discounted && (
         <span className={`ml-1.5 ${listCls} font-normal text-ink-soft line-through`}>
