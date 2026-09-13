@@ -1,11 +1,14 @@
 import { ImageResponse } from "next/og";
 import { getProduct, PRODUCTS, type ProductCode } from "@/lib/products";
 import { loadKoreanFont } from "@/lib/og-font";
+import { posterArtDataUrl } from "@/lib/poster-art-file";
 
 // 세로 포스터 600×750 (4:5) — 홈 캐러셀·레일 전용. 상품 상세·목록은 가로(app/brand/poster/[code])를 그대로 쓴다.
 // 홈 v2 1안 목업(밤하늘 계열)에 맞춰 어두운 남색 베이스 + 초승달·별 + 금색 붓글씨 제목 + 'OROBMI · PDF n PAGES' 워드마크.
 // 목업처럼 질문형 소문구는 넣지 않는다 — 카드 캡션(cardTitle)이 같은 문장을 이미 담당하고, 레일 150px에서는 읽히지도 않는다.
 // 가로 포스터와 같은 이유로 빌드 때 10장을 한 번만 그려 정적 서빙한다(첫 방문자 흰 빈칸 방지).
+// 2026-09-13: 일러스트 원화(public/poster-art/{code}.png, 1024×1280 = 같은 4:5)가 있으면 배경으로 깔고
+// 하단 40%를 어둡게 눌러 기존 달·별·붓글씨 레이어를 그대로 얹는다. 없는 상품은 종전 그라데이션.
 // 사용: /brand/poster-portrait/reunion
 export const runtime = "nodejs";
 export const dynamic = "force-static";
@@ -88,6 +91,7 @@ export async function GET(
   const art = ARTS[code];
   const product = getProduct(code);
   if (!art || !product) return new Response("bad product", { status: 400 });
+  const artImage = posterArtDataUrl(product.code);
 
   const wordmark = `OROBMI · PDF ${product.pdfPages} PAGES`;
   const brushText = art.title;
@@ -108,6 +112,25 @@ export async function GET(
           background: art.bg, fontFamily: "sans", position: "relative",
         }}
       >
+        {artImage ? (
+          // eslint-disable-next-line @next/next/no-img-element -- Satori 레이어(next/image 불가)
+          <img
+            src={artImage}
+            alt=""
+            width={600}
+            height={750}
+            style={{ position: "absolute", top: 0, left: 0, width: 600, height: 750, objectFit: "cover" }}
+          />
+        ) : null}
+        {artImage ? (
+          <div
+            style={{
+              display: "flex", position: "absolute", top: 0, left: 0, width: 600, height: 750,
+              background: "linear-gradient(180deg, rgba(23,19,31,0) 60%, rgba(23,19,31,0.82) 100%)",
+            }}
+          />
+        ) : null}
+
         {/* 밤하늘 베이스 — 아래쪽을 어둡게 눌러 제목 대비를 확보하고, 우상단은 은은하게 밝힌다 */}
         <div
           style={{

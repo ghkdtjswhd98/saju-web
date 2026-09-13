@@ -31,3 +31,10 @@ export const POSTER_PORTRAIT_BG: Record<ProductCode, string> = {
   deep: "#2b2340",
   bundle: "#58268a",
 };
+
+// 원화(public/poster-art/{code}.png)가 아직 없는 상품의 히어로·챕터 헤더 폴백 — 세로 포스터 자리표시 색을
+// 위는 조금 밝게, 아래는 셸 바닥색(#17131f)으로 눌러 밤하늘 무드로 만든다. 원화가 들어오면 자연히 안 쓰인다.
+export function posterMoodGradient(code: ProductCode): string {
+  const mid = POSTER_PORTRAIT_BG[code];
+  return `radial-gradient(circle at 78% 18%, rgba(255,233,168,0.18) 0%, rgba(255,233,168,0) 46%), linear-gradient(170deg, ${mid} 0%, ${mid} 45%, #17131f 100%)`;
+}

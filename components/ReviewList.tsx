@@ -13,8 +13,15 @@ function Stars({ n }: { n: number }) {
 // 실후기 노출 섹션 — 가짜 후기 절대 금지.
 // 3건 미만이면 미노출: "후기 1명 · 평균 5.0"은 사회적 증거가 아니라 무실적 인증(역프루프)이다.
 // 당근 진입으로 후기 수집 속도가 붙어 임계를 5→3으로 낮췄다. 3건이면 "여러 명"으로 읽힌다.
-export default async function ReviewList({ limit = 4 }: { limit?: number }) {
-  const { count, avg, recent } = await getReviewSummary(limit);
+// summary: 부모가 이미 같은 요약을 조회했으면(상품 상세 신뢰 스트립) 넘겨받아 DB를 두 번 치지 않는다
+export default async function ReviewList({
+  limit = 4,
+  summary,
+}: {
+  limit?: number;
+  summary?: Awaited<ReturnType<typeof getReviewSummary>>;
+}) {
+  const { count, avg, recent } = summary ?? (await getReviewSummary(limit));
   if (count < 3) return null;
 
   return (

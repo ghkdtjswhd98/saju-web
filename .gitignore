@@ -54,3 +54,6 @@ reference/
 
 # 워크플로 격리 작업트리(로컬 전용)
 .claude/worktrees/
+
+# 포스터 원화 후보안 — 확정본({code}.png)만 커밋
+public/poster-art/candidates/

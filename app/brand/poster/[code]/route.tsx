@@ -1,6 +1,7 @@
 import { ImageResponse } from "next/og";
 import { getProduct, PRODUCTS, type ProductCode } from "@/lib/products";
 import { loadKoreanFont } from "@/lib/og-font";
+import { posterArtDataUrl } from "@/lib/poster-art-file";
 
 // 상품 포스터 썸네일 900×600 (3:2) — 홈·상품 목록 카드의 얼굴.
 // 압구정연애박사 벤치마킹(2026-08-30, docs/benchmark-love119-ux.md)의 포스터 공식을 자체 제작:
@@ -8,6 +9,8 @@ import { loadKoreanFont } from "@/lib/og-font";
 // 사용: /brand/poster/reunion  (옛 /brand/poster?product=reunion 은 308 리다이렉트)
 // love119 모바일 벤치마킹(권고 1): 요청마다 폰트 2종을 받아 그리느라 첫 방문자가 5~6초 흰 빈칸을 봤다 —
 // 빌드 때 10장을 한 번만 그려 정적 서빙한다. 로딩 중 자리표시 색은 lib/poster-art.ts POSTER_BG(ARTS bg와 맞춤).
+// 2026-09-13: 일러스트 원화(public/poster-art/{code}.png)가 있으면 배경 레이어로 깔고 하단 40%를 어둡게 눌러
+// 기존 텍스트·붓글씨 레이어를 그대로 얹는다. 원화가 없는 상품은 종전 그라데이션 그대로.
 export const runtime = "nodejs";
 export const dynamic = "force-static";
 
@@ -121,6 +124,7 @@ export async function GET(
   const art = ARTS[code];
   const product = getProduct(code);
   if (!art || !product) return new Response("bad product", { status: 400 });
+  const artImage = posterArtDataUrl(product.code);
 
   const brushText = art.title;
   const sansText = `${art.question}${art.badge ?? ""}오롭미${art.chat ? art.chat.name + art.chat.msg + "방금" : ""}`;
@@ -138,13 +142,37 @@ export async function GET(
           fontFamily: "sans", position: "relative",
         }}
       >
-        {/* 무드 오브젝트 — 우상단 크게, 은은하게 */}
-        <div style={{ display: "flex", position: "absolute", top: 36, right: 44, fontSize: 96, opacity: 0.9 }}>
-          {art.emoji}
-        </div>
-        <div style={{ display: "flex", position: "absolute", bottom: -30, left: -20, fontSize: 150, opacity: 0.14 }}>
-          {art.emoji}
-        </div>
+        {/* 일러스트 원화 — 세로 원화를 가운데 위주로 크롭, 하단 40% 그라데이션으로 글자 대비 확보 */}
+        {artImage ? (
+          // eslint-disable-next-line @next/next/no-img-element -- Satori 레이어(next/image 불가)
+          <img
+            src={artImage}
+            alt=""
+            width={900}
+            height={600}
+            style={{ position: "absolute", top: 0, left: 0, width: 900, height: 600, objectFit: "cover" }}
+          />
+        ) : null}
+        {artImage ? (
+          <div
+            style={{
+              display: "flex", position: "absolute", top: 0, left: 0, width: 900, height: 600,
+              background: "linear-gradient(180deg, rgba(23,19,31,0) 60%, rgba(23,19,31,0.78) 100%)",
+            }}
+          />
+        ) : null}
+
+        {/* 무드 오브젝트 — 우상단 크게, 은은하게. 원화가 있으면 원화가 이 역할을 대신하므로 인물 위에 겹치지 않게 뺀다 */}
+        {artImage ? null : (
+          <div style={{ display: "flex", position: "absolute", top: 36, right: 44, fontSize: 96, opacity: 0.9 }}>
+            {art.emoji}
+          </div>
+        )}
+        {artImage ? null : (
+          <div style={{ display: "flex", position: "absolute", bottom: -30, left: -20, fontSize: 150, opacity: 0.14 }}>
+            {art.emoji}
+          </div>
+        )}
 
         {/* 브랜드 소문구 */}
         <div style={{ display: "flex", fontSize: 20, letterSpacing: 10, color: art.sub, marginBottom: 14 }}>
