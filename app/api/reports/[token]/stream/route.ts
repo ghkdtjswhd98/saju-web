@@ -5,6 +5,7 @@ import { getDb, orders, reports } from "@/lib/db";
 import { FREE_MODEL, PAID_MODEL, streamReport } from "@/lib/anthropic";
 import { sendOwnerAlert, sendReportPdf } from "@/lib/email";
 import { buildPdfForReport } from "@/lib/report-pdf";
+import { kickNextPart } from "@/lib/report-resume";
 import { siteUrl } from "@/lib/site";
 import { parseBlocks } from "@/lib/parse-blocks";
 import { CONCERN_MARKER, CONCERN_SECTION_SYSTEM, FORMATS } from "@/lib/prompts/formats";
@@ -21,8 +22,11 @@ function sse(data: object): string {
   return `data: ${JSON.stringify(data)}\n\n`;
 }
 
+// 파트 완료 후 고객 재접속을 기다리는 시간 — 클라이언트는 0.5초 뒤 재접속하므로 넉넉한 여유.
+const RECONNECT_GRACE_MS = 8_000;
+
 export async function GET(
-  _req: Request,
+  req: Request,
   { params }: { params: Promise<{ token: string }> },
 ) {
   const { token } = await params;
@@ -253,6 +257,24 @@ export async function GET(
           .where(eq(reports.token, token));
 
         send(isLast ? { t: "done" } : { t: "partial", partsDone, total: parts.length });
+
+        // 남은 파트가 있는데 고객이 재접속하지 않으면 서버가 스스로 다음 파트를 넘긴다
+        // (lib/report-resume.ts 참고). 고객이 재접속해 락을 잡았으면 status가 generating이라 건너뛴다.
+        if (!isLast) {
+          const gone = clientGone || req.signal.aborted;
+          if (!gone) await new Promise((r) => setTimeout(r, RECONNECT_GRACE_MS));
+          const now = await db
+            .select({ status: reports.status })
+            .from(reports)
+            .where(eq(reports.token, token))
+            .limit(1);
+          if (now[0]?.status === "pending") {
+            const kicked = await kickNextPart(`${siteUrl()}/api/reports/${token}/stream`);
+            if (!kicked) {
+              console.error(`[report-stream] 서버 이어쓰기 실패 — 재접속 시 이어짐 (${token}, 파트 ${partsDone + 1})`);
+            }
+          }
+        }
 
         // 유료 리포트 완성 → PDF 첨부 메일 자동 발송 (실제 상품 전달).
         // 실패해도 리포트 상태에는 영향 없음 — 고객은 웹/다운로드로 언제든 받을 수 있다.
