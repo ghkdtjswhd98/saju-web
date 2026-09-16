@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import ChemiLanding from "@/components/chemi/ChemiLanding";
 import { getChemiLink, listChemiRanking } from "@/lib/chemi";
 import { publicBoardView } from "@/lib/saju/chemi-link";
+import { currentSeason } from "@/lib/season";
 
 // 순위는 답이 올 때마다 바뀐다 — 캐시 없이 매 요청 조회
 export const dynamic = "force-dynamic";
@@ -33,7 +34,7 @@ export default async function ChemiLinkPage({ params }: { params: Promise<{ code
 
   return (
     <div className="mx-auto max-w-[430px] px-5 py-10">
-      <ChemiLanding code={code} nickname={link.nickname} initialBoard={board} />
+      <ChemiLanding code={code} nickname={link.nickname} initialBoard={board} season={currentSeason()} />
     </div>
   );
 }

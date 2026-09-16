@@ -13,6 +13,7 @@ import ShareBar from "@/components/ShareBar";
 import {
   CHEMI_NICKNAME_MAX, CHEMI_UTM, type ChemiBoardView, type ChemiRankRow,
 } from "@/lib/saju/chemi-link";
+import type { SeasonCopy } from "@/lib/season";
 import BoardVisibilityToggle from "./BoardVisibilityToggle";
 import LockIcon from "./LockIcon";
 import RankingBoard from "./RankingBoard";
@@ -23,6 +24,8 @@ interface Props {
   nickname: string;
   /** 서버가 친구 기준으로 만든 순위판(비공개 제외·잠금 반영) */
   initialBoard: ChemiBoardView;
+  /** 켜져 있는 명절 시즌 문구(lib/season.ts). 평상시엔 null */
+  season: SeasonCopy | null;
 }
 
 interface ReplyResult {
@@ -52,7 +55,7 @@ function boardProps(b: ChemiBoardView) {
 //   주인(이 브라우저에 ownerKey가 있음): 공유 버튼 + 공개 토글 + 전체 순위판
 //   친구: "{nickname}님과 너의 케미는?" → 별명+생일(+비공개 체크) → 점수·라벨·순위 → "나도 내 링크 만들기"
 // 성별은 묻지 않는다 — 케미는 지지·오행만 쓰고, 안내 문구("생일만")와 실제 입력이 같아야 한다
-export default function ChemiLanding({ code, nickname, initialBoard }: Props) {
+export default function ChemiLanding({ code, nickname, initialBoard, season }: Props) {
   const router = useRouter();
   // 링크를 막 만든 주인은 ?me=1로 들어온다 — 첫 프레임부터 순위판을 그려 친구 폼이 깜빡이지 않게.
   // 진짜 주인인지는 아래 useEffect에서 localStorage 키 + 서버 확인으로 다시 가리고, 아니면 친구 화면으로 바꾼다.
@@ -211,7 +214,9 @@ export default function ChemiLanding({ code, nickname, initialBoard }: Props) {
     return (
       <div className="space-y-5">
         <header className="text-center">
-          <p className="text-sm font-medium text-accent-strong">내 케미 순위판</p>
+          <p className="text-sm font-medium text-accent-strong">
+            {season ? `${season.badge} · 내 케미 순위판` : "내 케미 순위판"}
+          </p>
           <h1 className="mt-2 text-2xl font-bold leading-snug">
             {nickname}님과
             <br />
@@ -232,7 +237,9 @@ export default function ChemiLanding({ code, nickname, initialBoard }: Props) {
             description="생일만 넣으면 나와요 — 로그인 없이 10초"
             buttonLabel="내 케미 보기"
           />
-          <p className="mt-2 text-center text-xs text-ink-soft">단톡방·인스타 스토리에 한 번만 올려도 돼요</p>
+          <p className="mt-2 text-center text-xs text-ink-soft">
+            {season?.ownerShareHint ?? "단톡방·인스타 스토리에 한 번만 올려도 돼요"}
+          </p>
         </div>
 
         <div>
@@ -329,11 +336,20 @@ export default function ChemiLanding({ code, nickname, initialBoard }: Props) {
           )}
         </section>
 
-        <div className="text-center">
-          <Link href="/" className="inline-flex min-h-11 items-center px-2 text-sm text-accent-strong hover:underline">
-            내 사주도 무료로 보기 →
+        {/* 케미에서 본체(무료 사주)로 가는 유일한 길목이었는데 작은 텍스트 링크라 눈에 안 띄었다 —
+            링크 만들기(바이럴) 다음 순위의 보조 버튼으로 올린다. 2026-09-16 */}
+        <section className="rounded-2xl border border-line bg-card p-5 text-center">
+          <p className="text-sm font-bold text-ink">케미 말고 내 사주도 궁금하다면</p>
+          <p className="mt-1.5 text-xs leading-5 text-ink-soft">
+            성격·올해 흐름 요약을 무료로 받아볼 수 있어요 · 로그인 없음
+          </p>
+          <Link
+            href="/"
+            className="mt-4 flex min-h-12 w-full items-center justify-center rounded-xl border border-accent px-4 py-3.5 text-[15px] font-bold text-accent-strong transition hover:bg-accent-soft/40"
+          >
+            내 사주 무료로 보기
           </Link>
-        </div>
+        </section>
       </div>
     );
   }
@@ -342,7 +358,7 @@ export default function ChemiLanding({ code, nickname, initialBoard }: Props) {
   return (
     <div className="space-y-5">
       <header className="text-center">
-        <p className="text-sm font-medium text-accent-strong">친구 케미 초대</p>
+        <p className="text-sm font-medium text-accent-strong">{season?.friendKicker ?? "친구 케미 초대"}</p>
         <h1 className="mt-2 text-2xl font-bold leading-snug">
           {nickname}님과
           <br />

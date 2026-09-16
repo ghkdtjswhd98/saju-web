@@ -63,6 +63,11 @@ export function findCliches(text: string): ClicheHit[] {
       if (/[가-힣]/.test(prev)) continue; // 앞이 한글 → "과정인데" 류
       const after = text.slice(idx + term.length, idx + term.length + 3);
       if (term === "상관" && /^\s*(없|안 |이?\s*아니|하지)/.test(after)) continue; // "상관없이" 류
+      // 「~한 편 + 이다」 활용 — '편'은 십신 접두사이자 "~하는 편이다"의 의존명사라
+      // "여린 편인데 / 좋아하는 편인지"가 '편인'으로 잡힌다 (9/9 심층사주 실오탐).
+      // 진짜 십신 '편인'은 명사라 뒤에 조사(이/가/은/는/을/의/도)나 공백이 오므로,
+      // 서술어 어미(데/지/걸/줄/가/거/까)가 붙은 경우만 활용형으로 보고 건너뛴다.
+      if (term === "편인" && /^[데지걸줄가거까]/.test(after)) continue;
       hits.push({ rule: "전문용어", excerpt: excerptAround(text, idx) });
       break;
     }
