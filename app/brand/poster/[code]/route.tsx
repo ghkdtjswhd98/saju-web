@@ -159,7 +159,7 @@ export async function GET(
           <div
             style={{
               display: "flex", position: "absolute", top: 0, left: 0, width: 900, height: 600,
-              background: "linear-gradient(180deg, rgba(23,19,31,0) 60%, rgba(23,19,31,0.78) 100%)",
+              background: "linear-gradient(180deg, rgba(23,19,31,0) 48%, rgba(23,19,31,0.86) 100%)",
             }}
           />
         ) : null}
@@ -196,9 +196,12 @@ export async function GET(
         ) : null}
 
         {/* 질문형 소문구 */}
-        <div style={{ display: "flex", fontSize: artImage ? 26 : 30, color: art.sub, marginBottom: 6 }}>
-          {art.question}
-        </div>
+        {/* 원화 위(3:2)에서는 띠가 짧아 소문구를 생략 — 질문은 카드 캡션(cardTitle)이 이미 맡는다 */}
+        {artImage ? null : (
+          <div style={{ display: "flex", fontSize: 30, color: art.sub, marginBottom: 6 }}>
+            {art.question}
+          </div>
+        )}
 
         {/* 대형 붓글씨 제목 — 원화 위에서는 하단 띠(약 40%) 안에 들어가게 한 단계 작게 */}
         <div
