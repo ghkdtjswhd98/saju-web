@@ -10,7 +10,7 @@
  * - 원화는 세로(4:5, 약 1024×1280)·텍스트 없음. 라우트(app/brand/poster*, app/products/[code])가 크롭·글자 합성을 맡는다.
  * - candidates/ 는 .gitignore, 확정본 {code}.png 는 커밋한다(정적 서빙).
  */
-import { copyFileSync, existsSync, mkdirSync, writeFileSync } from "node:fs";
+import { copyFileSync, existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { PRODUCTS, type ProductCode } from "../lib/products";
 import { loadEnvLocal } from "./content-gen-lib";
@@ -21,12 +21,13 @@ const CAND_DIR = join(ART_DIR, "candidates");
 // 스타일 통일 접두어 — 스펙 §1 원문. 상품이 바뀌어도 이 문장은 고정해 10장이 한 세트로 보이게 한다.
 const STYLE_PREFIX =
   "부드러운 웹툰풍 일러스트, 한국 20~30대 인물, 섬세한 선, 파스텔+딥네이비 대비, 밤하늘·별 모티프가 은은하게, " +
-  "텍스트 없음, 로고 없음, 워터마크 없음, 얼굴 자연스럽게, 상반신 또는 실루엣, 여백은 아래쪽(제목 자리). " +
-  "세로 4:5 구도, 하단 40%는 어둡고 단순하게 비워둘 것.";
+  "텍스트 없음, 로고 없음, 워터마크 없음, 얼굴 자연스럽게, 상반신 또는 실루엣. " +
+  "세로 4:5 구도로 화면 전체를 꽉 채울 것(빈 여백·액자·검은 띠 금지). 인물과 주요 소재는 위쪽 60%에, " +
+  "아래쪽 1/3은 장면이 이어진 채로 점점 어두운 남색으로 자연스럽게 잦아들어(부드러운 그라데이션) 글자를 올릴 수 있게 할 것.";
 
 // 상품별 장면 — 스펙 §1 원문(타이트사주 구도 직접 복제 금지)
 const SCENES: Record<ProductCode, string> = {
-  deep: "밤하늘 아래 한복 두루마리를 펼쳐 보는 청년, 금색 글자 빛",
+  deep: "밤하늘 아래 오래된 두루마리를 펼쳐 보는 한복 차림 청년, 두루마리에서 금빛 빛무리가 피어오름",
   bundle: "세 장의 카드가 부채처럼 펼쳐진 손, 보라 안개",
   lifetime: "별자리 지도를 올려다보는 사람 뒷모습, 인생 길이 이어진 밤길",
   year: "붉은 말(병오) 실루엣이 달을 가로지르는 겨울 밤하늘, 눈송이",
@@ -38,8 +39,19 @@ const SCENES: Record<ProductCode, string> = {
   dohwa: "붉은 꽃잎 흩날리는 밤, 자신감 있는 인물 실루엣, 버건디",
 };
 
+// 포스터 공식 레시피(docs/poster-formula-2026-09-14.md → scripts/poster-recipes.json)가 있으면 그 완성 프롬프트를 우선 쓴다.
+// 레시피에 없는 상품만 STYLE_PREFIX + SCENES 폴백 — 공식이 바뀌면 JSON만 갈아끼우면 되게.
+type Recipe = { code: string; prompt: string };
+function loadRecipes(): Map<string, string> {
+  const file = join(process.cwd(), "scripts", "poster-recipes.json");
+  if (!existsSync(file)) return new Map();
+  const json = JSON.parse(readFileSync(file, "utf8")) as { recipes?: Recipe[] };
+  return new Map((json.recipes ?? []).map((r) => [r.code, r.prompt]));
+}
+const RECIPES = loadRecipes();
+
 function prompt(code: ProductCode): string {
-  return `${STYLE_PREFIX}\n\n장면: ${SCENES[code]}`;
+  return RECIPES.get(code) ?? `${STYLE_PREFIX}\n\n장면: ${SCENES[code]}`;
 }
 
 // ── 이미지 생성 백엔드 ──────────────────────────────────────────────
