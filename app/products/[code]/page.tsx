@@ -14,7 +14,7 @@ import { getReviewSummary } from "@/lib/reviews";
 
 // 상품 상세 v2 — 타이트사주 벤치마킹(2026-09-13, docs/superpowers/specs/2026-09-13-product-detail-v2.md):
 // [원화 히어로: 질문 2줄+가격+CTA] → [감성 한 줄 ×2] → [챕터 카드] → [샘플] → [신뢰 스트립(진짜만)] → [후기] → [FAQ] → [고정 CTA]
-// 원화(public/poster-art/{code}.png)가 없는 상품은 무드 그라데이션으로 대신한다. 가짜 참여자 수·수상 배지는 넣지 않는다.
+// 원화(public/poster-art/{code}.jpg|png)가 없는 상품은 무드 그라데이션으로 대신한다. 가짜 참여자 수·수상 배지는 넣지 않는다.
 // 카운트다운은 진짜다(lib/launch.ts) — 마감 후 pricing이 실제로 정가를 적용한다.
 export const revalidate = 60;
 

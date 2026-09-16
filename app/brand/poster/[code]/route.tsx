@@ -9,7 +9,7 @@ import { posterArtDataUrl } from "@/lib/poster-art-file";
 // 사용: /brand/poster/reunion  (옛 /brand/poster?product=reunion 은 308 리다이렉트)
 // love119 모바일 벤치마킹(권고 1): 요청마다 폰트 2종을 받아 그리느라 첫 방문자가 5~6초 흰 빈칸을 봤다 —
 // 빌드 때 10장을 한 번만 그려 정적 서빙한다. 로딩 중 자리표시 색은 lib/poster-art.ts POSTER_BG(ARTS bg와 맞춤).
-// 2026-09-13: 일러스트 원화(public/poster-art/{code}.png)가 있으면 배경 레이어로 깔고 하단 40%를 어둡게 눌러
+// 2026-09-13: 일러스트 원화(public/poster-art/{code}.jpg|png)가 있으면 배경 레이어로 깔고 하단 40%를 어둡게 눌러
 // 기존 텍스트·붓글씨 레이어를 그대로 얹는다. 원화가 없는 상품은 종전 그라데이션 그대로.
 export const runtime = "nodejs";
 export const dynamic = "force-static";
@@ -138,7 +138,9 @@ export async function GET(
       <div
         style={{
           width: "100%", height: "100%", display: "flex", flexDirection: "column",
-          alignItems: "center", justifyContent: "center", background: art.bg,
+          // 원화가 있으면 글자를 하단 페이드 띠 안에 모아 인물·소품(중앙)을 가리지 않는다 — 공식 규칙 2·8
+          alignItems: "center", justifyContent: artImage ? "flex-end" : "center", background: art.bg,
+          paddingBottom: artImage ? 34 : 0,
           fontFamily: "sans", position: "relative",
         }}
       >
@@ -174,13 +176,15 @@ export async function GET(
           </div>
         )}
 
-        {/* 브랜드 소문구 */}
-        <div style={{ display: "flex", fontSize: 20, letterSpacing: 10, color: art.sub, marginBottom: 14 }}>
-          오롭미
-        </div>
+        {/* 브랜드 소문구 — 원화가 있으면 생략(하단 띠 공간을 제목·질문에 양보) */}
+        {artImage ? null : (
+          <div style={{ display: "flex", fontSize: 20, letterSpacing: 10, color: art.sub, marginBottom: 14 }}>
+            오롭미
+          </div>
+        )}
 
-        {/* 뱃지 */}
-        {art.badge ? (
+        {/* 뱃지 — 원화가 있으면 생략(공식 규칙 18: 뱃지·숫자는 포스터 밖). 원화 위에서는 인물·소품 위에 얹혀 잡음이 됐다 */}
+        {art.badge && !artImage ? (
           <div
             style={{
               display: "flex", fontSize: 24, color: art.fg, padding: "6px 26px",
@@ -192,14 +196,14 @@ export async function GET(
         ) : null}
 
         {/* 질문형 소문구 */}
-        <div style={{ display: "flex", fontSize: 30, color: art.sub, marginBottom: 6 }}>
+        <div style={{ display: "flex", fontSize: artImage ? 26 : 30, color: art.sub, marginBottom: 6 }}>
           {art.question}
         </div>
 
-        {/* 대형 붓글씨 제목 */}
+        {/* 대형 붓글씨 제목 — 원화 위에서는 하단 띠(약 40%) 안에 들어가게 한 단계 작게 */}
         <div
           style={{
-            display: "flex", fontFamily: "brush", fontSize: 150, color: art.fg,
+            display: "flex", fontFamily: "brush", fontSize: artImage ? 118 : 150, color: art.fg,
             lineHeight: 1.05,
             textShadow: art.glow
               ? `0 0 34px ${art.glow}, 0 0 70px ${art.glow}`
@@ -209,13 +213,17 @@ export async function GET(
           {art.title}
         </div>
 
-        {/* 카톡 알림 목업 — 재회·썸 전용 감정 트리거 */}
+        {/* 카톡 알림 목업 — 재회·썸 전용 감정 트리거. 원화가 있으면 좌상단 빈 하늘(상단 35% 여백)에 띄워
+            하단 띠의 제목을 밀어 올리지 않는다 */}
         {art.chat ? (
           <div
             style={{
-              display: "flex", alignItems: "center", gap: 16, marginTop: 26,
+              display: "flex", alignItems: "center", gap: 16,
+              ...(artImage
+                ? { position: "absolute" as const, top: 40, left: 44, width: 380 }
+                : { marginTop: 26, width: 420 }),
               background: "#ffffff", borderRadius: 20, padding: "16px 26px",
-              boxShadow: "0 12px 40px rgba(0,0,0,0.35)", width: 420,
+              boxShadow: "0 12px 40px rgba(0,0,0,0.35)",
             }}
           >
             <div

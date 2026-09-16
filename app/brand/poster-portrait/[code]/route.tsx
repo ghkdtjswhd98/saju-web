@@ -7,7 +7,7 @@ import { posterArtDataUrl } from "@/lib/poster-art-file";
 // 홈 v2 1안 목업(밤하늘 계열)에 맞춰 어두운 남색 베이스 + 초승달·별 + 금색 붓글씨 제목 + 'OROBMI · PDF n PAGES' 워드마크.
 // 목업처럼 질문형 소문구는 넣지 않는다 — 카드 캡션(cardTitle)이 같은 문장을 이미 담당하고, 레일 150px에서는 읽히지도 않는다.
 // 가로 포스터와 같은 이유로 빌드 때 10장을 한 번만 그려 정적 서빙한다(첫 방문자 흰 빈칸 방지).
-// 2026-09-13: 일러스트 원화(public/poster-art/{code}.png, 1024×1280 = 같은 4:5)가 있으면 배경으로 깔고
+// 2026-09-13: 일러스트 원화(public/poster-art/{code}.jpg|png, 896×1152 = 같은 4:5)가 있으면 배경으로 깔고
 // 하단 40%를 어둡게 눌러 기존 달·별·붓글씨 레이어를 그대로 얹는다. 없는 상품은 종전 그라데이션.
 // 사용: /brand/poster-portrait/reunion
 export const runtime = "nodejs";
@@ -138,14 +138,19 @@ export async function GET(
             background: "linear-gradient(180deg, rgba(23,19,31,0) 38%, rgba(23,19,31,0.62) 100%)",
           }}
         />
-        <div
-          style={{
-            display: "flex", position: "absolute", top: 0, left: 0, width: 600, height: 750,
-            background: "radial-gradient(circle at 78% 18%, rgba(255,233,168,0.16) 0%, rgba(255,233,168,0) 46%)",
-          }}
-        />
+        {/* 우상단 금빛 하이라이트·달·별·달무리 링은 원화가 없을 때만 — 공식(2026-09-14) 레시피 원화는
+            제 광원(달빛·창·스탠드)과 장식을 이미 갖고 있어, 겹쳐 그리면 잡음이 된다 */}
+        {artImage ? null : (
+          <div
+            style={{
+              display: "flex", position: "absolute", top: 0, left: 0, width: 600, height: 750,
+              background: "radial-gradient(circle at 78% 18%, rgba(255,233,168,0.16) 0%, rgba(255,233,168,0) 46%)",
+            }}
+          />
+        )}
 
         {/* 초승달 + 별 + 달무리 링 — 목업 포스터 장식을 600×750 좌표로 옮김 */}
+        {artImage ? null : (
         <svg
           width="600" height="750" viewBox="0 0 600 750"
           style={{ position: "absolute", top: 0, left: 0 }}
@@ -162,12 +167,13 @@ export async function GET(
           <path d="M300 208 l11 33 l33 11 l-33 11 l-11 33 l-11 -33 l-33 -11 l33 -11 z" fill={GOLD} opacity="0.9" />
           <path d="M172 364 l6 17 l17 6 l-17 6 l-6 17 l-6 -17 l-17 -6 l17 -6 z" fill={GOLD} opacity="0.7" />
         </svg>
+        )}
 
-        {/* 카톡 알림 목업 — 재회·속마음 전용 감정 트리거, 달무리 링 가운데 */}
+        {/* 카톡 알림 목업 — 재회·속마음 전용 감정 트리거. 원화가 있으면 인물(중앙)을 가리지 않게 페이드 띠 바로 위로 내린다 */}
         {art.chat ? (
           <div
             style={{
-              display: "flex", alignItems: "center", gap: 16, position: "absolute", top: 302, left: 90,
+              display: "flex", alignItems: "center", gap: 16, position: "absolute", top: artImage ? 430 : 302, left: 90,
               background: "#ffffff", borderRadius: 20, padding: "16px 24px",
               boxShadow: "0 12px 40px rgba(0,0,0,0.4)", width: 420,
             }}
